@@ -11,6 +11,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.remember
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import xyz.doocode.superbus.ui.components.EmptyDataView
@@ -21,7 +22,10 @@ import xyz.doocode.superbus.ui.components.SearchBar
 import xyz.doocode.superbus.ui.components.StopListItem
 
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
+import xyz.doocode.superbus.core.data.FavoritesRepository
 import xyz.doocode.superbus.ui.details.StopDetailsActivity
+import xyz.doocode.superbus.ui.components.*
 
 @Composable
 fun SearchScreen(
@@ -31,6 +35,10 @@ fun SearchScreen(
     val uiState by viewModel.uiState.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val context = LocalContext.current
+
+    // Connect to Favorites Repository
+    val favoritesRepository = remember { FavoritesRepository.getInstance(context) }
+    val favorites by favoritesRepository.favorites.collectAsState()
 
     Column(modifier = modifier.fillMaxSize()) {
         SearchBar(
@@ -66,9 +74,18 @@ fun SearchScreen(
                     )
                     LazyColumn(modifier = Modifier.fillMaxSize()) {
                         items(state.stops) { stop ->
+                            val favorite = favorites.find { it.id == stop.id }
+                            val isFavorite = favorite != null
+
                             StopListItem(
                                 stop = stop,
                                 searchQuery = searchQuery,
+                                isFavorite = isFavorite,
+                                favoriteLines = favorite?.lines ?: emptyList(),
+                                onFillQuery = { name -> viewModel.onSearchQueryChanged(name) },
+                                onToggleFavorite = {
+                                    viewModel.toggleFavorite(stop)
+                                },
                                 onClick = {
                                     val intent = android.content.Intent(
                                         context,
