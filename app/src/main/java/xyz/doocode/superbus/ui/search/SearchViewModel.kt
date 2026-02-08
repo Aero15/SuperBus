@@ -22,7 +22,7 @@ class SearchViewModel : ViewModel() {
 
     // Configuration flag for deduplication
     // Set to true to group stops by name, false to show all entries
-    private val REMOVE_DUPLICATES = true
+    val REMOVE_DUPLICATES = true
 
     private val _allStops = MutableStateFlow<List<Arret>>(emptyList())
     private val _isLoading = MutableStateFlow(false)

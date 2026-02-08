@@ -20,6 +20,9 @@ import xyz.doocode.superbus.ui.components.LoadingView
 import xyz.doocode.superbus.ui.components.SearchBar
 import xyz.doocode.superbus.ui.components.StopListItem
 
+import androidx.compose.ui.platform.LocalContext
+import xyz.doocode.superbus.ui.details.StopDetailsActivity
+
 @Composable
 fun SearchScreen(
     modifier: Modifier = Modifier,
@@ -27,6 +30,7 @@ fun SearchScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
+    val context = LocalContext.current
 
     Column(modifier = modifier.fillMaxSize()) {
         SearchBar(
@@ -55,11 +59,36 @@ fun SearchScreen(
                 if (state.stops.isEmpty()) {
                     EmptyResultsView(query = searchQuery)
                 } else {
+                    Text(
+                        text = "${state.stops.size} arrêts trouvés",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
                     LazyColumn(modifier = Modifier.fillMaxSize()) {
                         items(state.stops) { stop ->
                             StopListItem(
                                 stop = stop,
-                                searchQuery = searchQuery
+                                searchQuery = searchQuery,
+                                onClick = {
+                                    val intent = android.content.Intent(
+                                        context,
+                                        StopDetailsActivity::class.java
+                                    )
+                                    if (viewModel.REMOVE_DUPLICATES) {
+                                        intent.putExtra(
+                                            StopDetailsActivity.EXTRA_STOP_NAME,
+                                            stop.nom
+                                        )
+                                    } else {
+                                        intent.putExtra(StopDetailsActivity.EXTRA_STOP_ID, stop.id)
+                                        intent.putExtra(
+                                            StopDetailsActivity.EXTRA_STOP_NAME,
+                                            stop.nom
+                                        )
+                                    }
+                                    context.startActivity(intent)
+                                }
                             )
                         }
                     }
