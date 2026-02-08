@@ -7,9 +7,16 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Menu
+import androidx.compose.material.icons.outlined.Place
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -21,8 +28,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
+import xyz.doocode.superbus.ui.home.*
 import xyz.doocode.superbus.ui.theme.SuperBusTheme
 
 class MainActivity : ComponentActivity() {
@@ -40,55 +48,49 @@ class MainActivity : ComponentActivity() {
 @PreviewScreenSizes
 @Composable
 fun SuperBusApp() {
-    var currentDestination by rememberSaveable { mutableStateOf(AppDestinations.HOME) }
+    var currentDestination by rememberSaveable { mutableStateOf(AppDestinations.MAP) }
 
     NavigationSuiteScaffold(
         navigationSuiteItems = {
             AppDestinations.entries.forEach {
+                val isSelected = it == currentDestination
                 item(
                     icon = {
                         Icon(
-                            it.icon,
+                            imageVector = if (isSelected) it.selectedIcon else it.unselectedIcon,
                             contentDescription = it.label
                         )
                     },
-                    label = { Text(it.label) },
-                    selected = it == currentDestination,
+                    label = { Text(it.label, textAlign = TextAlign.Center) },
+                    selected = isSelected,
                     onClick = { currentDestination = it }
                 )
             }
         }
     ) {
         Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-            Greeting(
-                name = "Android",
-                modifier = Modifier.padding(innerPadding)
-            )
+            val modifier = Modifier
+                .padding(innerPadding)
+                .fillMaxSize()
+            when (currentDestination) {
+                AppDestinations.MAP -> MapScreen(modifier)
+                AppDestinations.FAVORITES -> FavoritesScreen(modifier)
+                AppDestinations.SEARCH -> SearchScreen(modifier)
+                AppDestinations.TRAFFIC -> TrafficScreen(modifier)
+                AppDestinations.MENU -> MenuScreen(modifier)
+            }
         }
     }
 }
 
 enum class AppDestinations(
     val label: String,
-    val icon: ImageVector,
+    val selectedIcon: ImageVector,
+    val unselectedIcon: ImageVector,
 ) {
-    HOME("Home", Icons.Default.Home),
-    FAVORITES("Favorites", Icons.Default.Favorite),
-    PROFILE("Profile", Icons.Default.AccountBox),
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    SuperBusTheme {
-        Greeting("Android")
-    }
+    MAP("Carte", Icons.Default.Place, Icons.Outlined.Place),
+    FAVORITES("Favoris", Icons.Default.Favorite, Icons.Outlined.FavoriteBorder),
+    SEARCH("Chercher", Icons.Default.Search, Icons.Outlined.Search),
+    TRAFFIC("Infos", Icons.Default.Info, Icons.Outlined.Info),
+    MENU("Menu", Icons.Default.Menu, Icons.Outlined.Menu),
 }
