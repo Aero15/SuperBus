@@ -51,7 +51,7 @@ class MainActivity : ComponentActivity() {
 @PreviewScreenSizes
 @Composable
 fun SuperBusApp() {
-    var currentDestination by rememberSaveable { mutableStateOf(AppDestinations.MAP) }
+    var currentDestination by rememberSaveable { mutableStateOf(AppDestinations.FAVORITES) }
 
     NavigationSuiteScaffold(
         navigationSuiteItems = {
