@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import xyz.doocode.superbus.core.dto.Arret
+import xyz.doocode.superbus.core.util.removeAccents
 
 @Composable
 fun StopListItem(
@@ -52,12 +53,18 @@ fun StopListItem(
                 if (query.isEmpty()) {
                     append(fullText)
                 } else {
-                    val startIndex = fullText.indexOf(query, ignoreCase = true)
+                    val normalizedFullText = fullText.removeAccents()
+                    val normalizedQuery = query.removeAccents()
+                    val startIndex = normalizedFullText.indexOf(normalizedQuery, ignoreCase = true)
+
                     if (startIndex >= 0) {
                         val endIndex = startIndex + query.length
+                        // Safe check for indices in original text just in case lengths differ
+                        val safeEndIndex = endIndex.coerceAtMost(fullText.length)
+                        val safeStartIndex = startIndex.coerceAtMost(safeEndIndex)
 
                         // Text before match
-                        append(fullText.substring(0, startIndex))
+                        append(fullText.substring(0, safeStartIndex))
 
                         // Matched text
                         withStyle(
@@ -66,13 +73,13 @@ fun StopListItem(
                                 color = MaterialTheme.colorScheme.primary
                             )
                         ) {
-                            append(fullText.substring(startIndex, endIndex))
+                            append(fullText.substring(safeStartIndex, safeEndIndex))
                         }
 
                         // Text after match
-                        append(fullText.substring(endIndex))
+                        append(fullText.substring(safeEndIndex))
                     } else {
-                        // Fallback if contain check passed but indexOf failed (unlikely with simple contains) or no match found
+                        // Fallback
                         append(fullText)
                     }
                 }

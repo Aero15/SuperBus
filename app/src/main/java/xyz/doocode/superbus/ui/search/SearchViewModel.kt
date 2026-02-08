@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import xyz.doocode.superbus.core.api.ApiClient
 import xyz.doocode.superbus.core.dto.Arret
+import xyz.doocode.superbus.core.util.removeAccents
 
 sealed interface SearchUiState {
     data object Loading : SearchUiState
@@ -46,7 +47,10 @@ class SearchViewModel : ViewModel() {
             val filteredStops = if (query.isBlank()) {
                 stops
             } else {
-                stops.filter { it.nom.contains(query, ignoreCase = true) }
+                val normalizedQuery = query.trim().removeAccents()
+                stops.filter {
+                    it.nom.removeAccents().contains(normalizedQuery, ignoreCase = true)
+                }
             }
             SearchUiState.Success(filteredStops)
         }
