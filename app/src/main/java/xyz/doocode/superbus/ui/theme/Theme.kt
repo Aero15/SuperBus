@@ -9,6 +9,7 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
@@ -55,4 +56,17 @@ fun SuperBusTheme(
         typography = Typography,
         content = content
     )
+}
+
+/**
+ * Helper to get the header gradient colors based on the current theme.
+ * This keeps the logic centralized in the Theme file.
+ */
+@Composable
+fun headerGradientColors(darkTheme: Boolean = isSystemInDarkTheme()): List<Color> {
+    return if (darkTheme) {
+        listOf(HeaderDarkStart, HeaderDarkEnd)
+    } else {
+        listOf(HeaderLightStart, HeaderLightEnd)
+    }
 }
