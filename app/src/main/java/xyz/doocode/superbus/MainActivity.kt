@@ -31,6 +31,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import xyz.doocode.superbus.ui.home.*
+import xyz.doocode.superbus.ui.favorites.FavoritesScreen
+import xyz.doocode.superbus.ui.details.StopDetailsActivity
 import xyz.doocode.superbus.ui.search.SearchScreen
 import xyz.doocode.superbus.ui.theme.SuperBusTheme
 
@@ -75,7 +77,19 @@ fun SuperBusApp() {
                 .fillMaxSize()
             when (currentDestination) {
                 AppDestinations.MAP -> MapScreen(modifier)
-                AppDestinations.FAVORITES -> FavoritesScreen(modifier)
+                AppDestinations.FAVORITES -> {
+                    val context = androidx.compose.ui.platform.LocalContext.current
+                    FavoritesScreen(
+                        modifier = modifier,
+                        onSearchClick = { currentDestination = AppDestinations.SEARCH },
+                        onStationClick = { station ->
+                            val intent = android.content.Intent(context, StopDetailsActivity::class.java)
+                            intent.putExtra(StopDetailsActivity.EXTRA_STOP_ID, station.id)
+                            intent.putExtra(StopDetailsActivity.EXTRA_STOP_NAME, station.name)
+                            context.startActivity(intent)
+                        }
+                    )
+                }
                 AppDestinations.SEARCH -> SearchScreen(modifier)
                 AppDestinations.TRAFFIC -> TrafficScreen(modifier)
                 AppDestinations.MENU -> MenuScreen(modifier)

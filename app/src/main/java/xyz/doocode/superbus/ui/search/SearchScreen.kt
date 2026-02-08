@@ -35,8 +35,7 @@ fun SearchScreen(
     Column(modifier = modifier.fillMaxSize()) {
         SearchBar(
             query = searchQuery,
-            onQueryChange = viewModel::onSearchQueryChanged,
-            placeholder = "Rechercher un arrêt..."
+            onQueryChange = viewModel::onSearchQueryChanged
         )
 
         when (val state = uiState) {
@@ -75,18 +74,11 @@ fun SearchScreen(
                                         context,
                                         StopDetailsActivity::class.java
                                     )
-                                    if (viewModel.REMOVE_DUPLICATES) {
-                                        intent.putExtra(
-                                            StopDetailsActivity.EXTRA_STOP_NAME,
-                                            stop.nom
-                                        )
-                                    } else {
-                                        intent.putExtra(StopDetailsActivity.EXTRA_STOP_ID, stop.id)
-                                        intent.putExtra(
-                                            StopDetailsActivity.EXTRA_STOP_NAME,
-                                            stop.nom
-                                        )
-                                    }
+                                    intent.putExtra(StopDetailsActivity.EXTRA_STOP_ID, stop.id)
+                                    intent.putExtra(
+                                        StopDetailsActivity.EXTRA_STOP_NAME,
+                                        stop.nom
+                                    )
                                     context.startActivity(intent)
                                 }
                             )

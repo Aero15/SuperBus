@@ -1,30 +1,36 @@
 package xyz.doocode.superbus.ui.details
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.isActive
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import xyz.doocode.superbus.core.api.ApiClient
+import xyz.doocode.superbus.core.data.FavoritesRepository
+import xyz.doocode.superbus.core.dto.LineInfo
 import xyz.doocode.superbus.core.dto.Temps
 import xyz.doocode.superbus.core.dto.TempsLieu
+
 
 sealed interface StopDetailsUiState {
     data object Loading : StopDetailsUiState
     data class Success(
-        val tempsLieu: TempsLieu,
-        val groupedArrivals: Map<String, List<Temps>> // Key: Ligne + Direction
+        val tempsLieu: TempsLieu?,
+        val groupedArrivals: Map<String, List<Temps>>
     ) : StopDetailsUiState
 
     data class Error(val message: String) : StopDetailsUiState
     data object Empty : StopDetailsUiState
 }
 
-class StopDetailsViewModel : ViewModel() {
+class StopDetailsViewModel(application: Application) : AndroidViewModel(application) {
+
+    private val repository = FavoritesRepository.getInstance(application)
 
     private val _uiState = MutableStateFlow<StopDetailsUiState>(StopDetailsUiState.Loading)
     val uiState: StateFlow<StopDetailsUiState> = _uiState.asStateFlow()
@@ -32,91 +38,105 @@ class StopDetailsViewModel : ViewModel() {
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
-    private var autoRefreshJob: Job? = null
+    private val _isFavorite = MutableStateFlow(false)
+    val isFavorite: StateFlow<Boolean> = _isFavorite.asStateFlow()
+
+    private var currentStopName: String? = null
+    private var currentStopId: String? = null
+    private var pollingJob: Job? = null
     private var lastRefreshTime = 0L
-    private val MIN_REFRESH_INTERVAL = 15_000L // 15 seconds
-    private val AUTO_REFRESH_INTERVAL = 30_000L // 30 seconds
 
-    // Identifiers
-    private var stopName: String? = null
-    private var stopId: String? = null
+    fun init(stopName: String?, stopId: String?) {
+        val isNew = (currentStopName != stopName || currentStopId != stopId)
+        currentStopName = stopName
+        currentStopId = stopId
 
-    fun init(name: String?, id: String?) {
-        if (stopName == name && stopId == id && _uiState.value !is StopDetailsUiState.Loading) return
+        stopId?.let { id ->
+            viewModelScope.launch {
+                repository.favorites.collectLatest { favorites ->
+                    _isFavorite.value = favorites.any { it.id == id }
+                }
+            }
+        }
 
-        stopName = name
-        stopId = id
-
+        if (isNew) {
+            loadData(forceRefresh = true)
+        }
         startAutoRefresh()
     }
 
-    private fun startAutoRefresh() {
-        autoRefreshJob?.cancel()
-        autoRefreshJob = viewModelScope.launch {
-            while (isActive) {
-                loadData(isAutoRefresh = true)
-                delay(AUTO_REFRESH_INTERVAL)
-            }
+    fun toggleFavorite() {
+        println("Toggling favorite for stopId=$currentStopId, stopName=$currentStopName")
+        val id = currentStopId ?: return
+        val name = currentStopName ?: return
+
+        val currentState = uiState.value
+        val lines = if (currentState is StopDetailsUiState.Success) {
+            currentState.groupedArrivals.values.flatten()
+                .map { LineInfo(it.numLignePublic, it.couleurFond, it.couleurTexte) }
+                .distinctBy { it.numLigne }
+        } else {
+            emptyList()
         }
+
+        repository.toggleFavorite(id, name, lines)
     }
 
     fun refresh() {
-        val currentTime = System.currentTimeMillis()
-        if (currentTime - lastRefreshTime < MIN_REFRESH_INTERVAL) {
-            // Rate limit triggered, skip refresh
+        val now = System.currentTimeMillis()
+        if (now - lastRefreshTime < 15000) {
+            _isRefreshing.value = false
             return
         }
+        lastRefreshTime = now
+        loadData(forceRefresh = true)
+    }
 
-        viewModelScope.launch {
-            _isRefreshing.value = true
-            loadData(isAutoRefresh = false)
-            _isRefreshing.value = false
+    private fun startAutoRefresh() {
+        pollingJob?.cancel()
+        pollingJob = viewModelScope.launch {
+            while (true) {
+                if (!_isRefreshing.value) {
+                    loadData(forceRefresh = false)
+                }
+                delay(30000)
+            }
         }
     }
 
-    private suspend fun loadData(isAutoRefresh: Boolean) {
-        if (!isAutoRefresh && _uiState.value is StopDetailsUiState.Loading) {
-            // Initial load or explict retry from error state, keep Loading state
-        } else if (!isAutoRefresh) {
-            // User initiated refresh, UI shows pull indicator, no need to change state to Loading
-        }
+    private fun loadData(forceRefresh: Boolean) {
+        if (forceRefresh) _isRefreshing.value = true
 
-        try {
-            val response = ApiClient.ginkoService.getTempsLieu(
-                nom = stopName,
-                idArret = stopId,
-                nb = 3 // Per API documentation, fetches 3 times per line/direction
-            )
+        viewModelScope.launch {
+            try {
+                if (currentStopName != null) {
+                    val response = ApiClient.ginkoService.getTempsLieu(currentStopName!!)
+                    val arrivals = response.objects.listeTemps
 
-            val data = response.objects
-
-            if (data.listeTemps.isEmpty()) {
-                _uiState.value = StopDetailsUiState.Empty
-            } else {
-                // Group by Line and Direction to organize the display
-                // Key format example: "3|Centre Ville"
-                val grouped = data.listeTemps.groupBy {
-                    "${it.numLignePublic}|${it.destination}"
+                    if (arrivals.isEmpty()) {
+                        _uiState.value = StopDetailsUiState.Empty
+                    } else {
+                        val grouped = arrivals.groupBy { "${it.numLignePublic}|${it.destination}" }
+                            .mapValues { (_, list) ->
+                                list.sortedWith(compareBy {
+                                    if (it.temps.contains("min")) 0 else 1
+                                })
+                            }
+                        _uiState.value = StopDetailsUiState.Success(response.objects, grouped)
+                    }
                 }
-
-                _uiState.value = StopDetailsUiState.Success(data, grouped)
-            }
-            lastRefreshTime = System.currentTimeMillis()
-
-        } catch (e: Exception) {
-            if (_uiState.value !is StopDetailsUiState.Success) {
-                _uiState.value = StopDetailsUiState.Error(
-                    e.localizedMessage ?: "Erreur de chargement"
-                )
-            } else {
-                // If we already have data, just log error or show snackbar (not handled here for simplicity)
-                // Retain old data
+            } catch (e: Exception) {
+                if (_uiState.value !is StopDetailsUiState.Success) {
+                    _uiState.value = StopDetailsUiState.Error(e.message ?: "Erreur réseau")
+                }
+            } finally {
+                _isRefreshing.value = false
             }
         }
     }
 
     override fun onCleared() {
         super.onCleared()
-        autoRefreshJob?.cancel()
+        pollingJob?.cancel()
     }
 }

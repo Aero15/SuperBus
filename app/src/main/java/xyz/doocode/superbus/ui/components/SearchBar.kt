@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.dp
 fun SearchBar(
     query: String,
     onQueryChange: (String) -> Unit,
-    placeholder: String = "Rechercher...",
+    placeholder: String = "Rechercher",
     modifier: Modifier = Modifier
 ) {
     val focusManager = LocalFocusManager.current

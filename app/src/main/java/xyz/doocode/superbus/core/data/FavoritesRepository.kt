@@ -1,0 +1,64 @@
+package xyz.doocode.superbus.core.data
+
+import android.content.Context
+import android.content.SharedPreferences
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import xyz.doocode.superbus.core.dto.FavoriteStation
+import xyz.doocode.superbus.core.dto.LineInfo
+
+class FavoritesRepository(context: Context) {
+
+    private val prefs: SharedPreferences = context.getSharedPreferences("superbus_favorites", Context.MODE_PRIVATE)
+    private val gson = Gson()
+    private val _favorites = MutableStateFlow<List<FavoriteStation>>(loadFavorites())
+    val favorites: StateFlow<List<FavoriteStation>> = _favorites.asStateFlow()
+
+    private fun loadFavorites(): List<FavoriteStation> {
+        val json = prefs.getString("favorites_list", null) ?: return emptyList()
+        val type = object : TypeToken<List<FavoriteStation>>() {}.type
+        return try {
+            gson.fromJson(json, type)
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    private fun saveFavorites(list: List<FavoriteStation>) {
+        val json = gson.toJson(list)
+        prefs.edit().putString("favorites_list", json).apply()
+        _favorites.value = list
+    }
+
+    fun isFavorite(stopId: String): Boolean {
+        return _favorites.value.any { it.id == stopId }
+    }
+
+    fun toggleFavorite(stopId: String, stopName: String, lines: List<LineInfo>) {
+        val currentList = _favorites.value.toMutableList()
+        val existingIndex = currentList.indexOfFirst { it.id == stopId }
+
+        if (existingIndex != -1) {
+            // Remove
+            currentList.removeAt(existingIndex)
+        } else {
+            // Add
+            currentList.add(FavoriteStation(stopId, stopName, lines))
+        }
+        saveFavorites(currentList)
+    }
+
+    companion object {
+        @Volatile
+        private var INSTANCE: FavoritesRepository? = null
+
+        fun getInstance(context: Context): FavoritesRepository {
+            return INSTANCE ?: synchronized(this) {
+                INSTANCE ?: FavoritesRepository(context.applicationContext).also { INSTANCE = it }
+            }
+        }
+    }
+}
