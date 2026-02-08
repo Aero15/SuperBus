@@ -16,12 +16,17 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import xyz.doocode.superbus.core.dto.Arret
 
 @Composable
 fun StopListItem(
     stop: Arret,
+    searchQuery: String = "",
     onClick: () -> Unit = {}
 ) {
     Column {
@@ -29,7 +34,7 @@ fun StopListItem(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable(onClick = onClick)
-                .padding(vertical = 12.dp, horizontal = 16.dp),
+                .padding(vertical = 16.dp, horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
@@ -38,8 +43,43 @@ fun StopListItem(
                 tint = MaterialTheme.colorScheme.primary
             )
             Spacer(modifier = Modifier.width(16.dp))
+
+            // Highlight matching text
+            val annotatedString = buildAnnotatedString {
+                val fullText = stop.nom
+                val query = searchQuery.trim()
+
+                if (query.isEmpty()) {
+                    append(fullText)
+                } else {
+                    val startIndex = fullText.indexOf(query, ignoreCase = true)
+                    if (startIndex >= 0) {
+                        val endIndex = startIndex + query.length
+
+                        // Text before match
+                        append(fullText.substring(0, startIndex))
+
+                        // Matched text
+                        withStyle(
+                            style = SpanStyle(
+                                fontWeight = FontWeight.Black,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        ) {
+                            append(fullText.substring(startIndex, endIndex))
+                        }
+
+                        // Text after match
+                        append(fullText.substring(endIndex))
+                    } else {
+                        // Fallback if contain check passed but indexOf failed (unlikely with simple contains) or no match found
+                        append(fullText)
+                    }
+                }
+            }
+
             Text(
-                text = stop.nom,
+                text = annotatedString,
                 style = MaterialTheme.typography.bodyLarge
             )
         }

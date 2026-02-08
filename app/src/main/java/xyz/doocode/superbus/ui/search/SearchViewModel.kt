@@ -72,7 +72,7 @@ class SearchViewModel : ViewModel() {
                     loadedStops = loadedStops
                         .distinctBy { it.nom } // Deduplicate by name
                 }
-                
+
                 // Sort alphabetically
                 loadedStops = loadedStops.sortedBy { it.nom }
 

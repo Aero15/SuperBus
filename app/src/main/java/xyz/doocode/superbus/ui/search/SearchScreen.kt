@@ -4,10 +4,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import xyz.doocode.superbus.ui.components.EmptyDataView
 import xyz.doocode.superbus.ui.components.EmptyResultsView
@@ -35,22 +39,28 @@ fun SearchScreen(
             is SearchUiState.Loading -> {
                 LoadingView()
             }
+
             is SearchUiState.Error -> {
                 ErrorView(
                     message = state.message,
                     onRetry = viewModel::loadStops
                 )
             }
+
             is SearchUiState.Empty -> {
                 EmptyDataView()
             }
+
             is SearchUiState.Success -> {
                 if (state.stops.isEmpty()) {
                     EmptyResultsView(query = searchQuery)
                 } else {
                     LazyColumn(modifier = Modifier.fillMaxSize()) {
                         items(state.stops) { stop ->
-                            StopListItem(stop = stop)
+                            StopListItem(
+                                stop = stop,
+                                searchQuery = searchQuery
+                            )
                         }
                     }
                 }
