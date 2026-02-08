@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import xyz.doocode.superbus.ui.home.*
+import xyz.doocode.superbus.ui.search.SearchScreen
 import xyz.doocode.superbus.ui.theme.SuperBusTheme
 
 class MainActivity : ComponentActivity() {
