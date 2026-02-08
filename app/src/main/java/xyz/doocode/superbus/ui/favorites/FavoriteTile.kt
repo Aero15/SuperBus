@@ -31,9 +31,9 @@ fun FavoriteTile(
             modifier = Modifier
                 .aspectRatio(1f) // Square
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
+                .clip(RoundedCornerShape(12.dp))
                 .background(MaterialTheme.colorScheme.surfaceVariant)
-                .padding(8.dp),
+                .padding(4.dp),
             contentAlignment = Alignment.Center
         ) {
             val validLines = station.lines
@@ -50,7 +50,7 @@ fun FavoriteTile(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(12.dp),
+                        .padding(6.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     EnlargedLineBadge(line)
@@ -86,23 +86,22 @@ fun FavoriteTile(
                                 // Counter Badge
                                 Box(
                                     modifier = Modifier
-                                        .size(32.dp)
+                                        .size(40.dp)
                                         .background(
                                             MaterialTheme.colorScheme.primary,
-                                            RoundedCornerShape(4.dp)
+                                            RoundedCornerShape(6.dp)
                                         ),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
                                         text = "+${validLines.size - 3}",
                                         color = MaterialTheme.colorScheme.onPrimary,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 12.sp
+                                        fontWeight = FontWeight.Bold
                                     )
                                 }
                             } else {
                                 // Empty slot (size was 3)
-                                Spacer(modifier = Modifier.size(32.dp))
+                                Spacer(modifier = Modifier.size(40.dp))
                             }
                         }
                     } else {
@@ -113,7 +112,7 @@ fun FavoriteTile(
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
         // Station Name
         Text(

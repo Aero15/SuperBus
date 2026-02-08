@@ -66,7 +66,6 @@ class StopDetailsViewModel(application: Application) : AndroidViewModel(applicat
     }
 
     fun toggleFavorite() {
-        println("Toggling favorite for stopId=$currentStopId, stopName=$currentStopName")
         val id = currentStopId ?: return
         val name = currentStopName ?: return
 

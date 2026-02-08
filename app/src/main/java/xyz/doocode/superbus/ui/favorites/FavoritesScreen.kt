@@ -29,27 +29,34 @@ fun FavoritesScreen(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(horizontal = 8.dp)
+            .padding(horizontal = 16.dp)
+            .padding(top = 16.dp)
     ) {
         // --- Header & Search ---
         Text(
-            text = "Favoris" + if (favorites.isNotEmpty()) " (${favorites.size})" else "",
-            style = MaterialTheme.typography.displaySmall,
+            text = "Favoris",
+            style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier
-                .padding(bottom = 8.dp)
-                .padding(horizontal = 8.dp)
+            modifier = Modifier.padding(bottom = 16.dp)
         )
 
-        SearchBar(
+        /*SearchBar(
             query = searchQuery,
             onQueryChange = viewModel::onSearchQueryChanged,
+            placeholder = "Rechercher...",
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 8.dp)
-        )
+        )*/
 
-        Spacer(modifier = Modifier.height(8.dp))
+        if (favorites.isNotEmpty()) {
+            Text(
+                text = "${favorites.size} station(s)",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+        }
 
         if (favorites.isEmpty()) {
             if (searchQuery.isNotEmpty()) {
@@ -74,7 +81,7 @@ fun FavoritesScreen(
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Button(onClick = onSearchClick) {
-                            Text("Ajouter une station")
+                            Text("Trouver une station")
                         }
                     }
                 }
@@ -82,8 +89,8 @@ fun FavoritesScreen(
         } else {
             // Grid of Tiles
             LazyVerticalGrid(
-                columns = GridCells.Adaptive(minSize = 140.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                columns = GridCells.Adaptive(minSize = 100.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 items(favorites, key = { it.id }) { station ->

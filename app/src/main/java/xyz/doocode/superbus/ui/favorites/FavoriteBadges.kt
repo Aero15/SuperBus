@@ -15,20 +15,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import xyz.doocode.superbus.core.dto.LineInfo
+import xyz.doocode.superbus.ui.components.parseColorSafe
 
 @Composable
 fun EnlargedLineBadge(line: LineInfo) {
-    val bgColor = try {
-        Color(android.graphics.Color.parseColor(line.couleurFond))
-    } catch (_: Exception) {
-        MaterialTheme.colorScheme.primary
-    }
-
-    val textColor = try {
-        Color(android.graphics.Color.parseColor(line.couleurTexte))
-    } catch (_: Exception) {
-        MaterialTheme.colorScheme.onPrimary
-    }
+    val bgColor = parseColorSafe(line.couleurFond, MaterialTheme.colorScheme.primary)
+    val textColor = parseColorSafe(line.couleurTexte, MaterialTheme.colorScheme.onPrimary)
 
     Box(
         modifier = Modifier
@@ -48,17 +40,8 @@ fun EnlargedLineBadge(line: LineInfo) {
 
 @Composable
 fun SmallLineBadge(line: LineInfo) {
-    val bgColor = try {
-        Color(android.graphics.Color.parseColor(line.couleurFond))
-    } catch (_: Exception) {
-        MaterialTheme.colorScheme.primary
-    }
-
-    val textColor = try {
-        Color(android.graphics.Color.parseColor(line.couleurTexte))
-    } catch (_: Exception) {
-        MaterialTheme.colorScheme.onPrimary
-    }
+    val bgColor = parseColorSafe(line.couleurFond, MaterialTheme.colorScheme.primary)
+    val textColor = parseColorSafe(line.couleurTexte, MaterialTheme.colorScheme.onPrimary)
 
     Box(
         modifier = Modifier
