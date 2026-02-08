@@ -40,7 +40,7 @@ fun LineBadge(
         modifier = modifier
             .background(
                 color = backgroundColor,
-                shape = RoundedCornerShape(4.dp)
+                shape = RoundedCornerShape(6.dp)
             )
             .padding(horizontal = 6.dp, vertical = 2.dp)
             .widthIn(min = 28.dp),

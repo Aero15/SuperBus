@@ -57,16 +57,3 @@ fun SuperBusTheme(
         content = content
     )
 }
-
-/**
- * Helper to get the header gradient colors based on the current theme.
- * This keeps the logic centralized in the Theme file.
- */
-@Composable
-fun headerGradientColors(darkTheme: Boolean = isSystemInDarkTheme()): List<Color> {
-    return if (darkTheme) {
-        listOf(HeaderDarkStart, HeaderDarkEnd)
-    } else {
-        listOf(HeaderLightStart, HeaderLightEnd)
-    }
-}
