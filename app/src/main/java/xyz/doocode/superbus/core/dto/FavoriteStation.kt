@@ -1,13 +1,9 @@
 package xyz.doocode.superbus.core.dto
 
-data class LineInfo(
-    val numLigne: String,
-    val couleurFond: String,
-    val couleurTexte: String
-)
-
 data class FavoriteStation(
     val id: String,
     val name: String,
-    val lines: List<LineInfo>
+    val lines: List<Ligne>,
+    val createdAt: Long = System.currentTimeMillis(),
+    val updatedAt: Long = System.currentTimeMillis()
 )

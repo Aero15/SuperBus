@@ -14,11 +14,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import xyz.doocode.superbus.core.dto.LineInfo
+import xyz.doocode.superbus.core.dto.Ligne
 import xyz.doocode.superbus.ui.components.parseColorSafe
 
 @Composable
-fun EnlargedLineBadge(line: LineInfo) {
+fun EnlargedLineBadge(line: Ligne) {
     val bgColor = parseColorSafe(line.couleurFond, MaterialTheme.colorScheme.primary)
     val textColor = parseColorSafe(line.couleurTexte, MaterialTheme.colorScheme.onPrimary)
 
@@ -30,7 +30,7 @@ fun EnlargedLineBadge(line: LineInfo) {
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = line.numLigne,
+            text = line.numLignePublic,
             color = textColor,
             style = MaterialTheme.typography.displaySmall, // Large text
             fontWeight = FontWeight.Black
@@ -39,7 +39,7 @@ fun EnlargedLineBadge(line: LineInfo) {
 }
 
 @Composable
-fun SmallLineBadge(line: LineInfo) {
+fun SmallLineBadge(line: Ligne) {
     val bgColor = parseColorSafe(line.couleurFond, MaterialTheme.colorScheme.primary)
     val textColor = parseColorSafe(line.couleurTexte, MaterialTheme.colorScheme.onPrimary)
 

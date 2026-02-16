@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import xyz.doocode.superbus.core.dto.FavoriteStation
-import xyz.doocode.superbus.core.dto.LineInfo
+import xyz.doocode.superbus.core.dto.Ligne
 
 class FavoritesRepository(context: Context) {
 
@@ -37,18 +37,45 @@ class FavoritesRepository(context: Context) {
         return _favorites.value.any { it.id == stopId }
     }
 
-    fun toggleFavorite(stopId: String, stopName: String, lines: List<LineInfo>) {
+    fun addFavorite(stopId: String, stopName: String, lines: List<Ligne>) {
         val currentList = _favorites.value.toMutableList()
-        val existingIndex = currentList.indexOfFirst { it.id == stopId }
-
-        if (existingIndex != -1) {
-            // Remove
-            currentList.removeAt(existingIndex)
-        } else {
-            // Add
-            currentList.add(FavoriteStation(stopId, stopName, lines))
+        if (currentList.none { it.id == stopId }) {
+            currentList.add(
+                FavoriteStation(
+                    id = stopId,
+                    name = stopName,
+                    lines = lines,
+                    createdAt = System.currentTimeMillis(),
+                    updatedAt = System.currentTimeMillis()
+                )
+            )
+            saveFavorites(currentList)
         }
-        saveFavorites(currentList)
+    }
+
+    fun removeFavorite(stopId: String) {
+        val currentList = _favorites.value.toMutableList()
+        if (currentList.removeIf { it.id == stopId }) {
+            saveFavorites(currentList)
+        }
+    }
+
+    fun updateFavoriteLines(stopId: String, lines: List<Ligne>) {
+        val currentList = _favorites.value.toMutableList()
+        val index = currentList.indexOfFirst { it.id == stopId }
+
+        if (index != -1) {
+            val oldFav = currentList[index]
+            
+            if (oldFav.lines != lines) {
+                val newFav = oldFav.copy(
+                    lines = lines,
+                    updatedAt = System.currentTimeMillis()
+                )
+                currentList[index] = newFav
+                saveFavorites(currentList)
+            }
+        }
     }
 
     companion object {

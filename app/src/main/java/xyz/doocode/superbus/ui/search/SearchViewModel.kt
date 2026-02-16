@@ -12,7 +12,7 @@ import kotlinx.coroutines.launch
 import xyz.doocode.superbus.core.api.ApiClient
 import xyz.doocode.superbus.core.data.FavoritesRepository
 import xyz.doocode.superbus.core.dto.Arret
-import xyz.doocode.superbus.core.dto.LineInfo
+import xyz.doocode.superbus.core.manager.FavoritesManager
 import xyz.doocode.superbus.core.util.removeAccents
 
 sealed interface SearchUiState {
@@ -24,7 +24,7 @@ sealed interface SearchUiState {
 
 class SearchViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val repository = FavoritesRepository.getInstance(application)
+    private val favoritesManager = FavoritesManager(application)
 
     // Configuration flag for deduplication
     // Set to true to group stops by name, false to show all entries
@@ -101,21 +101,7 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
 
     fun toggleFavorite(stop: Arret) {
         viewModelScope.launch {
-            if (repository.isFavorite(stop.id)) {
-                // Removing: No need to fetch details
-                repository.toggleFavorite(stop.id, stop.nom, emptyList())
-            } else {
-                // Adding: Fetch lines first
-                val lines = try {
-                    val response = ApiClient.ginkoService.getTempsLieu(stop.nom)
-                    response.objects.listeTemps
-                        .map { LineInfo(it.numLignePublic, it.couleurFond, it.couleurTexte) }
-                        .distinctBy { it.numLigne }
-                } catch (e: Exception) {
-                    emptyList()
-                }
-                repository.toggleFavorite(stop.id, stop.nom, lines)
-            }
+            favoritesManager.toggleFavorite(stop.id, stop.nom)
         }
     }
 }

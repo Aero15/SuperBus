@@ -12,9 +12,9 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import xyz.doocode.superbus.core.api.ApiClient
 import xyz.doocode.superbus.core.data.FavoritesRepository
-import xyz.doocode.superbus.core.dto.LineInfo
 import xyz.doocode.superbus.core.dto.Temps
 import xyz.doocode.superbus.core.dto.TempsLieu
+import xyz.doocode.superbus.core.manager.FavoritesManager
 
 
 sealed interface StopDetailsUiState {
@@ -31,6 +31,7 @@ sealed interface StopDetailsUiState {
 class StopDetailsViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository = FavoritesRepository.getInstance(application)
+    private val favoritesManager = FavoritesManager(application)
 
     private val _uiState = MutableStateFlow<StopDetailsUiState>(StopDetailsUiState.Loading)
     val uiState: StateFlow<StopDetailsUiState> = _uiState.asStateFlow()
@@ -57,6 +58,9 @@ class StopDetailsViewModel(application: Application) : AndroidViewModel(applicat
                     _isFavorite.value = favorites.any { it.id == id }
                 }
             }
+            viewModelScope.launch {
+                favoritesManager.refreshFavoriteLines(id)
+            }
         }
 
         if (isNew) {
@@ -65,20 +69,14 @@ class StopDetailsViewModel(application: Application) : AndroidViewModel(applicat
         startAutoRefresh()
     }
 
+    private val name: String get() = currentStopName ?: ""
+    private val id: String get() = currentStopId ?: ""
+
     fun toggleFavorite() {
-        val id = currentStopId ?: return
-        val name = currentStopName ?: return
-
-        val currentState = uiState.value
-        val lines = if (currentState is StopDetailsUiState.Success) {
-            currentState.groupedArrivals.values.flatten()
-                .map { LineInfo(it.numLignePublic, it.couleurFond, it.couleurTexte) }
-                .distinctBy { it.numLigne }
-        } else {
-            emptyList()
+        if (id.isEmpty()) return
+        viewModelScope.launch {
+            favoritesManager.toggleFavorite(id, name)
         }
-
-        repository.toggleFavorite(id, name, lines)
     }
 
     fun refresh() {
@@ -109,7 +107,8 @@ class StopDetailsViewModel(application: Application) : AndroidViewModel(applicat
         viewModelScope.launch {
             try {
                 if (currentStopName != null) {
-                    val response = ApiClient.ginkoService.getTempsLieu(currentStopName!!)
+                    val response =
+                        ApiClient.ginkoService.getTempsLieu(nom = currentStopName!!, nb = 3)
                     val arrivals = response.objects.listeTemps
 
                     if (arrivals.isEmpty()) {
