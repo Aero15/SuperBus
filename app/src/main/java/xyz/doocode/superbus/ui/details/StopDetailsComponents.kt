@@ -5,11 +5,10 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -18,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.material.icons.filled.NoTransfer
 import androidx.compose.ui.unit.sp
 import xyz.doocode.superbus.core.dto.Temps
 import xyz.doocode.superbus.ui.components.LineBadge
@@ -91,30 +91,60 @@ fun ArrivalCard(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Time Row: Equally distributed space with separators
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(IntrinsicSize.Min), // Essential for vertical divider
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    val displayTimes = times.take(3)
-
-                    displayTimes.forEachIndexed { index, temps ->
-                        Box(
-                            modifier = Modifier.weight(1f),
-                            contentAlignment = Alignment.Center
+                // Check for "Non desservi" case
+                val firstTime = times.firstOrNull()?.temps
+                if (firstTime != null && firstTime.equals("Non desservi", ignoreCase = true)) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp), // Add some padding
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
                         ) {
-                            TimeDisplayMinimal(temps, lineColor, isFirst = index == 0)
-                        }
-
-                        if (index < displayTimes.size - 1) {
-                            VerticalDivider(
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
-                                thickness = 1.dp,
-                                modifier = Modifier.height(24.dp)
+                            Icon(
+                                imageVector = Icons.Default.NoTransfer,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(24.dp)
                             )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Non desservi",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
+                } else {
+                    // Time Row: Equally distributed space with separators
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(IntrinsicSize.Min), // Essential for vertical divider
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        val displayTimes = times.take(3)
+
+                        displayTimes.forEachIndexed { index, temps ->
+                            Box(
+                                modifier = Modifier.weight(1f),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                TimeDisplayMinimal(temps, lineColor, isFirst = index == 0)
+                            }
+
+                            if (index < displayTimes.size - 1) {
+                                VerticalDivider(
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                                    thickness = 1.dp,
+                                    modifier = Modifier.height(24.dp)
+                                )
+                            }
                         }
                     }
                 }
