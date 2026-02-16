@@ -20,7 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import xyz.doocode.superbus.core.dto.Arret
-import xyz.doocode.superbus.core.dto.LineInfo
+import xyz.doocode.superbus.core.dto.Ligne
 import xyz.doocode.superbus.core.util.removeAccents
 import xyz.doocode.superbus.ui.favorites.SmallLineBadge
 
@@ -29,7 +29,7 @@ fun StopListItem(
     stop: Arret,
     searchQuery: String = "",
     isFavorite: Boolean = false,
-    favoriteLines: List<LineInfo> = emptyList(),
+    favoriteLines: List<Ligne> = emptyList(),
     onFillQuery: (String) -> Unit = {},
     onToggleFavorite: () -> Unit = {},
     onClick: () -> Unit = {}
