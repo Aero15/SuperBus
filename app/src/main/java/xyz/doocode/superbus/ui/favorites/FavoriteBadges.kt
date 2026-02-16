@@ -51,7 +51,7 @@ fun SmallLineBadge(line: Ligne) {
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = line.numLigne,
+            text = line.numLignePublic,
             color = textColor,
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Bold,

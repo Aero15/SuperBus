@@ -148,7 +148,7 @@ fun TimeDisplayMinimal(temps: Temps, accentColor: Color, isFirst: Boolean) {
     // Blink Animation
     val infiniteTransition = rememberInfiniteTransition(label = "blink")
     val animatedColor by if (isUrgent || isNear) {
-        val duration = if (isUrgent) 600 else 1200
+        val duration = if (isUrgent) 600 else 900
         infiniteTransition.animateColor(
             initialValue = defaultColor,
             targetValue = blinkTargetColor,
