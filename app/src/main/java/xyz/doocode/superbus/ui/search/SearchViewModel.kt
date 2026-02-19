@@ -80,8 +80,16 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
                 var loadedStops = referenceDataRepository.getArrets()
 
                 if (REMOVE_DUPLICATES) {
-                    loadedStops = loadedStops
-                        .distinctBy { it.nom } // Deduplicate by name
+                    val groupedStops = loadedStops.groupBy { it.nom }
+                    loadedStops = groupedStops.map { (name, stops) ->
+                        val mainStop = stops.first()
+                        val allIds = stops.map { it.id }.sorted()
+
+                        // Create a copy with the grouped IDs
+                        mainStop.copy(groupedIds = allIds).also {
+                            println("Arrêt [$name] (${it.id}) : $allIds")
+                        }
+                    }
                 }
 
                 // Sort alphabetically
