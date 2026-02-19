@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import xyz.doocode.superbus.core.api.ApiClient
 import xyz.doocode.superbus.core.data.FavoritesRepository
+import xyz.doocode.superbus.core.data.ReferenceDataRepository
 import xyz.doocode.superbus.core.dto.Arret
 import xyz.doocode.superbus.core.manager.FavoritesManager
 import xyz.doocode.superbus.core.util.removeAccents
@@ -25,6 +26,7 @@ sealed interface SearchUiState {
 class SearchViewModel(application: Application) : AndroidViewModel(application) {
 
     private val favoritesManager = FavoritesManager(application)
+    private val referenceDataRepository = ReferenceDataRepository.getInstance(application)
 
     // Configuration flag for deduplication
     // Set to true to group stops by name, false to show all entries
@@ -74,8 +76,8 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
             _isLoading.value = true
             _error.value = null
             try {
-                val response = ApiClient.ginkoService.getArrets()
-                var loadedStops = response.objects
+                // Use repository to get cached data if available
+                var loadedStops = referenceDataRepository.getArrets()
 
                 if (REMOVE_DUPLICATES) {
                     loadedStops = loadedStops

@@ -52,7 +52,7 @@ fun StopDetailsScreen(
     // Keep Screen On Logic
     val context = LocalContext.current
     val activity = context as? Activity
-    val prefs = remember { context.getSharedPreferences("app_settings", Context.MODE_PRIVATE) }
+    val prefs = remember { context.getSharedPreferences("superbus_app_settings", Context.MODE_PRIVATE) }
     var keepScreenOn by remember { 
         mutableStateOf(prefs.getBoolean("keep_screen_on", false)) 
     }
