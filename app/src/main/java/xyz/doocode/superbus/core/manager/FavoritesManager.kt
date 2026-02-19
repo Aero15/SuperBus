@@ -11,21 +11,45 @@ class FavoritesManager(context: Context) {
 
     private val repository = FavoritesRepository.getInstance(context)
 
-    suspend fun toggleFavorite(stopId: String, stopName: String) {
+    fun isFavorite(stopId: String): Boolean {
+        return repository.isFavorite(stopId)
+    }
+
+    suspend fun toggleFavorite(stopId: String, groupedIds: List<String>, stopName: String) {
         if (repository.isFavorite(stopId)) {
             repository.removeFavorite(stopId)
         } else {
-            addFavorite(stopId, stopName)
+            addFavorite(stopId, groupedIds, stopName)
         }
     }
 
-    private suspend fun addFavorite(stopId: String, stopName: String) {
+    private suspend fun addFavorite(stopId: String, groupedIds: List<String>, stopName: String) {
         try {
-            val lines = fetchLines(stopId)
-            repository.addFavorite(stopId, stopName, lines)
+            val lines = try {
+                fetchLines(stopId)
+            } catch (e: Exception) {
+                // Try fetching lines with other grouped IDs if main one fails
+                var successLines: List<Ligne> = emptyList()
+                for (otherId in groupedIds) {
+                    if (otherId == stopId) continue
+                    try {
+                        successLines = fetchLines(otherId)
+                        if (successLines.isNotEmpty()) break
+                    } catch (_: Exception) {
+                    }
+                }
+                successLines
+            }
+            repository.addFavorite(stopId, groupedIds, stopName, lines)
         } catch (e: Exception) {
-            // Fallback: add with empty lines if network fails
-            repository.addFavorite(stopId, stopName, emptyList())
+            // Fallback
+            repository.addFavorite(stopId, groupedIds, stopName, emptyList())
+        }
+    }
+
+    fun updateFavoriteGroupedIds(stopId: String, groupedIds: List<String>) {
+        if (repository.isFavorite(stopId)) {
+            repository.updateFavoriteGroupedIds(stopId, groupedIds)
         }
     }
 

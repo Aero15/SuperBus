@@ -75,7 +75,10 @@ class StopDetailsViewModel(application: Application) : AndroidViewModel(applicat
     fun toggleFavorite() {
         if (id.isEmpty()) return
         viewModelScope.launch {
-            favoritesManager.toggleFavorite(id, name)
+            // In details view, we might not have grouped IDs immediately.
+            // Using empty list as placeholder, but ideally we should pass real ones.
+            // However, this screen is usually accessed from search where grouping happens.
+            favoritesManager.toggleFavorite(id, emptyList(), name)
         }
     }
 

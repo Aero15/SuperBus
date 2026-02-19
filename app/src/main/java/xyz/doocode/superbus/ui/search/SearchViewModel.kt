@@ -87,7 +87,10 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
 
                         // Create a copy with the grouped IDs
                         mainStop.copy(groupedIds = allIds).also {
-                            println("Arrêt [$name] (${it.id}) : $allIds")
+                            // Automatically update grouped IDs in favorites if needed
+                            if (favoritesManager.isFavorite(it.id)) {
+                                favoritesManager.updateFavoriteGroupedIds(it.id, allIds)
+                            }
                         }
                     }
                 }
@@ -99,6 +102,7 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
             } catch (e: Exception) {
                 // In a real app, parse the error to give a better message
                 _error.value = e.localizedMessage ?: "Une erreur inconnue est survenue"
+                e.printStackTrace()
             } finally {
                 _isLoading.value = false
             }
@@ -111,7 +115,7 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
 
     fun toggleFavorite(stop: Arret) {
         viewModelScope.launch {
-            favoritesManager.toggleFavorite(stop.id, stop.nom)
+            favoritesManager.toggleFavorite(stop.id, stop.groupedIds, stop.nom)
         }
     }
 }

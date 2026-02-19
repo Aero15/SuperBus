@@ -9,10 +9,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import xyz.doocode.superbus.core.dto.FavoriteStation
 import xyz.doocode.superbus.core.dto.Ligne
+import androidx.core.content.edit
 
 class FavoritesRepository(context: Context) {
 
-    private val prefs: SharedPreferences = context.getSharedPreferences("superbus_favorites", Context.MODE_PRIVATE)
+    private val prefs: SharedPreferences =
+        context.getSharedPreferences("superbus_favorites", Context.MODE_PRIVATE)
     private val gson = Gson()
     private val _favorites = MutableStateFlow<List<FavoriteStation>>(loadFavorites())
     val favorites: StateFlow<List<FavoriteStation>> = _favorites.asStateFlow()
@@ -23,13 +25,14 @@ class FavoritesRepository(context: Context) {
         return try {
             gson.fromJson(json, type)
         } catch (e: Exception) {
+            e.printStackTrace()
             emptyList()
         }
     }
 
     private fun saveFavorites(list: List<FavoriteStation>) {
         val json = gson.toJson(list)
-        prefs.edit().putString("favorites_list", json).apply()
+        prefs.edit { putString("favorites_list", json) }
         _favorites.value = list
     }
 
@@ -37,12 +40,18 @@ class FavoritesRepository(context: Context) {
         return _favorites.value.any { it.id == stopId }
     }
 
-    fun addFavorite(stopId: String, stopName: String, lines: List<Ligne>) {
+    fun addFavorite(
+        stopId: String,
+        groupedIds: List<String>,
+        stopName: String,
+        lines: List<Ligne>
+    ) {
         val currentList = _favorites.value.toMutableList()
         if (currentList.none { it.id == stopId }) {
             currentList.add(
                 FavoriteStation(
                     id = stopId,
+                    groupedIds = groupedIds,
                     name = stopName,
                     lines = lines,
                     createdAt = System.currentTimeMillis(),
@@ -50,6 +59,29 @@ class FavoritesRepository(context: Context) {
                 )
             )
             saveFavorites(currentList)
+        }
+    }
+
+    fun updateFavoriteGroupedIds(stopId: String, newGroupedIds: List<String>) {
+        // Get favorite list then the index of the favorite item to update
+        val currentList = _favorites.value.toMutableList()
+        val index = currentList.indexOfFirst { it.id == stopId }
+
+        if (index != -1) { // Favorite exists, let's update it
+            val oldFav = currentList[index]
+
+            // Handle case where groupedIds is null (deserialization of old data)
+            val currentGroupedIds = oldFav.groupedIds ?: emptyList()
+
+            // Only update if lists are different
+            if (currentGroupedIds.sorted() != newGroupedIds.sorted()) {
+                val newFav = oldFav.copy(
+                    groupedIds = newGroupedIds,
+                    updatedAt = System.currentTimeMillis()
+                )
+                currentList[index] = newFav
+                saveFavorites(currentList)
+            }
         }
     }
 
@@ -66,7 +98,7 @@ class FavoritesRepository(context: Context) {
 
         if (index != -1) {
             val oldFav = currentList[index]
-            
+
             if (oldFav.lines != lines) {
                 val newFav = oldFav.copy(
                     lines = lines,
