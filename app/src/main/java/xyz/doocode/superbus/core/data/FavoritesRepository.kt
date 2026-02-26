@@ -9,10 +9,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import xyz.doocode.superbus.core.dto.FavoriteStation
 import xyz.doocode.superbus.core.dto.Ligne
+import androidx.core.content.edit
 
 class FavoritesRepository(context: Context) {
 
-    private val prefs: SharedPreferences = context.getSharedPreferences("superbus_favorites", Context.MODE_PRIVATE)
+    private val prefs: SharedPreferences =
+        context.getSharedPreferences("superbus_favorites", Context.MODE_PRIVATE)
     private val gson = Gson()
     private val _favorites = MutableStateFlow<List<FavoriteStation>>(loadFavorites())
     val favorites: StateFlow<List<FavoriteStation>> = _favorites.asStateFlow()
@@ -29,7 +31,7 @@ class FavoritesRepository(context: Context) {
 
     private fun saveFavorites(list: List<FavoriteStation>) {
         val json = gson.toJson(list)
-        prefs.edit().putString("favorites_list", json).apply()
+        prefs.edit { putString("favorites_list", json) }
         _favorites.value = list
     }
 
@@ -66,7 +68,7 @@ class FavoritesRepository(context: Context) {
 
         if (index != -1) {
             val oldFav = currentList[index]
-            
+
             if (oldFav.lines != lines) {
                 val newFav = oldFav.copy(
                     lines = lines,

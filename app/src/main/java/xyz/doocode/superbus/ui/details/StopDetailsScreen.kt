@@ -28,6 +28,7 @@ import xyz.doocode.superbus.core.util.setKeepScreenOn
 import xyz.doocode.superbus.ui.components.EmptyDataView
 import xyz.doocode.superbus.ui.components.ErrorView
 import xyz.doocode.superbus.ui.components.LoadingView
+import androidx.core.content.edit
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -110,7 +111,7 @@ fun StopDetailsScreen(
                                 },
                                 onClick = {
                                     keepScreenOn = !keepScreenOn
-                                    prefs.edit().putBoolean("keep_screen_on", keepScreenOn).apply()
+                                    prefs.edit { putBoolean("keep_screen_on", keepScreenOn) }
                                     showMenu = false
                                 }
                             )
