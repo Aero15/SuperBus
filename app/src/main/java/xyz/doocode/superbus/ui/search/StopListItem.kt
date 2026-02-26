@@ -1,5 +1,6 @@
 package xyz.doocode.superbus.ui.components
 
+import android.content.res.Configuration
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -18,11 +19,13 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import xyz.doocode.superbus.core.dto.Arret
 import xyz.doocode.superbus.core.dto.Ligne
 import xyz.doocode.superbus.core.util.removeAccents
 import xyz.doocode.superbus.ui.favorites.SmallLineBadge
+import xyz.doocode.superbus.ui.theme.SuperBusTheme
 
 @Composable
 fun StopListItem(
@@ -89,7 +92,8 @@ fun StopListItem(
                     style = MaterialTheme.typography.bodyLarge
                 )
 
-                if (isFavorite && favoriteLines.isNotEmpty()) {
+                // TODO: Display data from cache
+                /*if (isFavorite && favoriteLines.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -98,10 +102,10 @@ fun StopListItem(
                             SmallLineBadge(line = line)
                         }
                     }
-                }
+                }*/
             }
 
-            // Actions
+            /*// Actions
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = { onFillQuery(stop.nom) }) {
                     Icon(
@@ -117,8 +121,49 @@ fun StopListItem(
                         tint = if (isFavorite) Color.Yellow else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-            }
+            }*/
         }
         HorizontalDivider(thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant)
+    }
+}
+
+@Preview(
+    name = "Light mode",
+    uiMode = Configuration.UI_MODE_NIGHT_NO,
+    showBackground = true
+)
+@Preview(
+    name = "Dark mode",
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+    showBackground = true
+)
+@Composable
+fun StopListItemPreview() {
+    SuperBusTheme {
+        StopListItem(
+            stop = Arret(
+                id = "1",
+                nom = "Gare Centrale",
+                latitude = 0.0,
+                longitude = 0.0,
+                accessibilite = 0
+            ),
+            searchQuery = "gare",
+            isFavorite = true,
+            favoriteLines = listOf(
+                Ligne(
+                    id = "T1",
+                    numLignePublic = "T1",
+                    libellePublic = "Ligne 1",
+                    couleurFond = "#0076bb",
+                    couleurTexte = "#FFFFFF",
+                    modeTransport = 0,
+                    typologie = 0,
+                    scolaire = false,
+                    periurbain = false,
+                    variantes = emptyList()
+                ),
+            )
+        )
     }
 }
