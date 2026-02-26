@@ -125,6 +125,26 @@ class StopDetailsViewModel(application: Application) : AndroidViewModel(applicat
                             }
                         _uiState.value = StopDetailsUiState.Success(response.objects, grouped)
                     }
+                } else if (currentStopId != null) {
+                    // Fallback if stop name is not available
+                    val response =
+                        ApiClient.ginkoService.getTempsLieu(idArret = currentStopId!!, nb = 3)
+                    val arrivals = response.objects.listeTemps
+
+                    if (arrivals.isEmpty()) {
+                        _uiState.value = StopDetailsUiState.Empty
+                    } else {
+                        val grouped = arrivals.groupBy { "${it.numLignePublic}|${it.destination}" }
+                            .mapValues { (_, list) ->
+                                list.sortedWith(compareBy {
+                                    if (it.temps.contains("min")) 0 else 1
+                                })
+                            }
+                        _uiState.value = StopDetailsUiState.Success(response.objects, grouped)
+                    }
+                } else {
+                    _uiState.value =
+                        StopDetailsUiState.Error("Aucun identifiant de la station est disponible")
                 }
             } catch (e: Exception) {
                 if (_uiState.value !is StopDetailsUiState.Success) {

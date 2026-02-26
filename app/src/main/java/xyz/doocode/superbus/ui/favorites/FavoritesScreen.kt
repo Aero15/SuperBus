@@ -91,7 +91,8 @@ fun FavoritesScreen(
             LazyVerticalGrid(
                 columns = GridCells.Adaptive(minSize = 100.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = PaddingValues(bottom = 16.dp)
             ) {
                 items(favorites, key = { it.id }) { station ->
                     FavoriteTile(

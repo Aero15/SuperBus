@@ -92,10 +92,10 @@ fun SearchScreen(
                                         StopDetailsActivity::class.java
                                     )
                                     intent.putExtra(StopDetailsActivity.EXTRA_STOP_ID, stop.id)
-                                    intent.putExtra(
+                                    /*intent.putExtra(
                                         StopDetailsActivity.EXTRA_STOP_NAME,
                                         stop.nom
-                                    )
+                                    )*/
                                     context.startActivity(intent)
                                 }
                             )

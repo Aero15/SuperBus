@@ -30,7 +30,7 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
 
     // Configuration flag for deduplication
     // Set to true to group stops by name, false to show all entries
-    val REMOVE_DUPLICATES = true
+    val REMOVE_DUPLICATES = false
 
     private val _allStops = MutableStateFlow<List<Arret>>(emptyList())
     private val _isLoading = MutableStateFlow(false)
@@ -100,7 +100,6 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
 
                 _allStops.value = loadedStops
             } catch (e: Exception) {
-                // In a real app, parse the error to give a better message
                 _error.value = e.localizedMessage ?: "Une erreur inconnue est survenue"
                 e.printStackTrace()
             } finally {
