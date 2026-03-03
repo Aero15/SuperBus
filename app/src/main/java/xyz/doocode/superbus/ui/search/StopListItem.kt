@@ -33,9 +33,11 @@ fun StopListItem(
     searchQuery: String = "",
     isFavorite: Boolean = false,
     favoriteLines: List<Ligne> = emptyList(),
+    groupDuplicates: Boolean = true,
     onFillQuery: (String) -> Unit = {},
     onToggleFavorite: () -> Unit = {},
-    onClick: () -> Unit = {}
+    onClick: () -> Unit = {},
+    onDuplicateClick: (Arret) -> Unit = {}
 ) {
     Column {
         Row(
@@ -71,7 +73,7 @@ fun StopListItem(
                             val safeEndIndex = endIndex.coerceAtMost(fullText.length)
                             val safeStartIndex = startIndex.coerceAtMost(safeEndIndex)
 
-                            append(fullText.substring(0, safeStartIndex))
+                            append(fullText.take(safeStartIndex))
                             withStyle(
                                 style = SpanStyle(
                                     fontWeight = FontWeight.Black,
@@ -105,6 +107,22 @@ fun StopListItem(
                 }*/
             }
 
+            // Indicator for grouped duplicates
+            if (groupDuplicates && stop.duplicates.size > 1) {
+                Surface(
+                    shape = MaterialTheme.shapes.small,
+                    color = MaterialTheme.colorScheme.tertiaryContainer,
+                    modifier = Modifier.padding(start = 8.dp)
+                ) {
+                    Text(
+                        text = "+${stop.duplicates.size}",
+                        style = MaterialTheme.typography.labelSmall,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                        color = MaterialTheme.colorScheme.onTertiaryContainer
+                    )
+                }
+            }
+
             /*// Actions
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = { onFillQuery(stop.nom) }) {
@@ -123,6 +141,33 @@ fun StopListItem(
                 }
             }*/
         }
+
+        // Expanded list for non-grouped mode
+        if (!groupDuplicates && stop.duplicates.isNotEmpty() && stop.duplicates.size > 1) {
+            stop.duplicates.forEach { duplicate ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onDuplicateClick(duplicate) }
+                        .padding(start = 56.dp, end = 16.dp, top = 8.dp, bottom = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Station #${duplicate.id}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                if (duplicate != stop.duplicates.last()) {
+                    HorizontalDivider(
+                        modifier = Modifier.padding(start = 56.dp),
+                        thickness = 0.5.dp,
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                    )
+                }
+            }
+        }
+
         HorizontalDivider(thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant)
     }
 }

@@ -28,9 +28,9 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
     private val favoritesManager = FavoritesManager(application)
     private val referenceDataRepository = ReferenceDataRepository.getInstance(application)
 
-    // Configuration flag for deduplication
-    // Set to true to group stops by name, false to show all entries
-    val REMOVE_DUPLICATES = false
+    // Configuration flag for grouping duplicates
+    // Set to true to show grouped stops with a badge, false to show expanded view
+    val GROUP_DUPLICATES = true
 
     private val _allStops = MutableStateFlow<List<Arret>>(emptyList())
     private val _isLoading = MutableStateFlow(false)
@@ -77,28 +77,30 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
             _error.value = null
             try {
                 // Use repository to get cached data if available
-                var loadedStops = referenceDataRepository.getArrets()
+                val rawStops = referenceDataRepository.getArrets()
 
-                if (REMOVE_DUPLICATES) {
-                    val groupedStops = loadedStops.groupBy { it.nom }
-                    loadedStops = groupedStops.map { (name, stops) ->
-                        val mainStop = stops.first()
-                        val allIds = stops.map { it.id }.sorted()
+                // Always group duplicates by name to prevent data loss
+                val groupedStopsMap = rawStops.groupBy { it.nom }
+                val processedStops = groupedStopsMap.map { (_, stops) ->
+                    // Use a consistent sorting strategy (e.g., by ID) or keep original order
+                    // Here we sort by ID to ensure the main stop is deterministic
+                    val sortedStops = stops.sortedBy { it.id }
+                    val mainStop = sortedStops.first()
 
-                        // Create a copy with the grouped IDs
-                        mainStop.copy(groupedIds = allIds).also {
-                            // Automatically update grouped IDs in favorites if needed
-                            if (favoritesManager.isFavorite(it.id)) {
-                                favoritesManager.updateFavoriteGroupedIds(it.id, allIds)
-                            }
+                    // Create a copy with the duplicates list populated
+                    // This includes the main stop itself in the list
+                    mainStop.copy(duplicates = sortedStops).also {
+                        // Automatically update grouped IDs in favorites if needed
+                        if (favoritesManager.isFavorite(it.id)) {
+                            favoritesManager.updateFavoriteGroupedIds(it.id, it.groupedIds)
                         }
                     }
                 }
 
                 // Sort alphabetically
-                loadedStops = loadedStops.sortedBy { it.nom }
+                val sortedList = processedStops.sortedBy { it.nom }
 
-                _allStops.value = loadedStops
+                _allStops.value = sortedList
             } catch (e: Exception) {
                 _error.value = e.localizedMessage ?: "Une erreur inconnue est survenue"
                 e.printStackTrace()

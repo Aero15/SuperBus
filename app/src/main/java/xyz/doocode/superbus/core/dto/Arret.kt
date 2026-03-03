@@ -6,7 +6,10 @@ data class Arret(
     val latitude: Double,
     val longitude: Double,
     val accessibilite: Int,
-    // List of IDs grouped with this stop (for duplicates)
+    // List of Arret grouped with this stop (for duplicates)
     // Not part of the API response, but used in the UI
-    var groupedIds: List<String> = emptyList()
-)
+    var duplicates: List<Arret> = emptyList()
+) {
+    val groupedIds: List<String>
+        get() = duplicates.map { it.id }
+}
