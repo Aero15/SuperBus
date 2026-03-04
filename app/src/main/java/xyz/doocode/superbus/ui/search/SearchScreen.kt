@@ -57,6 +57,15 @@ fun SearchScreen(
     val context = LocalContext.current
     val groupDuplicates = viewModel.GROUP_DUPLICATES
 
+    val openStopDetails = { stop: Arret, fromId: Boolean ->
+        val intent = Intent(context, StopDetailsActivity::class.java).apply {
+            putExtra(StopDetailsActivity.EXTRA_STOP_NAME, stop.nom)
+            putExtra(StopDetailsActivity.EXTRA_STOP_ID, stop.id)
+            putExtra(StopDetailsActivity.EXTRA_DETAILS_FROM_ID, fromId)
+        }
+        context.startActivity(intent)
+    }
+
     // Bottom Sheet State
     var selectedStop by remember { mutableStateOf<Arret?>(null) }
     var showBottomSheet by remember { mutableStateOf(false) }
@@ -117,34 +126,12 @@ fun SearchScreen(
                                     if (groupDuplicates && stop.duplicates.size > 1) {
                                         selectedStop = stop
                                         showBottomSheet = true
-                                    } else if (!groupDuplicates) {
-                                        // Open by Name
-                                        val intent = Intent(
-                                            context,
-                                            StopDetailsActivity::class.java
-                                        )
-                                        intent.putExtra(
-                                            StopDetailsActivity.EXTRA_STOP_NAME,
-                                            stop.nom
-                                        )
-                                        context.startActivity(intent)
                                     } else {
-                                        // Open by ID
-                                        val intent = Intent(
-                                            context,
-                                            StopDetailsActivity::class.java
-                                        )
-                                        intent.putExtra(StopDetailsActivity.EXTRA_STOP_ID, stop.id)
-                                        context.startActivity(intent)
+                                        openStopDetails(stop, groupDuplicates)
                                     }
                                 },
                                 onDuplicateClick = { duplicate ->
-                                    val intent = Intent(
-                                        context,
-                                        StopDetailsActivity::class.java
-                                    )
-                                    intent.putExtra(StopDetailsActivity.EXTRA_STOP_ID, duplicate.id)
-                                    context.startActivity(intent)
+                                    openStopDetails(duplicate, true)
                                 }
                             )
                         }
@@ -207,15 +194,7 @@ fun SearchScreen(
                                             ),
                                             modifier = Modifier.clickable {
                                                 showBottomSheet = false
-                                                val intent = Intent(
-                                                    context,
-                                                    StopDetailsActivity::class.java
-                                                )
-                                                intent.putExtra(
-                                                    StopDetailsActivity.EXTRA_STOP_NAME,
-                                                    selectedStop!!.nom
-                                                )
-                                                context.startActivity(intent)
+                                                openStopDetails(selectedStop!!, false)
                                             }
                                         )
                                         HorizontalDivider(thickness = 0.5.dp)
@@ -244,15 +223,7 @@ fun SearchScreen(
                                             },
                                             modifier = Modifier.clickable {
                                                 showBottomSheet = false
-                                                val intent = Intent(
-                                                    context,
-                                                    StopDetailsActivity::class.java
-                                                )
-                                                intent.putExtra(
-                                                    StopDetailsActivity.EXTRA_STOP_ID,
-                                                    duplicate.id
-                                                )
-                                                context.startActivity(intent)
+                                                openStopDetails(duplicate, true)
                                             }
                                         )
                                         HorizontalDivider(thickness = 0.5.dp)

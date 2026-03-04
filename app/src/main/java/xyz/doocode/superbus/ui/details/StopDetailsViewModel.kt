@@ -44,13 +44,15 @@ class StopDetailsViewModel(application: Application) : AndroidViewModel(applicat
 
     private var currentStopName: String? = null
     private var currentStopId: String? = null
+    private var detailsFromId: Boolean = true
     private var pollingJob: Job? = null
     private var lastRefreshTime = 0L
 
-    fun init(stopName: String?, stopId: String?) {
+    fun init(stopName: String?, stopId: String?, detailsFromId: Boolean = true) {
         val isNew = (currentStopName != stopName || currentStopId != stopId)
         currentStopName = stopName
         currentStopId = stopId
+        this.detailsFromId = detailsFromId
 
         stopId?.let { id ->
             viewModelScope.launch {
@@ -65,6 +67,7 @@ class StopDetailsViewModel(application: Application) : AndroidViewModel(applicat
 
         if (isNew) {
             loadData(forceRefresh = true)
+            // Récupérer détails de l'arrêt (getDetailsArret) si l'id est présent
         }
         startAutoRefresh()
     }
@@ -109,38 +112,31 @@ class StopDetailsViewModel(application: Application) : AndroidViewModel(applicat
 
         viewModelScope.launch {
             try {
-                if (currentStopName != null) {
-                    val response =
-                        ApiClient.ginkoService.getTempsLieu(nom = currentStopName!!, nb = 3)
-                    val arrivals = response.objects.listeTemps
+                if (currentStopName != null || currentStopId != null) {
+                    val response = when {
+                        currentStopId != null && detailsFromId ->
+                            ApiClient.ginkoService.getTempsLieu(idArret = currentStopId!!, nb = 3)
 
-                    if (arrivals.isEmpty()) {
-                        _uiState.value = StopDetailsUiState.Empty
-                    } else {
-                        val grouped = arrivals.groupBy { "${it.numLignePublic}|${it.destination}" }
-                            .mapValues { (_, list) ->
-                                list.sortedWith(compareBy {
-                                    if (it.temps.contains("min")) 0 else 1
-                                })
-                            }
-                        _uiState.value = StopDetailsUiState.Success(response.objects, grouped)
+                        currentStopName != null && !detailsFromId ->
+                            ApiClient.ginkoService.getTempsLieu(nom = currentStopName!!, nb = 3)
+
+                        else -> null
                     }
-                } else if (currentStopId != null) {
-                    // Fallback if stop name is not available
-                    val response =
-                        ApiClient.ginkoService.getTempsLieu(idArret = currentStopId!!, nb = 3)
-                    val arrivals = response.objects.listeTemps
 
-                    if (arrivals.isEmpty()) {
-                        _uiState.value = StopDetailsUiState.Empty
-                    } else {
-                        val grouped = arrivals.groupBy { "${it.numLignePublic}|${it.destination}" }
-                            .mapValues { (_, list) ->
-                                list.sortedWith(compareBy {
-                                    if (it.temps.contains("min")) 0 else 1
-                                })
-                            }
-                        _uiState.value = StopDetailsUiState.Success(response.objects, grouped)
+                    response?.let { res ->
+                        val arrivals = res.objects.listeTemps
+
+                        if (arrivals.isEmpty()) {
+                            _uiState.value = StopDetailsUiState.Empty
+                        } else {
+                            val grouped = arrivals
+                                .groupBy { "${it.numLignePublic}|${it.destination}" }
+                                .mapValues { (_, list) ->
+                                    list.sortedWith(compareBy { if (it.temps.contains("min")) 0 else 1 })
+                                }
+
+                            _uiState.value = StopDetailsUiState.Success(res.objects, grouped)
+                        }
                     }
                 } else {
                     _uiState.value =

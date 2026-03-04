@@ -11,6 +11,7 @@ class StopDetailsActivity : ComponentActivity() {
     companion object {
         const val EXTRA_STOP_NAME = "extra_stop_name"
         const val EXTRA_STOP_ID = "extra_stop_id"
+        const val EXTRA_DETAILS_FROM_ID = "extra_details_from_id"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -19,12 +20,14 @@ class StopDetailsActivity : ComponentActivity() {
 
         val stopName = intent.getStringExtra(EXTRA_STOP_NAME)
         val stopId = intent.getStringExtra(EXTRA_STOP_ID)
+        val detailsFromId = intent.getBooleanExtra(EXTRA_DETAILS_FROM_ID, true)
 
         setContent {
             SuperBusTheme {
                 StopDetailsScreen(
                     stopName = stopName,
                     stopId = stopId,
+                    detailsFromId = detailsFromId,
                     onBackClick = { finish() }
                 )
             }

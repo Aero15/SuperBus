@@ -34,11 +34,12 @@ import xyz.doocode.superbus.ui.components.LoadingView
 fun StopDetailsScreen(
     stopName: String?,
     stopId: String?,
+    detailsFromId: Boolean = true,
     onBackClick: () -> Unit,
     viewModel: StopDetailsViewModel = viewModel()
 ) {
     LaunchedEffect(stopName, stopId) {
-        viewModel.init(stopName, stopId)
+        viewModel.init(stopName, stopId, detailsFromId)
     }
 
     val uiState by viewModel.uiState.collectAsState()
