@@ -55,8 +55,18 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
                 stops
             } else {
                 val normalizedQuery = query.trim().removeAccents()
-                stops.filter {
-                    it.nom.removeAccents().contains(normalizedQuery, ignoreCase = true)
+                stops.filter { stop ->
+                    stop.nom.removeAccents().contains(normalizedQuery, ignoreCase = true) ||
+                            stop.duplicates.any {
+                                it.id.contains(
+                                    normalizedQuery,
+                                    ignoreCase = true
+                                )
+                            } ||
+                            (stop.duplicates.isEmpty() && stop.id.contains(
+                                normalizedQuery,
+                                ignoreCase = true
+                            ))
                 }
             }
             SearchUiState.Success(filteredStops)
@@ -109,9 +119,11 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
         searchQuery.value = query
     }
 
-    fun toggleFavorite(stop: Arret) {
+    fun toggleFavorite(stop: Arret, detailsFromId: Boolean? = null) {
         viewModelScope.launch {
-            favoritesManager.toggleFavorite(stop.id, stop.nom, true)
+            val actualDetailsFromId =
+                detailsFromId ?: !(GROUP_DUPLICATES && stop.duplicates.size > 1)
+            favoritesManager.toggleFavorite(stop.id, stop.nom, actualDetailsFromId)
         }
     }
 }

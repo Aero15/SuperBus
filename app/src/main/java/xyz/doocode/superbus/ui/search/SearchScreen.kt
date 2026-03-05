@@ -51,6 +51,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.background
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.LocalContentColor
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -118,9 +128,9 @@ fun SearchScreen(
                             val favorite =
                                 favorites.find {
                                     it.id == stop.id && (
-                                        (stop.duplicates.size > 1 && !it.detailsFromId) ||
-                                        (stop.duplicates.isEmpty() && it.detailsFromId)
-                                    )
+                                            (stop.duplicates.size > 1 && !it.detailsFromId) ||
+                                                    (stop.duplicates.isEmpty() && it.detailsFromId)
+                                            )
                                 }
                             val isFavorite = favorite != null
 
@@ -168,84 +178,186 @@ fun SearchScreen(
                                 LazyColumn(modifier = Modifier.background(MaterialTheme.colorScheme.surface)) {
                                     // 1. Recommended Item (Grouped)
                                     item {
-                                        ListItem(
-                                            headlineContent = {
-                                                val parts =
-                                                    selectedStop!!.nom.split(" - ", limit = 2)
-                                                if (parts.size == 2) {
-                                                    Column {
-                                                        Text(
-                                                            text = parts[0],
-                                                            style = MaterialTheme.typography.labelMedium,
-                                                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(
-                                                                alpha = 0.8f
+                                        var showMenu by remember { mutableStateOf(false) }
+                                        val clipboardManager = LocalClipboardManager.current
+                                        val isFav =
+                                            favorites.any { it.id == selectedStop!!.id && !it.detailsFromId }
+
+                                        Box {
+                                            ListItem(
+                                                headlineContent = {
+                                                    val parts =
+                                                        selectedStop!!.nom.split(" - ", limit = 2)
+                                                    if (parts.size == 2) {
+                                                        Column {
+                                                            Text(
+                                                                text = parts[0],
+                                                                style = MaterialTheme.typography.labelMedium,
+                                                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                                                                    alpha = 0.8f
+                                                                )
                                                             )
-                                                        )
+                                                            Text(
+                                                                text = parts[1],
+                                                                fontWeight = FontWeight.Bold,
+                                                                color = MaterialTheme.colorScheme.primary,
+                                                                style = MaterialTheme.typography.bodyLarge
+                                                            )
+                                                        }
+                                                    } else {
                                                         Text(
-                                                            text = parts[1],
+                                                            text = selectedStop!!.nom,
                                                             fontWeight = FontWeight.Bold,
-                                                            color = MaterialTheme.colorScheme.primary,
-                                                            style = MaterialTheme.typography.bodyLarge
+                                                            color = MaterialTheme.colorScheme.primary
                                                         )
                                                     }
-                                                } else {
-                                                    Text(
-                                                        text = selectedStop!!.nom,
-                                                        fontWeight = FontWeight.Bold,
-                                                        color = MaterialTheme.colorScheme.primary
+                                                },
+                                                supportingContent = {
+                                                    Text("Voir les horaires de tous les quais")
+                                                },
+                                                leadingContent = {
+                                                    val icon =
+                                                        if (isFav) Icons.Default.Favorite else Icons.Default.Search
+                                                    val tint =
+                                                        if (isFav) Color(0xFFE91E63) else MaterialTheme.colorScheme.primary
+                                                    Icon(
+                                                        imageVector = icon,
+                                                        contentDescription = if (isFav) "Favori" else "Rechercher par nom",
+                                                        tint = tint
                                                     )
-                                                }
-                                            },
-                                            supportingContent = {
-                                                Text("Voir les horaires de tous les quais")
-                                            },
-                                            leadingContent = {
-                                                val isFav =
-                                                    favorites.any { it.id == selectedStop!!.id && !it.detailsFromId }
-                                                val icon =
-                                                    if (isFav) Icons.Default.Favorite else Icons.Default.Search
-                                                val tint =
-                                                    if (isFav) Color(0xFFE91E63) else MaterialTheme.colorScheme.primary
-                                                Icon(
-                                                    imageVector = icon,
-                                                    contentDescription = if (isFav) "Favori" else "Rechercher par nom",
-                                                    tint = tint
-                                                )
-                                            },
-                                            trailingContent = {
-                                                Surface(
-                                                    color = MaterialTheme.colorScheme.primary,
-                                                    shape = MaterialTheme.shapes.extraSmall
-                                                ) {
-                                                    Text(
-                                                        text = "Recommandé",
-                                                        style = MaterialTheme.typography.labelSmall,
-                                                        modifier = Modifier.padding(
-                                                            horizontal = 6.dp,
-                                                            vertical = 2.dp
-                                                        ),
-                                                        color = MaterialTheme.colorScheme.onPrimary
+                                                },
+                                                trailingContent = {
+                                                    Surface(
+                                                        color = MaterialTheme.colorScheme.primary,
+                                                        shape = MaterialTheme.shapes.extraSmall
+                                                    ) {
+                                                        Text(
+                                                            text = "Recommandé",
+                                                            style = MaterialTheme.typography.labelSmall,
+                                                            modifier = Modifier.padding(
+                                                                horizontal = 6.dp,
+                                                                vertical = 2.dp
+                                                            ),
+                                                            color = MaterialTheme.colorScheme.onPrimary
+                                                        )
+                                                    }
+                                                },
+                                                colors = ListItemDefaults.colors(
+                                                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(
+                                                        alpha = 0.3f
                                                     )
-                                                }
-                                            },
-                                            colors = ListItemDefaults.colors(
-                                                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(
-                                                    alpha = 0.3f
+                                                ),
+                                                modifier = Modifier
+                                                    .padding(horizontal = 8.dp, vertical = 8.dp)
+                                                    .clip(MaterialTheme.shapes.medium)
+                                                    .pointerInput(Unit) {
+                                                        detectTapGestures(
+                                                            onTap = {
+                                                                showBottomSheet = false
+                                                                openStopDetails(
+                                                                    selectedStop!!,
+                                                                    false
+                                                                )
+                                                            },
+                                                            onLongPress = { showMenu = true }
+                                                        )
+                                                    }
+                                            )
+
+                                            DropdownMenu(
+                                                expanded = showMenu,
+                                                onDismissRequest = { showMenu = false }
+                                            ) {
+                                                DropdownMenuItem(
+                                                    text = { Text(if (isFav) "Retirer des favoris" else "Ajouter aux favoris") },
+                                                    leadingIcon = {
+                                                        Icon(
+                                                            imageVector = if (isFav) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                                            contentDescription = null,
+                                                            tint = if (isFav) Color(0xFFE91E63) else LocalContentColor.current
+                                                        )
+                                                    },
+                                                    onClick = {
+                                                        viewModel.toggleFavorite(
+                                                            selectedStop!!,
+                                                            false
+                                                        )
+                                                        showMenu = false
+                                                    }
                                                 )
-                                            ),
-                                            modifier = Modifier
-                                                .padding(horizontal = 8.dp, vertical = 8.dp)
-                                                .clip(MaterialTheme.shapes.medium)
-                                                .clickable {
-                                                    showBottomSheet = false
-                                                    openStopDetails(selectedStop!!, false)
-                                                }
-                                        )
+                                                HorizontalDivider()
+                                                DropdownMenuItem(
+                                                    text = { Text("Copier le nom") },
+                                                    leadingIcon = {
+                                                        Icon(
+                                                            Icons.Default.ContentCopy,
+                                                            contentDescription = null
+                                                        )
+                                                    },
+                                                    onClick = {
+                                                        clipboardManager.setText(
+                                                            AnnotatedString(
+                                                                selectedStop!!.nom
+                                                            )
+                                                        )
+                                                        showMenu = false
+                                                    }
+                                                )
+                                                DropdownMenuItem(
+                                                    text = { Text("Copier l'ID") },
+                                                    leadingIcon = {
+                                                        Icon(
+                                                            Icons.Default.ContentCopy,
+                                                            contentDescription = null
+                                                        )
+                                                    },
+                                                    onClick = {
+                                                        clipboardManager.setText(
+                                                            AnnotatedString(
+                                                                selectedStop!!.id
+                                                            )
+                                                        )
+                                                        showMenu = false
+                                                    }
+                                                )
+                                                HorizontalDivider()
+                                                DropdownMenuItem(
+                                                    text = { Text("Rechercher ce nom") },
+                                                    leadingIcon = {
+                                                        Icon(
+                                                            Icons.Default.Search,
+                                                            contentDescription = null
+                                                        )
+                                                    },
+                                                    onClick = {
+                                                        viewModel.onSearchQueryChanged(selectedStop!!.nom)
+                                                        showBottomSheet = false
+                                                        showMenu = false
+                                                    }
+                                                )
+                                                DropdownMenuItem(
+                                                    text = { Text("Rechercher cet ID") },
+                                                    leadingIcon = {
+                                                        Icon(
+                                                            Icons.Default.Search,
+                                                            contentDescription = null
+                                                        )
+                                                    },
+                                                    onClick = {
+                                                        viewModel.onSearchQueryChanged(selectedStop!!.id)
+                                                        showBottomSheet = false
+                                                        showMenu = false
+                                                    }
+                                                )
+                                            }
+                                        }
                                         HorizontalDivider(thickness = 0.5.dp)
                                     }
 
                                     // 2. Individual items (By ID)
                                     items(selectedStop!!.duplicates) { duplicate ->
+                                        var showMenu by remember { mutableStateOf(false) }
+                                        val clipboardManager = LocalClipboardManager.current
                                         val isTram = duplicate.id.startsWith("t_")
                                         val isFav =
                                             favorites.any { it.id == duplicate.id && it.detailsFromId }
@@ -255,52 +367,144 @@ fun SearchScreen(
                                         val iconColor =
                                             if (isFav) Color(0xFFE91E63) else if (isTram) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.secondary
 
-                                        ListItem(
-                                            leadingContent = {
-                                                Icon(
-                                                    imageVector = icon,
-                                                    contentDescription = if (isFav) "Favori" else if (isTram) "Arrêt de tram" else "Arrêt de bus",
-                                                    tint = iconColor
-                                                )
-                                            },
-                                            headlineContent = {
-                                                val parts = duplicate.nom.split(" - ", limit = 2)
-                                                if (parts.size == 2) {
-                                                    Column {
-                                                        Text(
-                                                            text = parts[0],
-                                                            style = MaterialTheme.typography.labelMedium,
-                                                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(
-                                                                alpha = 0.8f
+                                        Box {
+                                            ListItem(
+                                                leadingContent = {
+                                                    Icon(
+                                                        imageVector = icon,
+                                                        contentDescription = if (isFav) "Favori" else if (isTram) "Arrêt de tram" else "Arrêt de bus",
+                                                        tint = iconColor
+                                                    )
+                                                },
+                                                headlineContent = {
+                                                    val parts =
+                                                        duplicate.nom.split(" - ", limit = 2)
+                                                    if (parts.size == 2) {
+                                                        Column {
+                                                            Text(
+                                                                text = parts[0],
+                                                                style = MaterialTheme.typography.labelMedium,
+                                                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                                                                    alpha = 0.8f
+                                                                )
                                                             )
-                                                        )
+                                                            Text(
+                                                                text = parts[1],
+                                                                style = MaterialTheme.typography.bodyLarge
+                                                            )
+                                                        }
+                                                    } else {
                                                         Text(
-                                                            text = parts[1],
+                                                            text = duplicate.nom,
                                                             style = MaterialTheme.typography.bodyLarge
                                                         )
                                                     }
-                                                } else {
+                                                },
+                                                trailingContent = {
                                                     Text(
-                                                        text = duplicate.nom,
-                                                        style = MaterialTheme.typography.bodyLarge
+                                                        text = "#${duplicate.id}",
+                                                        fontFamily = FontFamily.Monospace,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                                                            alpha = 0.6f
+                                                        ),
+                                                        style = MaterialTheme.typography.bodyMedium
+                                                    )
+                                                },
+                                                modifier = Modifier.pointerInput(Unit) {
+                                                    detectTapGestures(
+                                                        onTap = {
+                                                            showBottomSheet = false
+                                                            openStopDetails(duplicate, true)
+                                                        },
+                                                        onLongPress = { showMenu = true }
                                                     )
                                                 }
-                                            },
-                                            trailingContent = {
-                                                Text(
-                                                    text = "#${duplicate.id}",
-                                                    fontFamily = FontFamily.Monospace,
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(
-                                                        alpha = 0.6f
-                                                    ),
-                                                    style = MaterialTheme.typography.bodyMedium
+                                            )
+
+                                            DropdownMenu(
+                                                expanded = showMenu,
+                                                onDismissRequest = { showMenu = false }
+                                            ) {
+                                                DropdownMenuItem(
+                                                    text = { Text(if (isFav) "Retirer des favoris" else "Ajouter aux favoris") },
+                                                    leadingIcon = {
+                                                        Icon(
+                                                            imageVector = if (isFav) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                                            contentDescription = null,
+                                                            tint = if (isFav) Color(0xFFE91E63) else LocalContentColor.current
+                                                        )
+                                                    },
+                                                    onClick = {
+                                                        viewModel.toggleFavorite(duplicate, true)
+                                                        showMenu = false
+                                                    }
                                                 )
-                                            },
-                                            modifier = Modifier.clickable {
-                                                showBottomSheet = false
-                                                openStopDetails(duplicate, true)
+                                                HorizontalDivider()
+                                                DropdownMenuItem(
+                                                    text = { Text("Copier le nom") },
+                                                    leadingIcon = {
+                                                        Icon(
+                                                            Icons.Default.ContentCopy,
+                                                            contentDescription = null
+                                                        )
+                                                    },
+                                                    onClick = {
+                                                        clipboardManager.setText(
+                                                            AnnotatedString(
+                                                                duplicate.nom
+                                                            )
+                                                        )
+                                                        showMenu = false
+                                                    }
+                                                )
+                                                DropdownMenuItem(
+                                                    text = { Text("Copier l'ID") },
+                                                    leadingIcon = {
+                                                        Icon(
+                                                            Icons.Default.ContentCopy,
+                                                            contentDescription = null
+                                                        )
+                                                    },
+                                                    onClick = {
+                                                        clipboardManager.setText(
+                                                            AnnotatedString(
+                                                                duplicate.id
+                                                            )
+                                                        )
+                                                        showMenu = false
+                                                    }
+                                                )
+                                                HorizontalDivider()
+                                                DropdownMenuItem(
+                                                    text = { Text("Rechercher ce nom") },
+                                                    leadingIcon = {
+                                                        Icon(
+                                                            Icons.Default.Search,
+                                                            contentDescription = null
+                                                        )
+                                                    },
+                                                    onClick = {
+                                                        viewModel.onSearchQueryChanged(duplicate.nom)
+                                                        showBottomSheet = false
+                                                        showMenu = false
+                                                    }
+                                                )
+                                                DropdownMenuItem(
+                                                    text = { Text("Rechercher cet ID") },
+                                                    leadingIcon = {
+                                                        Icon(
+                                                            Icons.Default.Search,
+                                                            contentDescription = null
+                                                        )
+                                                    },
+                                                    onClick = {
+                                                        viewModel.onSearchQueryChanged(duplicate.id)
+                                                        showBottomSheet = false
+                                                        showMenu = false
+                                                    }
+                                                )
                                             }
-                                        )
+                                        }
                                         HorizontalDivider(thickness = 0.5.dp)
                                     }
                                 }

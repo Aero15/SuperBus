@@ -9,7 +9,14 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.FolderOpen
 import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,11 +49,19 @@ fun StopListItem(
     onVariantsClick: () -> Unit = {},
     onDuplicateClick: (Arret) -> Unit = {}
 ) {
+    var showContextMenu by remember { mutableStateOf(false) }
+    val clipboardManager = LocalClipboardManager.current
+
     Column {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable(onClick = onClick)
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onTap = { onClick() },
+                        onLongPress = { showContextMenu = true }
+                    )
+                }
                 .padding(vertical = 12.dp, horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -153,23 +168,59 @@ fun StopListItem(
                 )
             }
 
-            /*// Actions
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = { onFillQuery(stop.nom) }) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Insérer ce nom"
-                    )
-                }
-
-                IconButton(onClick = onToggleFavorite) {
-                    Icon(
-                        imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                        contentDescription = "Favoris",
-                        tint = if (isFavorite) Color.Yellow else MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }*/
+            DropdownMenu(
+                expanded = showContextMenu,
+                onDismissRequest = { showContextMenu = false }
+            ) {
+                DropdownMenuItem(
+                    text = { Text(if (isFavorite) "Retirer des favoris" else "Ajouter aux favoris") },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                            contentDescription = null,
+                            tint = if (isFavorite) Color(0xFFE91E63) else LocalContentColor.current
+                        )
+                    },
+                    onClick = {
+                        onToggleFavorite()
+                        showContextMenu = false
+                    }
+                )
+                HorizontalDivider()
+                DropdownMenuItem(
+                    text = { Text("Copier le nom") },
+                    leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null) },
+                    onClick = {
+                        clipboardManager.setText(AnnotatedString(stop.nom))
+                        showContextMenu = false
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text("Copier l'ID") },
+                    leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null) },
+                    onClick = {
+                        clipboardManager.setText(AnnotatedString(stop.id))
+                        showContextMenu = false
+                    }
+                )
+                HorizontalDivider()
+                DropdownMenuItem(
+                    text = { Text("Rechercher ce nom") },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                    onClick = {
+                        onFillQuery(stop.nom)
+                        showContextMenu = false
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text("Rechercher cet ID") },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                    onClick = {
+                        onFillQuery(stop.id)
+                        showContextMenu = false
+                    }
+                )
+            }
         }
 
         // Expanded list for non-grouped mode
