@@ -50,10 +50,13 @@ fun StopListItem(
                 .padding(vertical = 12.dp, horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            val icon = if (isFavorite) Icons.Default.Favorite else Icons.Default.Place
+            val iconTint = if (isFavorite) Color(0xFFE91E63) else MaterialTheme.colorScheme.primary
+
             Icon(
-                imageVector = Icons.Default.Place,
+                imageVector = icon,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary
+                tint = iconTint
             )
             Spacer(modifier = Modifier.width(16.dp))
 

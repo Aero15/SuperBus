@@ -41,6 +41,7 @@ import android.content.Intent
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DirectionsBus
 import androidx.compose.material.icons.filled.Tram
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
@@ -49,6 +50,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.background
+import androidx.compose.ui.graphics.Color
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -113,7 +115,13 @@ fun SearchScreen(
                     )
                     LazyColumn(modifier = Modifier.fillMaxSize()) {
                         items(state.stops) { stop ->
-                            val favorite = favorites.find { it.id == stop.id }
+                            val favorite =
+                                favorites.find {
+                                    it.id == stop.id && (
+                                        (stop.duplicates.size > 1 && !it.detailsFromId) ||
+                                        (stop.duplicates.isEmpty() && it.detailsFromId)
+                                    )
+                                }
                             val isFavorite = favorite != null
 
                             StopListItem(
@@ -192,10 +200,16 @@ fun SearchScreen(
                                                 Text("Voir les horaires de tous les quais")
                                             },
                                             leadingContent = {
+                                                val isFav =
+                                                    favorites.any { it.id == selectedStop!!.id && !it.detailsFromId }
+                                                val icon =
+                                                    if (isFav) Icons.Default.Favorite else Icons.Default.Search
+                                                val tint =
+                                                    if (isFav) Color(0xFFE91E63) else MaterialTheme.colorScheme.primary
                                                 Icon(
-                                                    imageVector = Icons.Default.Search,
-                                                    contentDescription = "Rechercher par nom",
-                                                    tint = MaterialTheme.colorScheme.primary
+                                                    imageVector = icon,
+                                                    contentDescription = if (isFav) "Favori" else "Rechercher par nom",
+                                                    tint = tint
                                                 )
                                             },
                                             trailingContent = {
@@ -233,16 +247,19 @@ fun SearchScreen(
                                     // 2. Individual items (By ID)
                                     items(selectedStop!!.duplicates) { duplicate ->
                                         val isTram = duplicate.id.startsWith("t_")
+                                        val isFav =
+                                            favorites.any { it.id == duplicate.id && it.detailsFromId }
+
                                         val icon =
-                                            if (isTram) Icons.Default.Tram else Icons.Default.DirectionsBus
+                                            if (isFav) Icons.Default.Favorite else if (isTram) Icons.Default.Tram else Icons.Default.DirectionsBus
                                         val iconColor =
-                                            if (isTram) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.secondary
+                                            if (isFav) Color(0xFFE91E63) else if (isTram) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.secondary
 
                                         ListItem(
                                             leadingContent = {
                                                 Icon(
                                                     imageVector = icon,
-                                                    contentDescription = if (isTram) "Arrêt de tram" else "Arrêt de bus",
+                                                    contentDescription = if (isFav) "Favori" else if (isTram) "Arrêt de tram" else "Arrêt de bus",
                                                     tint = iconColor
                                                 )
                                             },
