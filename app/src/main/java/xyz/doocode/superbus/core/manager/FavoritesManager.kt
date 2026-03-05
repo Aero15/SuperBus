@@ -5,11 +5,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import xyz.doocode.superbus.core.api.ApiClient
 import xyz.doocode.superbus.core.data.FavoritesRepository
+import xyz.doocode.superbus.core.data.ReferenceDataRepository
 import xyz.doocode.superbus.core.dto.Ligne
 
 class FavoritesManager(context: Context) {
 
     private val repository = FavoritesRepository.getInstance(context)
+    private val referenceDataRepository = ReferenceDataRepository.getInstance(context)
 
     fun isFavorite(stopId: String, detailsFromId: Boolean): Boolean {
         return repository.isFavorite(stopId, detailsFromId)
@@ -42,12 +44,28 @@ class FavoritesManager(context: Context) {
         if (!repository.isFavorite(stopId, detailsFromId)) return
 
         try {
-            val lines = fetchLines(stopId)
+            val lines = if (detailsFromId) {
+                fetchLines(stopId)
+            } else {
+                fetchLinesByName(stopId)
+            }
             repository.updateFavoriteLines(stopId, detailsFromId, lines)
         } catch (e: Exception) {
             e.printStackTrace()
         }
     }
+
+    private suspend fun fetchLinesByName(stopId: String): List<Ligne> =
+        withContext(Dispatchers.IO) {
+            val stopDetails = ApiClient.ginkoService.getDetailsArret(stopId).objects
+            val stopName = stopDetails.nom
+
+            val tempsLieu = ApiClient.ginkoService.getTempsLieu(nom = stopName).objects
+            val activeLineIds = tempsLieu.listeTemps.map { it.idLigne }.toSet()
+
+            val allLines = referenceDataRepository.getLignes()
+            allLines.filter { it.id in activeLineIds }
+        }
 
     private suspend fun fetchLines(stopId: String): List<Ligne> = withContext(Dispatchers.IO) {
         val response = ApiClient.ginkoService.getVariantesDesservantArret(stopId)
