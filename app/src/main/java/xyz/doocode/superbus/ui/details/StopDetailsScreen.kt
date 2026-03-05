@@ -8,10 +8,12 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -19,8 +21,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -28,6 +30,7 @@ import xyz.doocode.superbus.core.util.setKeepScreenOn
 import xyz.doocode.superbus.ui.components.EmptyDataView
 import xyz.doocode.superbus.ui.components.ErrorView
 import xyz.doocode.superbus.ui.components.LoadingView
+import androidx.core.content.edit
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,7 +52,7 @@ fun StopDetailsScreen(
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val pullRefreshState = rememberPullToRefreshState()
-    
+
     // Keep Screen On Logic
     val context = LocalContext.current
     val activity = context as? Activity
@@ -57,7 +60,7 @@ fun StopDetailsScreen(
     var keepScreenOn by remember { 
         mutableStateOf(prefs.getBoolean("keep_screen_on", false)) 
     }
-    
+
     LaunchedEffect(keepScreenOn) {
         activity?.setKeepScreenOn(keepScreenOn)
     }
@@ -100,18 +103,37 @@ fun StopDetailsScreen(
                             onDismissRequest = { showMenu = false }
                         ) {
                             DropdownMenuItem(
-                                text = { Text("Garder l'écran allumé") },
+                                text = {
+                                    Text(
+                                        text = "Garder l'écran allumé",
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                },
                                 leadingIcon = {
                                     if (keepScreenOn) {
                                         Icon(
-                                            imageVector = Icons.Default.Check,
+                                            imageVector = Icons.Default.Lightbulb,
                                             contentDescription = null
+                                        )
+                                    } else {
+                                        Icon(
+                                            imageVector = Icons.Outlined.Lightbulb,
+                                            contentDescription = null
+                                        )
+                                    }
+                                },
+                                trailingIcon = {
+                                    if (keepScreenOn) {
+                                        Icon(
+                                            imageVector = Icons.Filled.CheckCircle,
+                                            contentDescription = "Activé",
+                                            tint = MaterialTheme.colorScheme.primary
                                         )
                                     }
                                 },
                                 onClick = {
                                     keepScreenOn = !keepScreenOn
-                                    prefs.edit().putBoolean("keep_screen_on", keepScreenOn).apply()
+                                    prefs.edit { putBoolean("keep_screen_on", keepScreenOn) }
                                     showMenu = false
                                 }
                             )
@@ -131,7 +153,7 @@ fun StopDetailsScreen(
                 .fillMaxSize()
         ) {
             LazyVerticalGrid(
-                columns = GridCells.Fixed(if (LocalConfiguration.current.screenWidthDp > 600) 2 else 1),
+                columns = GridCells.Fixed(if (LocalWindowInfo.current.containerSize.width.dp > 600.dp) 2 else 1),
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -146,7 +168,7 @@ fun StopDetailsScreen(
                                     .height(200.dp),
                                 contentAlignment = Alignment.Center
                             ) {
-                                LoadingView("Chargement des horaires...")
+                                LoadingView("Chargement des temps d'attente...")
                             }
                         }
                     }
