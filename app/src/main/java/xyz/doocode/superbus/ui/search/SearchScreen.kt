@@ -37,6 +37,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import xyz.doocode.superbus.core.dto.Arret
+import xyz.doocode.superbus.ui.components.StopActionsContainer
 import android.content.Intent
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DirectionsBus
@@ -179,7 +180,7 @@ fun SearchScreen(
                                     // 1. Recommended Item (Grouped)
                                     item {
                                         var showMenu by remember { mutableStateOf(false) }
-                                        val clipboardManager = LocalClipboardManager.current
+
                                         val isFav =
                                             favorites.any { it.id == selectedStop!!.id && !it.detailsFromId }
 
@@ -264,92 +265,23 @@ fun SearchScreen(
                                                     }
                                             )
 
-                                            DropdownMenu(
+                                            StopActionsContainer(
                                                 expanded = showMenu,
-                                                onDismissRequest = { showMenu = false }
-                                            ) {
-                                                DropdownMenuItem(
-                                                    text = { Text(if (isFav) "Retirer des favoris" else "Ajouter aux favoris") },
-                                                    leadingIcon = {
-                                                        Icon(
-                                                            imageVector = if (isFav) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                                                            contentDescription = null,
-                                                            tint = if (isFav) Color(0xFFE91E63) else LocalContentColor.current
-                                                        )
-                                                    },
-                                                    onClick = {
-                                                        viewModel.toggleFavorite(
-                                                            selectedStop!!,
-                                                            false
-                                                        )
-                                                        showMenu = false
-                                                    }
-                                                )
-                                                HorizontalDivider()
-                                                DropdownMenuItem(
-                                                    text = { Text("Copier le nom") },
-                                                    leadingIcon = {
-                                                        Icon(
-                                                            Icons.Default.ContentCopy,
-                                                            contentDescription = null
-                                                        )
-                                                    },
-                                                    onClick = {
-                                                        clipboardManager.setText(
-                                                            AnnotatedString(
-                                                                selectedStop!!.nom
-                                                            )
-                                                        )
-                                                        showMenu = false
-                                                    }
-                                                )
-                                                DropdownMenuItem(
-                                                    text = { Text("Copier l'ID") },
-                                                    leadingIcon = {
-                                                        Icon(
-                                                            Icons.Default.ContentCopy,
-                                                            contentDescription = null
-                                                        )
-                                                    },
-                                                    onClick = {
-                                                        clipboardManager.setText(
-                                                            AnnotatedString(
-                                                                selectedStop!!.id
-                                                            )
-                                                        )
-                                                        showMenu = false
-                                                    }
-                                                )
-                                                HorizontalDivider()
-                                                DropdownMenuItem(
-                                                    text = { Text("Rechercher ce nom") },
-                                                    leadingIcon = {
-                                                        Icon(
-                                                            Icons.Default.Search,
-                                                            contentDescription = null
-                                                        )
-                                                    },
-                                                    onClick = {
-                                                        viewModel.onSearchQueryChanged(selectedStop!!.nom)
-                                                        showBottomSheet = false
-                                                        showMenu = false
-                                                    }
-                                                )
-                                                DropdownMenuItem(
-                                                    text = { Text("Rechercher cet ID") },
-                                                    leadingIcon = {
-                                                        Icon(
-                                                            Icons.Default.Search,
-                                                            contentDescription = null
-                                                        )
-                                                    },
-                                                    onClick = {
-                                                        viewModel.onSearchQueryChanged(selectedStop!!.id)
-                                                        showBottomSheet = false
-                                                        showMenu = false
-                                                    }
-                                                )
-                                            }
+                                                onDismissRequest = { showMenu = false },
+                                                stopName = selectedStop!!.nom,
+                                                stopId = selectedStop!!.id,
+                                                isFavorite = isFav,
+                                                onToggleFavorite = {
+                                                    viewModel.toggleFavorite(
+                                                        selectedStop!!,
+                                                        false
+                                                    )
+                                                },
+                                                onFillQuery = { query ->
+                                                    viewModel.onSearchQueryChanged(query)
+                                                    showBottomSheet = false
+                                                }
+                                            )
                                         }
                                         HorizontalDivider(thickness = 0.5.dp)
                                     }
@@ -357,7 +289,7 @@ fun SearchScreen(
                                     // 2. Individual items (By ID)
                                     items(selectedStop!!.duplicates) { duplicate ->
                                         var showMenu by remember { mutableStateOf(false) }
-                                        val clipboardManager = LocalClipboardManager.current
+
                                         val isTram = duplicate.id.startsWith("t_")
                                         val isFav =
                                             favorites.any { it.id == duplicate.id && it.detailsFromId }
@@ -421,89 +353,23 @@ fun SearchScreen(
                                                 }
                                             )
 
-                                            DropdownMenu(
+                                            StopActionsContainer(
                                                 expanded = showMenu,
-                                                onDismissRequest = { showMenu = false }
-                                            ) {
-                                                DropdownMenuItem(
-                                                    text = { Text(if (isFav) "Retirer des favoris" else "Ajouter aux favoris") },
-                                                    leadingIcon = {
-                                                        Icon(
-                                                            imageVector = if (isFav) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                                                            contentDescription = null,
-                                                            tint = if (isFav) Color(0xFFE91E63) else LocalContentColor.current
-                                                        )
-                                                    },
-                                                    onClick = {
-                                                        viewModel.toggleFavorite(duplicate, true)
-                                                        showMenu = false
-                                                    }
-                                                )
-                                                HorizontalDivider()
-                                                DropdownMenuItem(
-                                                    text = { Text("Copier le nom") },
-                                                    leadingIcon = {
-                                                        Icon(
-                                                            Icons.Default.ContentCopy,
-                                                            contentDescription = null
-                                                        )
-                                                    },
-                                                    onClick = {
-                                                        clipboardManager.setText(
-                                                            AnnotatedString(
-                                                                duplicate.nom
-                                                            )
-                                                        )
-                                                        showMenu = false
-                                                    }
-                                                )
-                                                DropdownMenuItem(
-                                                    text = { Text("Copier l'ID") },
-                                                    leadingIcon = {
-                                                        Icon(
-                                                            Icons.Default.ContentCopy,
-                                                            contentDescription = null
-                                                        )
-                                                    },
-                                                    onClick = {
-                                                        clipboardManager.setText(
-                                                            AnnotatedString(
-                                                                duplicate.id
-                                                            )
-                                                        )
-                                                        showMenu = false
-                                                    }
-                                                )
-                                                HorizontalDivider()
-                                                DropdownMenuItem(
-                                                    text = { Text("Rechercher ce nom") },
-                                                    leadingIcon = {
-                                                        Icon(
-                                                            Icons.Default.Search,
-                                                            contentDescription = null
-                                                        )
-                                                    },
-                                                    onClick = {
-                                                        viewModel.onSearchQueryChanged(duplicate.nom)
-                                                        showBottomSheet = false
-                                                        showMenu = false
-                                                    }
-                                                )
-                                                DropdownMenuItem(
-                                                    text = { Text("Rechercher cet ID") },
-                                                    leadingIcon = {
-                                                        Icon(
-                                                            Icons.Default.Search,
-                                                            contentDescription = null
-                                                        )
-                                                    },
-                                                    onClick = {
-                                                        viewModel.onSearchQueryChanged(duplicate.id)
-                                                        showBottomSheet = false
-                                                        showMenu = false
-                                                    }
-                                                )
-                                            }
+                                                onDismissRequest = { showMenu = false },
+                                                stopName = duplicate.nom,
+                                                stopId = duplicate.id,
+                                                isFavorite = isFav,
+                                                onToggleFavorite = {
+                                                    viewModel.toggleFavorite(
+                                                        duplicate,
+                                                        true
+                                                    )
+                                                },
+                                                onFillQuery = { query ->
+                                                    viewModel.onSearchQueryChanged(query)
+                                                    showBottomSheet = false
+                                                }
+                                            )
                                         }
                                         HorizontalDivider(thickness = 0.5.dp)
                                     }

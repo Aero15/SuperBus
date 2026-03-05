@@ -17,7 +17,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.runtime.Composable
+import xyz.doocode.superbus.ui.components.StopActionsContainer
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
@@ -50,7 +50,6 @@ fun StopListItem(
     onDuplicateClick: (Arret) -> Unit = {}
 ) {
     var showContextMenu by remember { mutableStateOf(false) }
-    val clipboardManager = LocalClipboardManager.current
 
     Column {
         Row(
@@ -168,59 +167,15 @@ fun StopListItem(
                 )
             }
 
-            DropdownMenu(
+            StopActionsContainer(
                 expanded = showContextMenu,
-                onDismissRequest = { showContextMenu = false }
-            ) {
-                DropdownMenuItem(
-                    text = { Text(if (isFavorite) "Retirer des favoris" else "Ajouter aux favoris") },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                            contentDescription = null,
-                            tint = if (isFavorite) Color(0xFFE91E63) else LocalContentColor.current
-                        )
-                    },
-                    onClick = {
-                        onToggleFavorite()
-                        showContextMenu = false
-                    }
-                )
-                HorizontalDivider()
-                DropdownMenuItem(
-                    text = { Text("Copier le nom") },
-                    leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null) },
-                    onClick = {
-                        clipboardManager.setText(AnnotatedString(stop.nom))
-                        showContextMenu = false
-                    }
-                )
-                DropdownMenuItem(
-                    text = { Text("Copier l'ID") },
-                    leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null) },
-                    onClick = {
-                        clipboardManager.setText(AnnotatedString(stop.id))
-                        showContextMenu = false
-                    }
-                )
-                HorizontalDivider()
-                DropdownMenuItem(
-                    text = { Text("Rechercher ce nom") },
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                    onClick = {
-                        onFillQuery(stop.nom)
-                        showContextMenu = false
-                    }
-                )
-                DropdownMenuItem(
-                    text = { Text("Rechercher cet ID") },
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                    onClick = {
-                        onFillQuery(stop.id)
-                        showContextMenu = false
-                    }
-                )
-            }
+                onDismissRequest = { showContextMenu = false },
+                stopName = stop.nom,
+                stopId = stop.id,
+                isFavorite = isFavorite,
+                onToggleFavorite = onToggleFavorite,
+                onFillQuery = onFillQuery
+            )
         }
 
         // Expanded list for non-grouped mode
