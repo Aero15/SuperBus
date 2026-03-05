@@ -15,15 +15,41 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import xyz.doocode.superbus.core.dto.FavoriteStation
+import androidx.compose.animation.core.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.graphicsLayer
 
 @Composable
 fun FavoriteTile(
     station: FavoriteStation,
+    isEditing: Boolean = false,
     onClick: () -> Unit
 ) {
+    val infiniteTransition = rememberInfiniteTransition(label = "shake")
+    val rotation by if (isEditing) {
+        infiniteTransition.animateFloat(
+            initialValue = -2f,
+            targetValue = 2f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(200, easing = LinearEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "rotation"
+        )
+    } else {
+        remember {
+            mutableStateOf(0f)
+        }
+    }
+
     Column(
         modifier = Modifier
-            .width(IntrinsicSize.Min)
+            .fillMaxWidth()
+            .graphicsLayer {
+                rotationZ = if (isEditing) rotation else 0f
+            }
             .clickable(onClick = onClick)
     ) {
         // Tile Box
