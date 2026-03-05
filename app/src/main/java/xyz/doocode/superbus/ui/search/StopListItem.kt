@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
@@ -57,44 +58,58 @@ fun StopListItem(
             Spacer(modifier = Modifier.width(16.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                // Highlight matching text
-                val annotatedString = buildAnnotatedString {
-                    val fullText = stop.nom
+                // Highlight matching text and split line if needed
+                val primaryColor = MaterialTheme.colorScheme.primary
+
+                fun highlight(text: String): AnnotatedString = buildAnnotatedString {
                     val query = searchQuery.trim()
 
                     if (query.isEmpty()) {
-                        append(fullText)
+                        append(text)
                     } else {
-                        val normalizedFullText = fullText.removeAccents()
+                        val normalizedText = text.removeAccents()
                         val normalizedQuery = query.removeAccents()
                         val startIndex =
-                            normalizedFullText.indexOf(normalizedQuery, ignoreCase = true)
+                            normalizedText.indexOf(normalizedQuery, ignoreCase = true)
 
                         if (startIndex >= 0) {
                             val endIndex = startIndex + query.length
-                            val safeEndIndex = endIndex.coerceAtMost(fullText.length)
+                            val safeEndIndex = endIndex.coerceAtMost(text.length)
                             val safeStartIndex = startIndex.coerceAtMost(safeEndIndex)
 
-                            append(fullText.take(safeStartIndex))
+                            append(text.take(safeStartIndex))
                             withStyle(
                                 style = SpanStyle(
                                     fontWeight = FontWeight.Black,
-                                    color = MaterialTheme.colorScheme.primary
+                                    color = primaryColor
                                 )
                             ) {
-                                append(fullText.substring(safeStartIndex, safeEndIndex))
+                                append(text.substring(safeStartIndex, safeEndIndex))
                             }
-                            append(fullText.substring(safeEndIndex))
+                            append(text.substring(safeEndIndex))
                         } else {
-                            append(fullText)
+                            append(text)
                         }
                     }
                 }
 
-                Text(
-                    text = annotatedString,
-                    style = MaterialTheme.typography.bodyLarge
-                )
+                val parts = stop.nom.split(" - ", limit = 2)
+                if (parts.size == 2) {
+                    Text(
+                        text = highlight(parts[0]),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                    )
+                    Text(
+                        text = highlight(parts[1]),
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                } else {
+                    Text(
+                        text = highlight(stop.nom),
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
 
                 // TODO: Display data from cache
                 /*if (isFavorite && favoriteLines.isNotEmpty()) {

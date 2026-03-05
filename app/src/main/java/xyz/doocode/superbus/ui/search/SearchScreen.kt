@@ -128,11 +128,14 @@ fun SearchScreen(
                                 },
                                 onClick = {
                                     if (groupDuplicates && stop.duplicates.size > 1) {
-                                        selectedStop = stop
-                                        showBottomSheet = true
+                                        openStopDetails(stop, false)
                                     } else {
                                         openStopDetails(stop, groupDuplicates)
                                     }
+                                },
+                                onVariantsClick = {
+                                    selectedStop = stop
+                                    showBottomSheet = true
                                 },
                                 onDuplicateClick = { duplicate ->
                                     openStopDetails(duplicate, true)
@@ -159,11 +162,31 @@ fun SearchScreen(
                                     item {
                                         ListItem(
                                             headlineContent = {
-                                                Text(
-                                                    text = selectedStop!!.nom,
-                                                    fontWeight = FontWeight.Bold,
-                                                    color = MaterialTheme.colorScheme.primary
-                                                )
+                                                val parts =
+                                                    selectedStop!!.nom.split(" - ", limit = 2)
+                                                if (parts.size == 2) {
+                                                    Column {
+                                                        Text(
+                                                            text = parts[0],
+                                                            style = MaterialTheme.typography.labelMedium,
+                                                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                                                                alpha = 0.8f
+                                                            )
+                                                        )
+                                                        Text(
+                                                            text = parts[1],
+                                                            fontWeight = FontWeight.Bold,
+                                                            color = MaterialTheme.colorScheme.primary,
+                                                            style = MaterialTheme.typography.bodyLarge
+                                                        )
+                                                    }
+                                                } else {
+                                                    Text(
+                                                        text = selectedStop!!.nom,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = MaterialTheme.colorScheme.primary
+                                                    )
+                                                }
                                             },
                                             supportingContent = {
                                                 Text("Voir les horaires de tous les quais")
@@ -223,7 +246,29 @@ fun SearchScreen(
                                                     tint = iconColor
                                                 )
                                             },
-                                            headlineContent = { Text(duplicate.nom) },
+                                            headlineContent = {
+                                                val parts = duplicate.nom.split(" - ", limit = 2)
+                                                if (parts.size == 2) {
+                                                    Column {
+                                                        Text(
+                                                            text = parts[0],
+                                                            style = MaterialTheme.typography.labelMedium,
+                                                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                                                                alpha = 0.8f
+                                                            )
+                                                        )
+                                                        Text(
+                                                            text = parts[1],
+                                                            style = MaterialTheme.typography.bodyLarge
+                                                        )
+                                                    }
+                                                } else {
+                                                    Text(
+                                                        text = duplicate.nom,
+                                                        style = MaterialTheme.typography.bodyLarge
+                                                    )
+                                                }
+                                            },
                                             trailingContent = {
                                                 Text(
                                                     text = "#${duplicate.id}",
