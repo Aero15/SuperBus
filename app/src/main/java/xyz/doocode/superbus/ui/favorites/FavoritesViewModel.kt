@@ -42,6 +42,18 @@ class FavoritesViewModel(application: Application) : AndroidViewModel(applicatio
         initialValue = emptyList()
     )
 
+    fun renameFavorite(stopId: String, detailsFromId: Boolean, newName: String) {
+        viewModelScope.launch {
+            repository.renameFavorite(stopId, detailsFromId, newName)
+        }
+    }
+
+    fun removeFavorite(stopId: String, detailsFromId: Boolean) {
+        viewModelScope.launch {
+            repository.removeFavorite(stopId, detailsFromId)
+        }
+    }
+
     fun startEditing() {
         // Copy current repo list to local list for editing
         viewModelScope.launch {

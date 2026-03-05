@@ -50,6 +50,8 @@ fun FavoritesScreen(
 
     var showMenu by remember { mutableStateOf(false) }
     var showSearchBar by remember { mutableStateOf(false) }
+    var showRenameDialog by remember { mutableStateOf<FavoriteStation?>(null) }
+    var newNameForRename by remember { mutableStateOf("") }
 
     // State for drag and drop
     var draggedItem by remember { mutableStateOf<FavoriteStation?>(null) }
@@ -242,7 +244,18 @@ fun FavoritesScreen(
                                     isEditing = isEditing,
                                     onClick = {
                                         if (!isEditing) onStationClick(station)
-                                    }
+                                    },
+                                    onRename = {
+                                        newNameForRename = station.name
+                                        showRenameDialog = station
+                                    },
+                                    onRemove = {
+                                        viewModel.removeFavorite(
+                                            station.id,
+                                            station.detailsFromId
+                                        )
+                                    },
+                                    onEnableEditing = { viewModel.startEditing() }
                                 )
                             }
                         }
@@ -276,6 +289,42 @@ fun FavoritesScreen(
                                 onClick = {}
                             )
                         }
+                    }
+
+                    if (showRenameDialog != null) {
+                        AlertDialog(
+                            onDismissRequest = { showRenameDialog = null },
+                            title = { Text("Renommer le favori") },
+                            text = {
+                                OutlinedTextField(
+                                    value = newNameForRename,
+                                    onValueChange = { newNameForRename = it },
+                                    label = { Text("Nom") },
+                                    singleLine = true
+                                )
+                            },
+                            confirmButton = {
+                                TextButton(
+                                    onClick = {
+                                        showRenameDialog?.let { station ->
+                                            viewModel.renameFavorite(
+                                                station.id,
+                                                station.detailsFromId,
+                                                newNameForRename
+                                            )
+                                        }
+                                        showRenameDialog = null
+                                    }
+                                ) {
+                                    Text("Enregistrer")
+                                }
+                            },
+                            dismissButton = {
+                                TextButton(onClick = { showRenameDialog = null }) {
+                                    Text("Annuler")
+                                }
+                            }
+                        )
                     }
                 }
             }

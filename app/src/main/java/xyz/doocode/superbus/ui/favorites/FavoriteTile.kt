@@ -2,14 +2,23 @@ package xyz.doocode.superbus.ui.favorites
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.GridView
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -17,16 +26,20 @@ import androidx.compose.ui.unit.sp
 import xyz.doocode.superbus.core.dto.FavoriteStation
 import androidx.compose.animation.core.*
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.graphicsLayer
 
 @Composable
 fun FavoriteTile(
     station: FavoriteStation,
     isEditing: Boolean = false,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onRename: () -> Unit = {},
+    onRemove: () -> Unit = {},
+    onEnableEditing: () -> Unit = {}
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "shake")
     val rotation by if (isEditing) {
@@ -45,13 +58,24 @@ fun FavoriteTile(
         }
     }
 
+    var showContextMenu by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .graphicsLayer {
                 rotationZ = if (isEditing) rotation else 0f
             }
-            .clickable(onClick = onClick)
+            .pointerInput(isEditing) {
+                if (!isEditing) {
+                    detectTapGestures(
+                        onTap = { onClick() },
+                        onLongPress = {
+                            showContextMenu = true
+                        }
+                    )
+                }
+            }
     ) {
         // Tile Box
         Box(
@@ -150,5 +174,43 @@ fun FavoriteTile(
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.fillMaxWidth()
         )
+
+        // Context Menu
+        if (!isEditing) {
+            DropdownMenu(
+                expanded = showContextMenu,
+                onDismissRequest = { showContextMenu = false }
+            ) {
+                DropdownMenuItem(
+                    text = { Text("Renommer") },
+                    leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
+                    onClick = {
+                        showContextMenu = false
+                        onRename()
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text("Réorganiser") },
+                    leadingIcon = {
+                        Icon(
+                            Icons.Default.GridView,
+                            contentDescription = null
+                        )
+                    },
+                    onClick = {
+                        showContextMenu = false
+                        onEnableEditing()
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text("Retirer des favoris") },
+                    leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) },
+                    onClick = {
+                        showContextMenu = false
+                        onRemove()
+                    }
+                )
+            }
+        }
     }
 }

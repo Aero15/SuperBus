@@ -68,6 +68,24 @@ class FavoritesRepository(context: Context) {
     }
 
 
+    fun renameFavorite(stopId: String, detailsFromId: Boolean, newName: String) {
+        val currentList = _favorites.value.toMutableList()
+        val index =
+            currentList.indexOfFirst { it.id == stopId && it.detailsFromId == detailsFromId }
+
+        if (index != -1) {
+            val oldFav = currentList[index]
+            if (oldFav.name != newName) {
+                val newFav = oldFav.copy(
+                    name = newName,
+                    updatedAt = System.currentTimeMillis()
+                )
+                currentList[index] = newFav
+                saveFavorites(currentList)
+            }
+        }
+    }
+
     fun removeFavorite(stopId: String, detailsFromId: Boolean) {
         val currentList = _favorites.value.toMutableList()
         if (currentList.removeIf { it.id == stopId && it.detailsFromId == detailsFromId }) {
