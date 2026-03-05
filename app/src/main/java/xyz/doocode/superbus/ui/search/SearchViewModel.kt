@@ -89,12 +89,7 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
 
                     // Create a copy with the duplicates list populated
                     // This includes the main stop itself in the list
-                    mainStop.copy(duplicates = sortedStops).also {
-                        // Automatically update grouped IDs in favorites if needed
-                        if (favoritesManager.isFavorite(it.id)) {
-                            favoritesManager.updateFavoriteGroupedIds(it.id, it.groupedIds)
-                        }
-                    }
+                    mainStop.copy(duplicates = sortedStops)
                 }
 
                 // Sort alphabetically
@@ -116,7 +111,7 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
 
     fun toggleFavorite(stop: Arret) {
         viewModelScope.launch {
-            favoritesManager.toggleFavorite(stop.id, stop.groupedIds, stop.nom)
+            favoritesManager.toggleFavorite(stop.id, stop.nom, true)
         }
     }
 }

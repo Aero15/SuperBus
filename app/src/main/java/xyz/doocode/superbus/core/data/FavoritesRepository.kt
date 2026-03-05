@@ -36,24 +36,29 @@ class FavoritesRepository(context: Context) {
         _favorites.value = list
     }
 
-    fun isFavorite(stopId: String): Boolean {
-        return _favorites.value.any { it.id == stopId }
+    fun updateFavoritesOrder(newOrder: List<FavoriteStation>) {
+        saveFavorites(newOrder)
+    }
+
+    fun isFavorite(stopId: String, detailsFromId: Boolean): Boolean {
+        return _favorites.value.any { it.id == stopId && it.detailsFromId == detailsFromId }
     }
 
     fun addFavorite(
         stopId: String,
-        groupedIds: List<String>,
         stopName: String,
+        detailsFromId: Boolean,
         lines: List<Ligne>
     ) {
         val currentList = _favorites.value.toMutableList()
-        if (currentList.none { it.id == stopId }) {
+        val filteredLines = lines.filter { it.typologie <= 30 }
+        if (currentList.none { it.id == stopId && it.detailsFromId == detailsFromId }) {
             currentList.add(
                 FavoriteStation(
                     id = stopId,
-                    groupedIds = groupedIds,
+                    detailsFromId = detailsFromId,
                     name = stopName,
-                    lines = lines,
+                    lines = filteredLines,
                     createdAt = System.currentTimeMillis(),
                     updatedAt = System.currentTimeMillis()
                 )
@@ -62,50 +67,30 @@ class FavoritesRepository(context: Context) {
         }
     }
 
-    fun updateFavoriteGroupedIds(stopId: String, newGroupedIds: List<String>) {
-        // Get favorite list then the index of the favorite item to update
+
+    fun removeFavorite(stopId: String, detailsFromId: Boolean) {
         val currentList = _favorites.value.toMutableList()
-        val index = currentList.indexOfFirst { it.id == stopId }
-
-        if (index != -1) { // Favorite exists, let's update it
-            val oldFav = currentList[index]
-
-            // Handle case where groupedIds is null (deserialization of old data)
-            val currentGroupedIds = oldFav.groupedIds ?: emptyList()
-
-            // Only update if lists are different
-            if (currentGroupedIds.sorted() != newGroupedIds.sorted()) {
-                val newFav = oldFav.copy(
-                    groupedIds = newGroupedIds,
-                    updatedAt = System.currentTimeMillis()
-                )
-                currentList[index] = newFav
-                saveFavorites(currentList)
-            }
-        }
-    }
-
-    fun removeFavorite(stopId: String) {
-        val currentList = _favorites.value.toMutableList()
-        if (currentList.removeIf { it.id == stopId }) {
+        if (currentList.removeIf { it.id == stopId && it.detailsFromId == detailsFromId }) {
             saveFavorites(currentList)
         }
     }
 
-    fun updateFavoriteLines(stopId: String, lines: List<Ligne>) {
-        val currentList = _favorites.value.toMutableList()
-        val index = currentList.indexOfFirst { it.id == stopId }
+    fun updateFavoriteLines(stopId: String, detailsFromId: Boolean, lines: List<Ligne>) {
+        val favoriteList = _favorites.value.toMutableList()
+        val index =
+            favoriteList.indexOfFirst { it.id == stopId && it.detailsFromId == detailsFromId }
 
         if (index != -1) {
-            val oldFav = currentList[index]
+            val oldFav = favoriteList[index]
+            val filteredLines = lines.filter { it.typologie <= 30 && it.id !in listOf("110") }
 
-            if (oldFav.lines != lines) {
+            if (oldFav.lines != filteredLines) {
                 val newFav = oldFav.copy(
-                    lines = lines,
+                    lines = filteredLines,
                     updatedAt = System.currentTimeMillis()
                 )
-                currentList[index] = newFav
-                saveFavorites(currentList)
+                favoriteList[index] = newFav
+                saveFavorites(favoriteList)
             }
         }
     }

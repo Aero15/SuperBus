@@ -11,54 +11,39 @@ class FavoritesManager(context: Context) {
 
     private val repository = FavoritesRepository.getInstance(context)
 
-    fun isFavorite(stopId: String): Boolean {
-        return repository.isFavorite(stopId)
+    fun isFavorite(stopId: String, detailsFromId: Boolean): Boolean {
+        return repository.isFavorite(stopId, detailsFromId)
     }
 
-    suspend fun toggleFavorite(stopId: String, groupedIds: List<String>, stopName: String) {
-        if (repository.isFavorite(stopId)) {
-            repository.removeFavorite(stopId)
+    suspend fun toggleFavorite(stopId: String, stopName: String, detailsFromId: Boolean) {
+        if (repository.isFavorite(stopId, detailsFromId)) {
+            repository.removeFavorite(stopId, detailsFromId)
         } else {
-            addFavorite(stopId, groupedIds, stopName)
+            addFavorite(stopId, stopName, detailsFromId)
         }
     }
 
-    private suspend fun addFavorite(stopId: String, groupedIds: List<String>, stopName: String) {
+    private suspend fun addFavorite(stopId: String, stopName: String, detailsFromId: Boolean) {
         try {
             val lines = try {
                 fetchLines(stopId)
             } catch (e: Exception) {
-                // Try fetching lines with other grouped IDs if main one fails
-                var successLines: List<Ligne> = emptyList()
-                for (otherId in groupedIds) {
-                    if (otherId == stopId) continue
-                    try {
-                        successLines = fetchLines(otherId)
-                        if (successLines.isNotEmpty()) break
-                    } catch (_: Exception) {
-                    }
-                }
-                successLines
+                emptyList()
             }
-            repository.addFavorite(stopId, groupedIds, stopName, lines)
+            repository.addFavorite(stopId, stopName, detailsFromId, lines)
         } catch (e: Exception) {
             // Fallback
-            repository.addFavorite(stopId, groupedIds, stopName, emptyList())
+            repository.addFavorite(stopId, stopName, detailsFromId, emptyList())
         }
     }
 
-    fun updateFavoriteGroupedIds(stopId: String, groupedIds: List<String>) {
-        if (repository.isFavorite(stopId)) {
-            repository.updateFavoriteGroupedIds(stopId, groupedIds)
-        }
-    }
 
-    suspend fun refreshFavoriteLines(stopId: String) {
-        if (!repository.isFavorite(stopId)) return
+    suspend fun refreshFavoriteLines(stopId: String, detailsFromId: Boolean) {
+        if (!repository.isFavorite(stopId, detailsFromId)) return
 
         try {
             val lines = fetchLines(stopId)
-            repository.updateFavoriteLines(stopId, lines)
+            repository.updateFavoriteLines(stopId, detailsFromId, lines)
         } catch (e: Exception) {
             e.printStackTrace()
         }

@@ -57,11 +57,12 @@ class StopDetailsViewModel(application: Application) : AndroidViewModel(applicat
         stopId?.let { id ->
             viewModelScope.launch {
                 repository.favorites.collectLatest { favorites ->
-                    _isFavorite.value = favorites.any { it.id == id }
+                    _isFavorite.value =
+                        favorites.any { it.id == id && it.detailsFromId == detailsFromId }
                 }
             }
             viewModelScope.launch {
-                favoritesManager.refreshFavoriteLines(id)
+                favoritesManager.refreshFavoriteLines(id, detailsFromId)
             }
         }
 
@@ -78,10 +79,7 @@ class StopDetailsViewModel(application: Application) : AndroidViewModel(applicat
     fun toggleFavorite() {
         if (id.isEmpty()) return
         viewModelScope.launch {
-            // In details view, we might not have grouped IDs immediately.
-            // Using empty list as placeholder, but ideally we should pass real ones.
-            // However, this screen is usually accessed from search where grouping happens.
-            favoritesManager.toggleFavorite(id, emptyList(), name)
+            favoritesManager.toggleFavorite(id, name, detailsFromId)
         }
     }
 
