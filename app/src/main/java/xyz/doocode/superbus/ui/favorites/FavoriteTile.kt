@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.sp
 import xyz.doocode.superbus.core.dto.FavoriteStation
 import androidx.compose.animation.core.*
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.graphicsLayer
@@ -40,7 +41,7 @@ fun FavoriteTile(
         )
     } else {
         remember {
-            mutableStateOf(0f)
+            mutableFloatStateOf(0f)
         }
     }
 

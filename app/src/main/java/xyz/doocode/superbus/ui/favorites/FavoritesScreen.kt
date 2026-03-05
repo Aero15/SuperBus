@@ -11,14 +11,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -216,7 +214,7 @@ fun FavoritesScreen(
 
                                             if (itemUnderFinger != null && draggedItem != null) {
                                                 val fromIndex =
-                                                    favorites.indexOfFirst { it.id == draggedItem!!.id }
+                                                    favorites.indexOfFirst { it.id == draggedItem!!.id && it.detailsFromId == draggedItem!!.detailsFromId }
                                                 val toIndex = itemUnderFinger.index
 
                                                 if (fromIndex != -1 && fromIndex != toIndex) {
@@ -230,8 +228,9 @@ fun FavoritesScreen(
                                 }
                             }
                     ) {
-                        items(favorites, key = { it.id }) { station ->
-                            val isBeingDragged = draggedItem?.id == station.id
+                        items(favorites, key = { "${it.id}_${it.detailsFromId}" }) { station ->
+                            val isBeingDragged =
+                                draggedItem?.id == station.id && draggedItem?.detailsFromId == station.detailsFromId
 
                             Box(
                                 modifier = Modifier
