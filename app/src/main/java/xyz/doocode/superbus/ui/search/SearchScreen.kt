@@ -39,12 +39,16 @@ import androidx.compose.material3.ListItemDefaults
 import xyz.doocode.superbus.core.dto.Arret
 import android.content.Intent
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DirectionsBus
+import androidx.compose.material.icons.filled.Tram
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.background
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -150,7 +154,7 @@ fun SearchScreen(
                                     modifier = Modifier.padding(16.dp)
                                 )
                                 HorizontalDivider()
-                                LazyColumn {
+                                LazyColumn(modifier = Modifier.background(MaterialTheme.colorScheme.surface)) {
                                     // 1. Recommended Item (Grouped)
                                     item {
                                         ListItem(
@@ -192,22 +196,31 @@ fun SearchScreen(
                                                     alpha = 0.3f
                                                 )
                                             ),
-                                            modifier = Modifier.clickable {
-                                                showBottomSheet = false
-                                                openStopDetails(selectedStop!!, false)
-                                            }
+                                            modifier = Modifier
+                                                .padding(horizontal = 8.dp, vertical = 8.dp)
+                                                .clip(MaterialTheme.shapes.medium)
+                                                .clickable {
+                                                    showBottomSheet = false
+                                                    openStopDetails(selectedStop!!, false)
+                                                }
                                         )
                                         HorizontalDivider(thickness = 0.5.dp)
                                     }
 
                                     // 2. Individual items (By ID)
                                     items(selectedStop!!.duplicates) { duplicate ->
+                                        val isTram = duplicate.id.startsWith("t_")
+                                        val icon =
+                                            if (isTram) Icons.Default.Tram else Icons.Default.DirectionsBus
+                                        val iconColor =
+                                            if (isTram) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.secondary
+
                                         ListItem(
                                             leadingContent = {
                                                 Icon(
-                                                    imageVector = Icons.Default.Place,
-                                                    contentDescription = null,
-                                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                                    imageVector = icon,
+                                                    contentDescription = if (isTram) "Arrêt de tram" else "Arrêt de bus",
+                                                    tint = iconColor
                                                 )
                                             },
                                             headlineContent = { Text(duplicate.nom) },
