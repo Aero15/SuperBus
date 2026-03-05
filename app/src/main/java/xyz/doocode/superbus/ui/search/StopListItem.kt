@@ -17,6 +17,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
@@ -37,6 +38,7 @@ fun StopListItem(
     onFillQuery: (String) -> Unit = {},
     onToggleFavorite: () -> Unit = {},
     onClick: () -> Unit = {},
+    onVariantsClick: () -> Unit = {},
     onDuplicateClick: (Arret) -> Unit = {}
 ) {
     Column {
@@ -112,15 +114,25 @@ fun StopListItem(
                 Surface(
                     shape = MaterialTheme.shapes.small,
                     color = MaterialTheme.colorScheme.tertiaryContainer,
-                    modifier = Modifier.padding(start = 8.dp)
+                    modifier = Modifier.clickable { onVariantsClick() }
                 ) {
                     Text(
-                        text = "+${stop.duplicates.size}",
+                        text = "${stop.duplicates.size} variantes",
                         style = MaterialTheme.typography.labelSmall,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp),
                         color = MaterialTheme.colorScheme.onTertiaryContainer
                     )
                 }
+            } else {
+                // Afficher l'id de la station
+                Text(
+                    text = "#${stop.id}",
+                    fontFamily = FontFamily.Monospace,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                        alpha = 0.6f
+                    )
+                )
             }
 
             /*// Actions
