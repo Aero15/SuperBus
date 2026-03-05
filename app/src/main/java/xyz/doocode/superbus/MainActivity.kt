@@ -83,13 +83,19 @@ fun SuperBusApp() {
                         modifier = modifier,
                         onSearchClick = { currentDestination = AppDestinations.SEARCH },
                         onStationClick = { station ->
-                            val intent = android.content.Intent(context, StopDetailsActivity::class.java)
+                            val intent =
+                                android.content.Intent(context, StopDetailsActivity::class.java)
                             intent.putExtra(StopDetailsActivity.EXTRA_STOP_ID, station.id)
                             intent.putExtra(StopDetailsActivity.EXTRA_STOP_NAME, station.name)
+                            intent.putExtra(
+                                StopDetailsActivity.EXTRA_DETAILS_FROM_ID,
+                                station.detailsFromId
+                            )
                             context.startActivity(intent)
                         }
                     )
                 }
+
                 AppDestinations.SEARCH -> SearchScreen(modifier)
                 AppDestinations.TRAFFIC -> TrafficScreen(modifier)
                 AppDestinations.MENU -> MenuScreen(modifier)

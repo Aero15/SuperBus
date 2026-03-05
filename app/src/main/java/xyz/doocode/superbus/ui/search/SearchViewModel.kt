@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import xyz.doocode.superbus.core.api.ApiClient
 import xyz.doocode.superbus.core.data.FavoritesRepository
+import xyz.doocode.superbus.core.data.ReferenceDataRepository
 import xyz.doocode.superbus.core.dto.Arret
 import xyz.doocode.superbus.core.manager.FavoritesManager
 import xyz.doocode.superbus.core.util.removeAccents
@@ -25,10 +26,11 @@ sealed interface SearchUiState {
 class SearchViewModel(application: Application) : AndroidViewModel(application) {
 
     private val favoritesManager = FavoritesManager(application)
+    private val referenceDataRepository = ReferenceDataRepository.getInstance(application)
 
-    // Configuration flag for deduplication
-    // Set to true to group stops by name, false to show all entries
-    val REMOVE_DUPLICATES = true
+    // Configuration flag for grouping duplicates
+    // Set to true to show grouped stops with a badge, false to show expanded view
+    val GROUP_DUPLICATES = true
 
     private val _allStops = MutableStateFlow<List<Arret>>(emptyList())
     private val _isLoading = MutableStateFlow(false)
@@ -53,8 +55,18 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
                 stops
             } else {
                 val normalizedQuery = query.trim().removeAccents()
-                stops.filter {
-                    it.nom.removeAccents().contains(normalizedQuery, ignoreCase = true)
+                stops.filter { stop ->
+                    stop.nom.removeAccents().contains(normalizedQuery, ignoreCase = true) ||
+                            stop.duplicates.any {
+                                it.id.contains(
+                                    normalizedQuery,
+                                    ignoreCase = true
+                                )
+                            } ||
+                            (stop.duplicates.isEmpty() && stop.id.contains(
+                                normalizedQuery,
+                                ignoreCase = true
+                            ))
                 }
             }
             SearchUiState.Success(filteredStops)
@@ -74,21 +86,29 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
             _isLoading.value = true
             _error.value = null
             try {
-                val response = ApiClient.ginkoService.getArrets()
-                var loadedStops = response.objects
+                // Use repository to get cached data if available
+                val rawStops = referenceDataRepository.getArrets()
 
-                if (REMOVE_DUPLICATES) {
-                    loadedStops = loadedStops
-                        .distinctBy { it.nom } // Deduplicate by name
+                // Always group duplicates by name to prevent data loss
+                val groupedStopsMap = rawStops.groupBy { it.nom }
+                val processedStops = groupedStopsMap.map { (_, stops) ->
+                    // Use a consistent sorting strategy (e.g., by ID) or keep original order
+                    // Here we sort by ID to ensure the main stop is deterministic
+                    val sortedStops = stops.sortedBy { it.id }
+                    val mainStop = sortedStops.first()
+
+                    // Create a copy with the duplicates list populated
+                    // This includes the main stop itself in the list
+                    mainStop.copy(duplicates = sortedStops)
                 }
 
                 // Sort alphabetically
-                loadedStops = loadedStops.sortedBy { it.nom }
+                val sortedList = processedStops.sortedBy { it.nom }
 
-                _allStops.value = loadedStops
+                _allStops.value = sortedList
             } catch (e: Exception) {
-                // In a real app, parse the error to give a better message
                 _error.value = e.localizedMessage ?: "Une erreur inconnue est survenue"
+                e.printStackTrace()
             } finally {
                 _isLoading.value = false
             }
@@ -99,9 +119,11 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
         searchQuery.value = query
     }
 
-    fun toggleFavorite(stop: Arret) {
+    fun toggleFavorite(stop: Arret, detailsFromId: Boolean? = null) {
         viewModelScope.launch {
-            favoritesManager.toggleFavorite(stop.id, stop.nom)
+            val actualDetailsFromId =
+                detailsFromId ?: !(GROUP_DUPLICATES && stop.duplicates.size > 1)
+            favoritesManager.toggleFavorite(stop.id, stop.nom, actualDetailsFromId)
         }
     }
 }

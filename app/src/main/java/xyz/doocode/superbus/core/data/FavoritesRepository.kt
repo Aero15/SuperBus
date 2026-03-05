@@ -25,6 +25,7 @@ class FavoritesRepository(context: Context) {
         return try {
             gson.fromJson(json, type)
         } catch (e: Exception) {
+            e.printStackTrace()
             emptyList()
         }
     }
@@ -35,18 +36,29 @@ class FavoritesRepository(context: Context) {
         _favorites.value = list
     }
 
-    fun isFavorite(stopId: String): Boolean {
-        return _favorites.value.any { it.id == stopId }
+    fun updateFavoritesOrder(newOrder: List<FavoriteStation>) {
+        saveFavorites(newOrder)
     }
 
-    fun addFavorite(stopId: String, stopName: String, lines: List<Ligne>) {
+    fun isFavorite(stopId: String, detailsFromId: Boolean): Boolean {
+        return _favorites.value.any { it.id == stopId && it.detailsFromId == detailsFromId }
+    }
+
+    fun addFavorite(
+        stopId: String,
+        stopName: String,
+        detailsFromId: Boolean,
+        lines: List<Ligne>
+    ) {
         val currentList = _favorites.value.toMutableList()
-        if (currentList.none { it.id == stopId }) {
+        val filteredLines = lines.filter { it.typologie <= 30 }
+        if (currentList.none { it.id == stopId && it.detailsFromId == detailsFromId }) {
             currentList.add(
                 FavoriteStation(
                     id = stopId,
+                    detailsFromId = detailsFromId,
                     name = stopName,
-                    lines = lines,
+                    lines = filteredLines,
                     createdAt = System.currentTimeMillis(),
                     updatedAt = System.currentTimeMillis()
                 )
@@ -55,27 +67,48 @@ class FavoritesRepository(context: Context) {
         }
     }
 
-    fun removeFavorite(stopId: String) {
-        val currentList = _favorites.value.toMutableList()
-        if (currentList.removeIf { it.id == stopId }) {
-            saveFavorites(currentList)
-        }
-    }
 
-    fun updateFavoriteLines(stopId: String, lines: List<Ligne>) {
+    fun renameFavorite(stopId: String, detailsFromId: Boolean, newName: String) {
         val currentList = _favorites.value.toMutableList()
-        val index = currentList.indexOfFirst { it.id == stopId }
+        val index =
+            currentList.indexOfFirst { it.id == stopId && it.detailsFromId == detailsFromId }
 
         if (index != -1) {
             val oldFav = currentList[index]
-
-            if (oldFav.lines != lines) {
+            if (oldFav.name != newName) {
                 val newFav = oldFav.copy(
-                    lines = lines,
+                    name = newName,
                     updatedAt = System.currentTimeMillis()
                 )
                 currentList[index] = newFav
                 saveFavorites(currentList)
+            }
+        }
+    }
+
+    fun removeFavorite(stopId: String, detailsFromId: Boolean) {
+        val currentList = _favorites.value.toMutableList()
+        if (currentList.removeIf { it.id == stopId && it.detailsFromId == detailsFromId }) {
+            saveFavorites(currentList)
+        }
+    }
+
+    fun updateFavoriteLines(stopId: String, detailsFromId: Boolean, lines: List<Ligne>) {
+        val favoriteList = _favorites.value.toMutableList()
+        val index =
+            favoriteList.indexOfFirst { it.id == stopId && it.detailsFromId == detailsFromId }
+
+        if (index != -1) {
+            val oldFav = favoriteList[index]
+            val filteredLines = lines.filter { it.typologie <= 30 && it.id !in listOf("110") }
+
+            if (oldFav.lines != filteredLines) {
+                val newFav = oldFav.copy(
+                    lines = filteredLines,
+                    updatedAt = System.currentTimeMillis()
+                )
+                favoriteList[index] = newFav
+                saveFavorites(favoriteList)
             }
         }
     }

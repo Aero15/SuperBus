@@ -37,11 +37,12 @@ import androidx.core.content.edit
 fun StopDetailsScreen(
     stopName: String?,
     stopId: String?,
+    detailsFromId: Boolean = true,
     onBackClick: () -> Unit,
     viewModel: StopDetailsViewModel = viewModel()
 ) {
     LaunchedEffect(stopName, stopId) {
-        viewModel.init(stopName, stopId)
+        viewModel.init(stopName, stopId, detailsFromId)
     }
 
     val uiState by viewModel.uiState.collectAsState()
@@ -55,9 +56,9 @@ fun StopDetailsScreen(
     // Keep Screen On Logic
     val context = LocalContext.current
     val activity = context as? Activity
-    val prefs = remember { context.getSharedPreferences("app_settings", Context.MODE_PRIVATE) }
-    var keepScreenOn by remember {
-        mutableStateOf(prefs.getBoolean("keep_screen_on", false))
+    val prefs = remember { context.getSharedPreferences("superbus_app_settings", Context.MODE_PRIVATE) }
+    var keepScreenOn by remember { 
+        mutableStateOf(prefs.getBoolean("keep_screen_on", false)) 
     }
 
     LaunchedEffect(keepScreenOn) {

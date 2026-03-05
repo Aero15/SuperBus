@@ -44,27 +44,31 @@ class StopDetailsViewModel(application: Application) : AndroidViewModel(applicat
 
     private var currentStopName: String? = null
     private var currentStopId: String? = null
+    private var detailsFromId: Boolean = true
     private var pollingJob: Job? = null
     private var lastRefreshTime = 0L
 
-    fun init(stopName: String?, stopId: String?) {
+    fun init(stopName: String?, stopId: String?, detailsFromId: Boolean = true) {
         val isNew = (currentStopName != stopName || currentStopId != stopId)
         currentStopName = stopName
         currentStopId = stopId
+        this.detailsFromId = detailsFromId
 
         stopId?.let { id ->
             viewModelScope.launch {
                 repository.favorites.collectLatest { favorites ->
-                    _isFavorite.value = favorites.any { it.id == id }
+                    _isFavorite.value =
+                        favorites.any { it.id == id && it.detailsFromId == detailsFromId }
                 }
             }
             viewModelScope.launch {
-                favoritesManager.refreshFavoriteLines(id)
+                favoritesManager.refreshFavoriteLines(id, detailsFromId)
             }
         }
 
         if (isNew) {
             loadData(forceRefresh = true)
+            // Récupérer détails de l'arrêt (getDetailsArret) si l'id est présent
         }
         startAutoRefresh()
     }
@@ -75,7 +79,7 @@ class StopDetailsViewModel(application: Application) : AndroidViewModel(applicat
     fun toggleFavorite() {
         if (id.isEmpty()) return
         viewModelScope.launch {
-            favoritesManager.toggleFavorite(id, name)
+            favoritesManager.toggleFavorite(id, name, detailsFromId)
         }
     }
 
@@ -106,22 +110,35 @@ class StopDetailsViewModel(application: Application) : AndroidViewModel(applicat
 
         viewModelScope.launch {
             try {
-                if (currentStopName != null) {
-                    val response =
-                        ApiClient.ginkoService.getTempsLieu(nom = currentStopName!!, nb = 3)
-                    val arrivals = response.objects.listeTemps
+                if (currentStopName != null || currentStopId != null) {
+                    val response = when {
+                        currentStopId != null && detailsFromId ->
+                            ApiClient.ginkoService.getTempsLieu(idArret = currentStopId!!, nb = 3)
 
-                    if (arrivals.isEmpty()) {
-                        _uiState.value = StopDetailsUiState.Empty
-                    } else {
-                        val grouped = arrivals.groupBy { "${it.numLignePublic}|${it.destination}" }
-                            .mapValues { (_, list) ->
-                                list.sortedWith(compareBy {
-                                    if (it.temps.contains("min")) 0 else 1
-                                })
-                            }
-                        _uiState.value = StopDetailsUiState.Success(response.objects, grouped)
+                        currentStopName != null && !detailsFromId ->
+                            ApiClient.ginkoService.getTempsLieu(nom = currentStopName!!, nb = 3)
+
+                        else -> null
                     }
+
+                    response?.let { res ->
+                        val arrivals = res.objects.listeTemps
+
+                        if (arrivals.isEmpty()) {
+                            _uiState.value = StopDetailsUiState.Empty
+                        } else {
+                            val grouped = arrivals
+                                .groupBy { "${it.numLignePublic}|${it.destination}" }
+                                .mapValues { (_, list) ->
+                                    list.sortedWith(compareBy { if (it.temps.contains("min")) 0 else 1 })
+                                }
+
+                            _uiState.value = StopDetailsUiState.Success(res.objects, grouped)
+                        }
+                    }
+                } else {
+                    _uiState.value =
+                        StopDetailsUiState.Error("Aucun identifiant de la station est disponible")
                 }
             } catch (e: Exception) {
                 if (_uiState.value !is StopDetailsUiState.Success) {

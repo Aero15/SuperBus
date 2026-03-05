@@ -4,6 +4,7 @@ data class FavoriteStation(
     val id: String,
     val name: String,
     val lines: List<Ligne>,
+    val detailsFromId: Boolean,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
 )
