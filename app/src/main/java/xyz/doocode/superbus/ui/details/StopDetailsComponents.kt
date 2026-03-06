@@ -4,14 +4,13 @@ import android.content.res.Configuration
 import androidx.compose.animation.animateColor
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.NoTransfer
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -37,6 +36,7 @@ fun ArrivalCard(
     val lineColor = parseLineColor(couleurFond)
     val gradientColors = getGradientColors(lineColor)
     val shape = RoundedCornerShape(14.dp)
+    var isExpoMode by remember { mutableStateOf(false) }
 
     Card(
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
@@ -77,7 +77,12 @@ fun ArrivalCard(
                 if (firstTime != null && firstTime.equals("Non desservi", ignoreCase = true)) {
                     ServiceNotServed()
                 } else {
-                    ArrivalTimesRow(times = times, lineColor = lineColor)
+                    ArrivalTimesRow(
+                        times = times,
+                        lineColor = lineColor,
+                        isExpoMode = isExpoMode,
+                        onToggleMode = { isExpoMode = !isExpoMode }
+                    )
                 }
             }
         }
@@ -214,12 +219,15 @@ private fun ServiceNotServedPreview() {
 @Composable
 fun ArrivalTimesRow(
     times: List<Temps>,
-    lineColor: Color
+    lineColor: Color,
+    isExpoMode: Boolean = false,
+    onToggleMode: () -> Unit = {}
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(IntrinsicSize.Min),
+            .height(IntrinsicSize.Min)
+            .clickable { onToggleMode() },
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -230,7 +238,11 @@ fun ArrivalTimesRow(
                 modifier = Modifier.weight(1f),
                 contentAlignment = Alignment.Center
             ) {
-                TimeDisplayMinimal(temps, lineColor, isFirst = index == 0)
+                if (isExpoMode) {
+                    TimeDisplayExpo(temps, lineColor)
+                } else {
+                    TimeDisplayMinimal(temps, lineColor, isFirst = index == 0)
+                }
             }
 
             if (index < displayTimes.size - 1) {
@@ -240,6 +252,100 @@ fun ArrivalTimesRow(
                     modifier = Modifier.height(24.dp)
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun TimeDisplayExpo(temps: Temps, accentColor: Color) {
+    val isRealTime = temps.fiable
+    val timeStr = temps.temps
+
+    // Extract minutes from string like "5 min"
+    val minutes = if (timeStr.contains("min")) {
+        timeStr.filter { it.isDigit() }.toIntOrNull()
+    } else 99 // Assume far if parsing fails or formatted as HH:MM
+
+    val isUrgent = minutes != null && minutes < 2
+    val isNear = minutes != null && minutes < 10
+
+    // Colors
+    val defaultColor =
+        if (isRealTime) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.primary
+    val blinkTargetColor = if (isUrgent) {
+        Color.Red
+    } else {
+        defaultColor.copy(alpha = 0.3f).compositeOver(MaterialTheme.colorScheme.surface)
+    }
+
+    // Blink Animation
+    val infiniteTransition = rememberInfiniteTransition(label = "blink_expo")
+    val animatedColor by if (isUrgent || isNear) {
+        val duration = if (isUrgent) 600 else 900
+        infiniteTransition.animateColor(
+            initialValue = defaultColor,
+            targetValue = blinkTargetColor,
+            animationSpec = infiniteRepeatable(
+                animation = tween(duration, easing = LinearEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "color_expo"
+        )
+    } else {
+        rememberUpdatedState(defaultColor)
+    }
+
+    val numberOnly = if (timeStr.contains("min")) {
+        timeStr.filter { it.isDigit() }
+    } else null
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        if (!numberOnly.isNullOrEmpty()) {
+            // Display for minutes
+            Text(
+                text = numberOnly,
+                style = MaterialTheme.typography.displayLarge.copy(
+                    fontWeight = if (isUrgent || isNear) FontWeight.Black else FontWeight.Normal
+                ),
+                color = animatedColor,
+                lineHeight = 40.sp,
+                modifier = Modifier.offset(y = 4.dp)
+            )
+            Text(
+                text = "min",
+                style = MaterialTheme.typography.bodyMedium,
+                color = animatedColor,
+                modifier = Modifier.offset(y = (-4).dp)
+            )
+        } else {
+            // Display for time like "20:45" or "Proche"
+            Text(
+                text = timeStr,
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = animatedColor
+            )
+        }
+
+        if (isUrgent) {
+            Text(
+                text = "Imminent",
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.error,
+                fontSize = 11.sp
+            )
+        } else if (!isRealTime) {
+            Text(
+                text = "Théorique",
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.error,
+                fontSize = 11.sp
+            )
         }
     }
 }
@@ -323,14 +429,31 @@ fun TimeDisplayMinimal(temps: Temps, accentColor: Color, isFirst: Boolean) {
 private fun ArrivalTimesRowPreview() {
     SuperBusTheme {
         Surface {
-            ArrivalTimesRow(
-                times = listOf(
-                    mockTemps("2 min", true),
-                    mockTemps("8 min", false),
-                    mockTemps("15 min", true)
-                ),
-                lineColor = Color.Red
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text("Normal Mode:", modifier = Modifier.padding(4.dp))
+                ArrivalTimesRow(
+                    times = listOf(
+                        mockTemps("2 min", true),
+                        mockTemps("8 min", false),
+                        mockTemps("15 min", true)
+                    ),
+                    lineColor = Color.Red,
+                    isExpoMode = false
+                )
+
+                HorizontalDivider()
+
+                Text("Expo Mode:", modifier = Modifier.padding(4.dp))
+                ArrivalTimesRow(
+                    times = listOf(
+                        mockTemps("2 min", true),
+                        mockTemps("8 min", false),
+                        mockTemps("20:40", true)
+                    ),
+                    lineColor = Color.Red,
+                    isExpoMode = true
+                )
+            }
         }
     }
 }
