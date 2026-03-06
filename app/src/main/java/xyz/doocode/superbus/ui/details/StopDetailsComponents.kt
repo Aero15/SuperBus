@@ -1,18 +1,20 @@
 package xyz.doocode.superbus.ui.details
 
 import android.content.res.Configuration
-import androidx.compose.animation.animateColor
+import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.NoTransfer
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
@@ -38,6 +40,7 @@ fun ArrivalCard(
     val gradientColors = getGradientColors(lineColor)
     val shape = RoundedCornerShape(14.dp)
     var isExpoMode by remember { mutableStateOf(initialExpoMode) }
+    var isExpanded by remember { mutableStateOf(true) }
 
     Card(
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
@@ -55,12 +58,19 @@ fun ArrivalCard(
     ) {
         Column {
             // Top Border Strip
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(6.dp)
-                    .background(lineColor)
-            )
+            AnimatedVisibility(
+                visible = isExpanded,
+                enter = expandVertically(),
+                exit = shrinkVertically()
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(6.dp)
+                        .background(lineColor)
+                )
+            }
+
             Column(
                 modifier = Modifier.padding(10.dp)
             ) {
@@ -68,22 +78,36 @@ fun ArrivalCard(
                     numLigne = numLigne,
                     destination = destination,
                     couleurFond = couleurFond,
-                    couleurTexte = couleurTexte
+                    couleurTexte = couleurTexte,
+                    isExpanded = isExpanded,
+                    onToggleExpand = { isExpanded = !isExpanded }
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                AnimatedVisibility(
+                    visible = isExpanded,
+                    enter = expandVertically() + fadeIn(),
+                    exit = shrinkVertically() + fadeOut()
+                ) {
+                    Column {
+                        Spacer(modifier = Modifier.height(16.dp))
 
-                // Check for "Non desservi" case
-                val firstTime = times.firstOrNull()?.temps
-                if (firstTime != null && firstTime.equals("Non desservi", ignoreCase = true)) {
-                    ServiceNotServed()
-                } else {
-                    ArrivalTimesRow(
-                        times = times,
-                        lineColor = lineColor,
-                        isExpoMode = isExpoMode,
-                        onToggleMode = { isExpoMode = !isExpoMode }
-                    )
+                        // Check for "Non desservi" case
+                        val firstTime = times.firstOrNull()?.temps
+                        if (firstTime != null && firstTime.equals(
+                                "Non desservi",
+                                ignoreCase = true
+                            )
+                        ) {
+                            ServiceNotServed()
+                        } else {
+                            ArrivalTimesRow(
+                                times = times,
+                                lineColor = lineColor,
+                                isExpoMode = isExpoMode,
+                                onToggleMode = { isExpoMode = !isExpoMode }
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -131,11 +155,20 @@ fun ArrivalCardHeader(
     numLigne: String,
     destination: String,
     couleurFond: String,
-    couleurTexte: String
+    couleurTexte: String,
+    isExpanded: Boolean,
+    onToggleExpand: () -> Unit
 ) {
+    val rotation by animateFloatAsState(
+        targetValue = if (isExpanded) 180f else 0f,
+        label = "chevronRotation"
+    )
+
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onToggleExpand() }
     ) {
         LineBadge(
             numLigne = numLigne,
@@ -149,6 +182,12 @@ fun ArrivalCardHeader(
             fontWeight = FontWeight.Bold,
             maxLines = 1,
             modifier = Modifier.weight(1f)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Icon(
+            imageVector = Icons.Default.KeyboardArrowDown,
+            contentDescription = if (isExpanded) "Réduire" else "Étendre",
+            modifier = Modifier.rotate(rotation)
         )
     }
 }
@@ -167,7 +206,9 @@ private fun ArrivalCardHeaderPreview() {
                 numLigne = "L3",
                 destination = "Pole Temis",
                 couleurFond = "00558f",
-                couleurTexte = "FFFFFF"
+                couleurTexte = "FFFFFF",
+                isExpanded = true,
+                onToggleExpand = {}
             )
         }
     }
