@@ -153,7 +153,7 @@ fun StopDetailsScreen(
                 .fillMaxSize()
         ) {
             LazyVerticalGrid(
-                columns = GridCells.Fixed(if (LocalWindowInfo.current.containerSize.width.dp > 600.dp) 2 else 1),
+                columns = GridCells.Fixed(/*if (LocalWindowInfo.current.containerSize.width.dp > 600.dp) 2 else*/ 1),
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),

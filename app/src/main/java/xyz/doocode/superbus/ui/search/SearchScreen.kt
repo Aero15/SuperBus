@@ -130,8 +130,8 @@ fun SearchScreen(
                                 favorites.find {
                                     it.id == stop.id && (
                                             (stop.duplicates.size > 1 && !it.detailsFromId) ||
-                                                    (stop.duplicates.isEmpty() && it.detailsFromId)
-                                            )
+                                            (stop.duplicates.size == 1 && it.detailsFromId)
+                                    )
                                 }
                             val isFavorite = favorite != null
 
