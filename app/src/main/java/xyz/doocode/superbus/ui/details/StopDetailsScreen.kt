@@ -56,9 +56,10 @@ fun StopDetailsScreen(
     // Keep Screen On Logic
     val context = LocalContext.current
     val activity = context as? Activity
-    val prefs = remember { context.getSharedPreferences("superbus_app_settings", Context.MODE_PRIVATE) }
-    var keepScreenOn by remember { 
-        mutableStateOf(prefs.getBoolean("keep_screen_on", false)) 
+    val prefs =
+        remember { context.getSharedPreferences("superbus_app_settings", Context.MODE_PRIVATE) }
+    var keepScreenOn by remember {
+        mutableStateOf(prefs.getBoolean("keep_screen_on", false))
     }
 
     LaunchedEffect(keepScreenOn) {
@@ -153,7 +154,9 @@ fun StopDetailsScreen(
                 .fillMaxSize()
         ) {
             LazyVerticalGrid(
-                columns = GridCells.Fixed(/*if (LocalWindowInfo.current.containerSize.width.dp > 600.dp) 2 else*/ 1),
+                columns = GridCells.Fixed(/*if (LocalWindowInfo.current.containerSize.width.dp > 600.dp) 2 else*/
+                    1
+                ),
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -182,14 +185,16 @@ fun StopDetailsScreen(
                     }
 
                     is StopDetailsUiState.Success -> {
-                        items(state.groupedArrivals.toList()) { (key, arrivals) ->
+                        val list = state.groupedArrivals.toList()
+                        items(list) { (key, arrivals) ->
                             val parts = key.split("|")
                             ArrivalCard(
                                 numLigne = parts.getOrNull(0) ?: "?",
                                 destination = parts.getOrNull(1) ?: "?",
                                 couleurFond = arrivals.first().couleurFond,
                                 couleurTexte = arrivals.first().couleurTexte,
-                                times = arrivals
+                                times = arrivals,
+                                initialExpoMode = list.size < 3
                             )
                         }
                     }

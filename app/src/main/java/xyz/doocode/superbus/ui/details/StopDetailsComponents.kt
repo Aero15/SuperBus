@@ -31,12 +31,13 @@ fun ArrivalCard(
     destination: String,
     couleurFond: String,
     couleurTexte: String,
-    times: List<Temps>
+    times: List<Temps>,
+    initialExpoMode: Boolean = false
 ) {
     val lineColor = parseLineColor(couleurFond)
     val gradientColors = getGradientColors(lineColor)
     val shape = RoundedCornerShape(14.dp)
-    var isExpoMode by remember { mutableStateOf(false) }
+    var isExpoMode by remember { mutableStateOf(initialExpoMode) }
 
     Card(
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
