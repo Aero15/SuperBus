@@ -8,6 +8,8 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
@@ -20,6 +22,7 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
@@ -30,6 +33,7 @@ import xyz.doocode.superbus.ui.components.EmptyDataView
 import xyz.doocode.superbus.ui.components.ErrorView
 import xyz.doocode.superbus.ui.components.LoadingView
 import androidx.core.content.edit
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,10 +69,44 @@ fun StopDetailsScreen(
         activity?.setKeepScreenOn(keepScreenOn)
     }
 
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+
+    fun toggleScreenOn() {
+        keepScreenOn = !keepScreenOn
+        prefs.edit { putBoolean("keep_screen_on", keepScreenOn) }
+        scope.launch {
+            snackbarHostState.currentSnackbarData?.dismiss()
+            snackbarHostState.showSnackbar(
+                message = if (keepScreenOn) "L'écran restera allumé" else "L'option est maintenant désactivée",
+                withDismissAction = true,
+                duration = SnackbarDuration.Short
+            )
+        }
+    }
+
     var showMenu by remember { mutableStateOf(false) }
+    var forcedExpandState by remember { mutableStateOf<Boolean?>(null) }
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState) { data ->
+                val isSuccess = data.visuals.message == "L'écran restera allumé"
+                SwipeToDismissBox(
+                    state = rememberSwipeToDismissBoxState(),
+                    backgroundContent = {}
+                ) {
+                    Snackbar(
+                        snackbarData = data,
+                        containerColor = if (isSuccess) Color(0xFF4CAF50) else MaterialTheme.colorScheme.surfaceContainerHighest,
+                        contentColor = if (isSuccess) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                        actionColor = if (isSuccess) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                        dismissActionContentColor = if (isSuccess) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        },
         topBar = {
             LargeTopAppBar(
                 title = {
@@ -112,6 +150,15 @@ fun StopDetailsScreen(
                             tint = if (isFavorite) MaterialTheme.colorScheme.primary else LocalContentColor.current
                         )
                     }
+                    if (keepScreenOn) {
+                        IconButton(onClick = { toggleScreenOn() }) {
+                            Icon(
+                                imageVector = Icons.Default.Lightbulb,
+                                contentDescription = "Désactiver l'écran toujours allumé",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
                     Box {
                         IconButton(onClick = { showMenu = true }) {
                             Icon(Icons.Default.MoreVert, "Plus d'options")
@@ -150,8 +197,20 @@ fun StopDetailsScreen(
                                     }
                                 },
                                 onClick = {
-                                    keepScreenOn = !keepScreenOn
-                                    prefs.edit { putBoolean("keep_screen_on", keepScreenOn) }
+                                    toggleScreenOn()
+                                    showMenu = false
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text(if (forcedExpandState != false) "Tout réduire" else "Tout développer") },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = if (forcedExpandState != false) Icons.Default.ArrowUpward else Icons.Default.ArrowDownward,
+                                        contentDescription = null
+                                    )
+                                },
+                                onClick = {
+                                    forcedExpandState = forcedExpandState == false
                                     showMenu = false
                                 }
                             )
@@ -211,7 +270,8 @@ fun StopDetailsScreen(
                                 couleurFond = arrivals.first().couleurFond,
                                 couleurTexte = arrivals.first().couleurTexte,
                                 times = arrivals,
-                                initialExpoMode = list.size < 3
+                                initialExpoMode = list.size < 3,
+                                forcedExpandState = forcedExpandState
                             )
                         }
                     }
