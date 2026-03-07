@@ -49,7 +49,7 @@ fun TimeDisplayExpo(temps: Temps, accentColor: Color) {
     ) {
         val (mainText, subText) = remember(timeStr, durationMinutes) {
             if (durationMinutes != null) {
-                if (durationMinutes < 60) {
+                if (durationMinutes <= 99) {
                     durationMinutes.toString() to "min"
                 } else {
                     val h = durationMinutes / 60
@@ -220,7 +220,7 @@ private fun TimeDisplayPreview() {
                         accentColor = MaterialTheme.colorScheme.primary
                     )
                     TimeDisplayExpo(
-                        temps = mockTemps("24 min", false),
+                        temps = mockTemps("88 min", false),
                         accentColor = MaterialTheme.colorScheme.primary
                     )
                 }

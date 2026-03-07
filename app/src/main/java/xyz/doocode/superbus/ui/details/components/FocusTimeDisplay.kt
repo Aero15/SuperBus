@@ -55,8 +55,15 @@ fun FocusTimeDisplay(temps: Temps, isPrimary: Boolean) {
             val styleUnit =
                 if (isPrimary) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.titleLarge
 
+            val (mainText, subText) = if (durationMinutes <= 99) {
+                durationMinutes.toString() to "min"
+            } else {
+                val h = durationMinutes / 60
+                ">$h" to if (h > 1) "heures" else "heure"
+            }
+
             Text(
-                text = "$durationMinutes",
+                text = mainText,
                 style = styleNumber,
                 fontWeight = fontWeight,
                 color = animatedColor,
@@ -64,7 +71,7 @@ fun FocusTimeDisplay(temps: Temps, isPrimary: Boolean) {
                 modifier = if (isPrimary) Modifier.offset(y = 16.dp) else Modifier
             )
             Text(
-                text = "min",
+                text = subText,
                 style = styleUnit,
                 fontWeight = FontWeight.Bold,
                 color = animatedColor.copy(alpha = 0.8f)
