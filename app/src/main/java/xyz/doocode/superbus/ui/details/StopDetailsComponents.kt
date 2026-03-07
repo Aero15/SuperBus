@@ -303,13 +303,27 @@ fun TimeDisplayExpo(temps: Temps, accentColor: Color) {
     val isRealTime = temps.fiable
     val timeStr = temps.temps
 
-    // Extract minutes from string like "5 min"
-    val minutes = if (timeStr.contains("min")) {
+    // Extract minutes from string like "5 min", "1 h 15", or calculate from seconds
+    val durationMinutes = if (timeStr.contains("min")) {
         timeStr.filter { it.isDigit() }.toIntOrNull()
-    } else 99 // Assume far if parsing fails or formatted as HH:MM
+    } else if (temps.tempsEnSeconde > 0) {
+        temps.tempsEnSeconde / 60
+    } else if (timeStr.contains("h") && !timeStr.contains(":")) {
+        try {
+            val parts = timeStr.lowercase().split("h")
+            val h = parts[0].trim().filter { it.isDigit() }.toInt()
+            val m = parts.getOrNull(1)?.trim()?.filter { it.isDigit() }?.toIntOrNull() ?: 0
+            h * 60 + m
+        } catch (e: Exception) {
+            null
+        }
+    } else {
+        null
+    }
 
-    val isUrgent = minutes != null && minutes < 2
-    val isNear = minutes != null && minutes < 10
+    val effectiveMinutes = durationMinutes ?: 99
+    val isUrgent = effectiveMinutes < 2
+    val isNear = effectiveMinutes < 10
 
     // Colors
     val defaultColor =
@@ -337,33 +351,45 @@ fun TimeDisplayExpo(temps: Temps, accentColor: Color) {
         rememberUpdatedState(defaultColor)
     }
 
-    val numberOnly = if (timeStr.contains("min")) {
-        timeStr.filter { it.isDigit() }
-    } else null
-
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        if (!numberOnly.isNullOrEmpty()) {
-            // Display for minutes
+        val (mainText, subText) = remember(timeStr, durationMinutes) {
+            if (durationMinutes != null) {
+                if (durationMinutes < 60) {
+                    durationMinutes.toString() to "min"
+                } else {
+                    val h = durationMinutes / 60
+                    ">$h" to if (h > 1) "heures" else "heure"
+                }
+            } else if (timeStr.matches(Regex("\\d{1,2}:\\d{2}"))) {
+                val parts = timeStr.split(":")
+                "${parts[0]}h" to parts[1]
+            } else {
+                null to null
+            }
+        }
+
+        if (mainText != null && subText != null) {
+            // Display for minutes, hours, or HH:MM
             Text(
-                text = numberOnly,
+                text = mainText,
                 style = MaterialTheme.typography.displayLarge.copy(
-                    fontWeight = if (isUrgent || isNear) FontWeight.Black else FontWeight.Normal
+                    fontWeight = if (isUrgent) FontWeight.Black else FontWeight.Normal
                 ),
                 color = animatedColor,
                 lineHeight = 40.sp,
                 modifier = Modifier.offset(y = 4.dp)
             )
             Text(
-                text = "min",
+                text = subText,
                 style = MaterialTheme.typography.bodyMedium,
                 color = animatedColor,
                 modifier = Modifier.offset(y = (-4).dp)
             )
         } else {
-            // Display for time like "20:45" or "Proche"
+            // Display for text like "Proche" or unparseable formats
             Text(
                 text = timeStr,
                 style = MaterialTheme.typography.headlineMedium,
@@ -372,7 +398,7 @@ fun TimeDisplayExpo(temps: Temps, accentColor: Color) {
             )
         }
 
-        if (isUrgent) {
+        /*if (isUrgent) {
             Text(
                 text = "Imminent",
                 style = MaterialTheme.typography.labelSmall,
@@ -380,15 +406,15 @@ fun TimeDisplayExpo(temps: Temps, accentColor: Color) {
                 color = MaterialTheme.colorScheme.error,
                 fontSize = 11.sp
             )
-        } else if (!isRealTime) {
-            Text(
-                text = "Théorique",
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.error,
-                fontSize = 11.sp
-            )
-        }
+        } else*/ if (!isRealTime) {
+        Text(
+            text = "Théorique",
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.error,
+            fontSize = 11.sp
+        )
+    }
     }
 }
 
@@ -490,7 +516,10 @@ private fun ArrivalTimesRowPreview() {
                     times = listOf(
                         mockTemps("2 min", true),
                         mockTemps("8 min", false),
-                        mockTemps("20:40", true)
+                        // Case with time format but seconds provided (e.g. 40 minutes away = 2400s)
+                        mockTemps("20:40", true, 2400),
+                        // Case with time format > 60 min (e.g. 75 min = 4500s)
+                        mockTemps("21:15", false, 4500)
                     ),
                     lineColor = Color.Red,
                     isExpoMode = true
@@ -522,7 +551,7 @@ private fun TimeDisplayPreview() {
                     isFirst = false
                 )
                 TimeDisplayMinimal(
-                    temps = mockTemps("12 min", false),
+                    temps = mockTemps("21h55", false, tempsEnSeconde = 300),
                     accentColor = MaterialTheme.colorScheme.primary,
                     isFirst = false
                 )
@@ -533,12 +562,13 @@ private fun TimeDisplayPreview() {
 
 private fun mockTemps(
     temps: String = "5 min",
-    fiable: Boolean = true
+    fiable: Boolean = true,
+    tempsEnSeconde: Int = 0
 ): Temps {
     return Temps(
         idArret = "", latitude = 0.0, longitude = 0.0, idLigne = "", numLignePublic = "",
         couleurFond = "", couleurTexte = "", sensAller = true, destination = "",
-        precisionDestination = "", temps = temps, tempsHTML = "", tempsEnSeconde = 0,
+        precisionDestination = "", temps = temps, tempsHTML = "", tempsEnSeconde = tempsEnSeconde,
         typeDeTemps = 0, alternance = false, tempsHTMLEnAlternance = "", fiable = fiable,
         numVehicule = "", accessibiliteArret = 0, accessibiliteVehicule = 0, affluence = 0,
         texteAffluence = "", aideDecisionAffluence = "", tauxDeCharge = 0.0, idInfoTrafic = 0,
