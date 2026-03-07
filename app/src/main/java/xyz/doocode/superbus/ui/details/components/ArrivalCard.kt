@@ -3,8 +3,10 @@ package xyz.doocode.superbus.ui.details.components
 import android.content.res.Configuration
 import androidx.compose.animation.*
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -22,6 +24,7 @@ import xyz.doocode.superbus.core.dto.Temps
 import xyz.doocode.superbus.ui.components.LineBadge
 import xyz.doocode.superbus.ui.theme.SuperBusTheme
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ArrivalCard(
     numLigne: String,
@@ -30,7 +33,8 @@ fun ArrivalCard(
     couleurTexte: String,
     times: List<Temps>,
     initialExpoMode: Boolean = false,
-    forcedExpandState: Boolean? = null
+    forcedExpandState: Boolean? = null,
+    onLongClick: (() -> Unit)? = null
 ) {
     val lineColor = StopDetailsUtils.parseLineColor(couleurFond)
     val gradientColors = StopDetailsUtils.getGradientColors(lineColor)
@@ -53,6 +57,10 @@ fun ArrivalCard(
         shape = shape,
         modifier = Modifier
             .fillMaxWidth()
+            .combinedClickable(
+                onClick = {}, // No op click on body (handled by children or ignored)
+                onLongClick = onLongClick
+            )
             .scrollingGradient(gradientColors, times, shape)
     ) {
         Column {
@@ -79,7 +87,8 @@ fun ArrivalCard(
                     couleurFond = couleurFond,
                     couleurTexte = couleurTexte,
                     isExpanded = isExpanded,
-                    onToggleExpand = { isExpanded = !isExpanded }
+                    onToggleExpand = { isExpanded = !isExpanded },
+                    onLongClick = onLongClick
                 )
 
                 AnimatedVisibility(
@@ -103,7 +112,8 @@ fun ArrivalCard(
                                 times = times,
                                 lineColor = lineColor,
                                 isExpoMode = isExpoMode,
-                                onToggleMode = { isExpoMode = !isExpoMode }
+                                onToggleMode = { isExpoMode = !isExpoMode },
+                                onLongClick = onLongClick
                             )
                         }
                     }
@@ -113,6 +123,7 @@ fun ArrivalCard(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ArrivalCardHeader(
     numLigne: String,
@@ -120,7 +131,8 @@ fun ArrivalCardHeader(
     couleurFond: String,
     couleurTexte: String,
     isExpanded: Boolean,
-    onToggleExpand: () -> Unit
+    onToggleExpand: () -> Unit,
+    onLongClick: (() -> Unit)? = null
 ) {
     val rotation by animateFloatAsState(
         targetValue = if (isExpanded) 180f else 0f,
@@ -131,7 +143,10 @@ fun ArrivalCardHeader(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onToggleExpand() }
+            .combinedClickable(
+                onClick = onToggleExpand,
+                onLongClick = onLongClick
+            )
     ) {
         LineBadge(
             numLigne = numLigne,

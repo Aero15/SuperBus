@@ -42,7 +42,7 @@ fun FocusArrivalCard(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .fillMaxWidth()
-                .height(6.dp)
+                .height(10.dp)
                 .background(lineColor)
         )
 

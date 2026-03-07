@@ -1,7 +1,8 @@
 package xyz.doocode.superbus.ui.details.components
 
 import android.content.res.Configuration
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -16,18 +17,23 @@ import androidx.compose.ui.unit.dp
 import xyz.doocode.superbus.core.dto.Temps
 import xyz.doocode.superbus.ui.theme.SuperBusTheme
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ArrivalTimesRow(
     times: List<Temps>,
     lineColor: Color,
     isExpoMode: Boolean = false,
-    onToggleMode: () -> Unit = {}
+    onToggleMode: () -> Unit = {},
+    onLongClick: (() -> Unit)? = null
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(IntrinsicSize.Min)
-            .clickable { onToggleMode() },
+            .combinedClickable(
+                onClick = onToggleMode,
+                onLongClick = onLongClick
+            ),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {

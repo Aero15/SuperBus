@@ -2,6 +2,7 @@ package xyz.doocode.superbus.ui.details
 
 import android.app.Activity
 import android.content.Context
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -91,6 +92,11 @@ fun StopDetailsScreen(
 
     var showMenu by remember { mutableStateOf(false) }
     var forcedExpandState by remember { mutableStateOf<Boolean?>(null) }
+    var focusedItemKey by remember { mutableStateOf<String?>(null) }
+
+    BackHandler(enabled = focusedItemKey != null) {
+        focusedItemKey = null
+    }
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -139,7 +145,13 @@ fun StopDetailsScreen(
                     }
                 },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(onClick = {
+                        if (focusedItemKey != null) {
+                            focusedItemKey = null
+                        } else {
+                            onBackClick()
+                        }
+                    }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Retour"
@@ -236,9 +248,22 @@ fun StopDetailsScreen(
                 .fillMaxSize()
         ) {
             val state = uiState
-            if (state is StopDetailsUiState.Success && state.groupedArrivals.size == 1) {
-                val list = state.groupedArrivals.toList()
-                val (key, arrivals) = list.first()
+
+            // Auto-clear focus if item is gone
+            LaunchedEffect(state, focusedItemKey) {
+                if (state is StopDetailsUiState.Success && focusedItemKey != null) {
+                    if (!state.groupedArrivals.containsKey(focusedItemKey)) {
+                        focusedItemKey = null
+                    }
+                }
+            }
+
+            val focusedEntry = if (state is StopDetailsUiState.Success && focusedItemKey != null) {
+                state.groupedArrivals.entries.find { it.key == focusedItemKey }?.toPair()
+            } else null
+
+            if (state is StopDetailsUiState.Success && (state.groupedArrivals.size == 1 || focusedEntry != null)) {
+                val (key, arrivals) = focusedEntry ?: state.groupedArrivals.toList().first()
                 val parts = key.split("|")
                 FocusArrivalCard(
                     numLigne = parts.getOrNull(0) ?: "?",
@@ -288,7 +313,8 @@ fun StopDetailsScreen(
                                     couleurTexte = arrivals.first().couleurTexte,
                                     times = arrivals.take(3),
                                     initialExpoMode = list.size < 3,
-                                    forcedExpandState = forcedExpandState
+                                    forcedExpandState = forcedExpandState,
+                                    onLongClick = { focusedItemKey = key }
                                 )
                             }
                         }
