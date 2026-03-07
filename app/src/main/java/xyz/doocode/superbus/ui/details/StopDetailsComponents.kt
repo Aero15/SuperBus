@@ -14,10 +14,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -61,10 +66,7 @@ fun ArrivalCard(
         shape = shape,
         modifier = Modifier
             .fillMaxWidth()
-            .background(
-                brush = Brush.verticalGradient(colors = gradientColors),
-                shape = shape
-            )
+            .scrollingGradient(gradientColors, times, shape)
     ) {
         Column {
             // Top Border Strip
@@ -620,7 +622,7 @@ fun FocusArrivalCard(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(brush = Brush.verticalGradient(colors = gradientColors))
+            .scrollingGradient(gradientColors, times, RectangleShape)
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -850,4 +852,41 @@ fun FocusTimeDisplay(temps: Temps, isPrimary: Boolean) {
             )
         }
     }
+}
+
+@Composable
+fun Modifier.scrollingGradient(
+    colors: List<Color>,
+    trigger: Any?,
+    shape: Shape
+): Modifier = composed {
+    val progress = remember { Animatable(1f) }
+
+    LaunchedEffect(trigger) {
+        progress.snapTo(0f)
+        progress.animateTo(
+            targetValue = 1f,
+            animationSpec = tween(durationMillis = 1500, easing = FastOutSlowInEasing)
+        )
+    }
+
+    this
+        .clip(shape)
+        .drawWithCache {
+            val h = size.height
+            val totalDistance = 2 * h
+            val shift = progress.value * totalDistance
+
+            val doubleColors = colors + colors
+
+            val brush = Brush.verticalGradient(
+                colors = doubleColors,
+                startY = -shift,
+                endY = -shift + (3 * h)
+            )
+
+            onDrawBehind {
+                drawRect(brush)
+            }
+        }
 }
