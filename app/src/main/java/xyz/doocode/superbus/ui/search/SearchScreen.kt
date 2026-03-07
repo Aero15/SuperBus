@@ -62,17 +62,31 @@ import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.LocalContentColor
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.runtime.LaunchedEffect
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen(
     modifier: Modifier = Modifier,
-    viewModel: SearchViewModel = viewModel()
+    viewModel: SearchViewModel = viewModel(),
+    focusOnStart: Boolean = false,
+    onFocusConsumed: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val context = LocalContext.current
     val groupDuplicates = viewModel.GROUP_DUPLICATES
+
+    val focusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(focusOnStart) {
+        if (focusOnStart) {
+            focusRequester.requestFocus()
+            onFocusConsumed()
+        }
+    }
 
     val openStopDetails = { stop: Arret, fromId: Boolean ->
         val intent = Intent(context, StopDetailsActivity::class.java).apply {
@@ -95,7 +109,8 @@ fun SearchScreen(
     Column(modifier = modifier.fillMaxSize()) {
         SearchBar(
             query = searchQuery,
-            onQueryChange = viewModel::onSearchQueryChanged
+            onQueryChange = viewModel::onSearchQueryChanged,
+            modifier = Modifier.focusRequester(focusRequester)
         )
 
         when (val state = uiState) {
@@ -130,8 +145,8 @@ fun SearchScreen(
                                 favorites.find {
                                     it.id == stop.id && (
                                             (stop.duplicates.size > 1 && !it.detailsFromId) ||
-                                            (stop.duplicates.size == 1 && it.detailsFromId)
-                                    )
+                                                    (stop.duplicates.size == 1 && it.detailsFromId)
+                                            )
                                 }
                             val isFavorite = favorite != null
 
