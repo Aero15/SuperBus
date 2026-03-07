@@ -28,6 +28,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import xyz.doocode.superbus.ui.details.components.*
 import androidx.lifecycle.viewmodel.compose.viewModel
 import xyz.doocode.superbus.core.util.setKeepScreenOn
 import xyz.doocode.superbus.ui.components.EmptyDataView
