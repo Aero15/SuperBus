@@ -679,7 +679,8 @@ fun FocusArrivalCard(
                     }
                 } else {
                     // Top 2 times (index 0 and 1)
-                    val topTimes = times.take(2)
+                    //val topTimes = times.take(2)
+                    val topTimes = times.take(1)
                     if (topTimes.isNotEmpty()) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -695,7 +696,8 @@ fun FocusArrivalCard(
                     Spacer(modifier = Modifier.weight(1f))
 
                     // Bottom 3 times (index 2, 3, 4)
-                    val bottomTimes = times.drop(2).take(3)
+                    //val bottomTimes = times.drop(2).take(3)
+                    val bottomTimes = times.drop(1).take(3)
                     if (bottomTimes.isNotEmpty()) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -800,7 +802,7 @@ fun FocusTimeDisplay(temps: Temps, isPrimary: Boolean) {
         if (durationMinutes != null) {
             val styleNumber =
                 if (isPrimary) MaterialTheme.typography.displayLarge.copy(fontSize = 140.sp) else MaterialTheme.typography.displayMedium.copy(
-                    fontSize = 54.sp
+                    fontSize = 60.sp
                 )
             val styleUnit =
                 if (isPrimary) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.titleLarge
