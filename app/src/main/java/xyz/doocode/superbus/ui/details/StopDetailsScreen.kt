@@ -11,6 +11,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Lightbulb
@@ -52,6 +53,8 @@ fun StopDetailsScreen(
     val isRefreshing by viewModel.isRefreshing.collectAsState()
     val isFavorite by viewModel.isFavorite.collectAsState()
     val title = stopName ?: "Arrêt"
+
+    val isSingleItem = (uiState as? StopDetailsUiState.Success)?.groupedArrivals?.size == 1
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val pullRefreshState = rememberPullToRefreshState()
@@ -201,19 +204,21 @@ fun StopDetailsScreen(
                                     showMenu = false
                                 }
                             )
-                            DropdownMenuItem(
-                                text = { Text(if (forcedExpandState != false) "Tout réduire" else "Tout développer") },
-                                leadingIcon = {
-                                    Icon(
-                                        imageVector = if (forcedExpandState != false) Icons.Default.ArrowUpward else Icons.Default.ArrowDownward,
-                                        contentDescription = null
-                                    )
-                                },
-                                onClick = {
-                                    forcedExpandState = forcedExpandState == false
-                                    showMenu = false
-                                }
-                            )
+                            if (!isSingleItem) {
+                                DropdownMenuItem(
+                                    text = { Text(if (forcedExpandState != false) "Tout réduire" else "Tout développer") },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = if (forcedExpandState != false) Icons.Default.ArrowUpward else Icons.Default.ArrowDownward,
+                                            contentDescription = null
+                                        )
+                                    },
+                                    onClick = {
+                                        forcedExpandState = forcedExpandState == false
+                                        showMenu = false
+                                    }
+                                )
+                            }
                         }
                     }
                 },
@@ -229,50 +234,62 @@ fun StopDetailsScreen(
                 .padding(innerPadding)
                 .fillMaxSize()
         ) {
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(/*if (LocalWindowInfo.current.containerSize.width.dp > 600.dp) 2 else*/
-                    1
-                ),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxSize()
-            ) {
-                when (val state = uiState) {
-                    is StopDetailsUiState.Loading -> {
-                        item {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(200.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                LoadingView("Chargement des temps d'attente...")
+            val state = uiState
+            if (state is StopDetailsUiState.Success && state.groupedArrivals.size == 1) {
+                val list = state.groupedArrivals.toList()
+                val (key, arrivals) = list.first()
+                val parts = key.split("|")
+                FocusArrivalCard(
+                    numLigne = parts.getOrNull(0) ?: "?",
+                    destination = parts.getOrNull(1) ?: "?",
+                    couleurFond = arrivals.first().couleurFond,
+                    couleurTexte = arrivals.first().couleurTexte,
+                    times = arrivals
+                )
+            } else {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(1),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    when (state) {
+                        is StopDetailsUiState.Loading -> {
+                            item {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(200.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    LoadingView("Chargement des temps d'attente...")
+                                }
                             }
                         }
-                    }
 
-                    is StopDetailsUiState.Error -> {
-                        item { ErrorView(state.message) { viewModel.init(stopName, stopId) } }
-                    }
+                        is StopDetailsUiState.Error -> {
+                            item { ErrorView(state.message) { viewModel.init(stopName, stopId) } }
+                        }
 
-                    is StopDetailsUiState.Empty -> {
-                        item { EmptyDataView() }
-                    }
+                        is StopDetailsUiState.Empty -> {
+                            item { EmptyDataView() }
+                        }
 
-                    is StopDetailsUiState.Success -> {
-                        val list = state.groupedArrivals.toList()
-                        items(list) { (key, arrivals) ->
-                            val parts = key.split("|")
-                            ArrivalCard(
-                                numLigne = parts.getOrNull(0) ?: "?",
-                                destination = parts.getOrNull(1) ?: "?",
-                                couleurFond = arrivals.first().couleurFond,
-                                couleurTexte = arrivals.first().couleurTexte,
-                                times = arrivals,
-                                initialExpoMode = list.size < 3,
-                                forcedExpandState = forcedExpandState
-                            )
+                        is StopDetailsUiState.Success -> {
+                            val list = state.groupedArrivals.toList()
+                            items(list) { (key, arrivals) ->
+                                val parts = key.split("|")
+                                ArrivalCard(
+                                    numLigne = parts.getOrNull(0) ?: "?",
+                                    destination = parts.getOrNull(1) ?: "?",
+                                    couleurFond = arrivals.first().couleurFond,
+                                    couleurTexte = arrivals.first().couleurTexte,
+                                    times = arrivals.take(3),
+                                    initialExpoMode = list.size < 3,
+                                    forcedExpandState = forcedExpandState
+                                )
+                            }
                         }
                     }
                 }
