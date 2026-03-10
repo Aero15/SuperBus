@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import xyz.doocode.superbus.ui.home.*
+import xyz.doocode.superbus.ui.menu.MenuScreen
 import xyz.doocode.superbus.ui.favorites.FavoritesScreen
 import xyz.doocode.superbus.ui.details.StopDetailsActivity
 import xyz.doocode.superbus.ui.search.SearchScreen

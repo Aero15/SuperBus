@@ -1,4 +1,4 @@
-package xyz.doocode.superbus.ui.home
+package xyz.doocode.superbus.ui.menu
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
