@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import xyz.doocode.superbus.ui.home.*
+import xyz.doocode.superbus.ui.menu.MenuScreen
 import xyz.doocode.superbus.ui.favorites.FavoritesScreen
 import xyz.doocode.superbus.ui.details.StopDetailsActivity
 import xyz.doocode.superbus.ui.search.SearchScreen
@@ -52,6 +53,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun SuperBusApp() {
     var currentDestination by rememberSaveable { mutableStateOf(AppDestinations.FAVORITES) }
+    var autoFocusSearch by rememberSaveable { mutableStateOf(false) }
 
     NavigationSuiteScaffold(
         navigationSuiteItems = {
@@ -81,7 +83,10 @@ fun SuperBusApp() {
                     val context = androidx.compose.ui.platform.LocalContext.current
                     FavoritesScreen(
                         modifier = modifier,
-                        onSearchClick = { currentDestination = AppDestinations.SEARCH },
+                        onSearchClick = {
+                            autoFocusSearch = true
+                            currentDestination = AppDestinations.SEARCH
+                        },
                         onStationClick = { station ->
                             val intent =
                                 android.content.Intent(context, StopDetailsActivity::class.java)
@@ -96,9 +101,19 @@ fun SuperBusApp() {
                     )
                 }
 
-                AppDestinations.SEARCH -> SearchScreen(modifier)
+                AppDestinations.SEARCH -> SearchScreen(
+                    modifier = modifier,
+                    focusOnStart = autoFocusSearch,
+                    onFocusConsumed = { autoFocusSearch = false }
+                )
+
                 AppDestinations.TRAFFIC -> TrafficScreen(modifier)
-                AppDestinations.MENU -> MenuScreen(modifier)
+                AppDestinations.MENU -> MenuScreen(modifier, onNavigateTo = { dest ->
+                    if (dest == AppDestinations.SEARCH) {
+                        autoFocusSearch = true
+                    }
+                    currentDestination = dest
+                })
             }
         }
     }
