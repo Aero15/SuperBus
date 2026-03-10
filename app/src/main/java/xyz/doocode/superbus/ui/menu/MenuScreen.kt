@@ -16,6 +16,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import xyz.doocode.superbus.AppDestinations
+import xyz.doocode.superbus.ui.about.AboutActivity
 
 @Composable
 fun MenuScreen(
@@ -49,7 +50,13 @@ fun MenuScreen(
     }
 
     val onUtilityClick: (UtilityItem) -> Unit = { utility ->
-        Toast.makeText(context, "TODO: ${utility.label}", Toast.LENGTH_SHORT).show()
+        when (utility) {
+            UtilityItem.ABOUT -> {
+                val intent = Intent(context, AboutActivity::class.java)
+                context.startActivity(intent)
+            }
+            else -> Toast.makeText(context, "TODO: ${utility.label}", Toast.LENGTH_SHORT).show()
+        }
     }
 
     MenuScreenContent(

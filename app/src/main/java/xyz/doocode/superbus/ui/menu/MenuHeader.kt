@@ -59,7 +59,7 @@ fun MenuHeader(greeting: String, isCompact: Boolean) {
                 }
                 Spacer(modifier = Modifier.width(16.dp))
                 Text(
-                    text = "SuperBus",
+                    text = "Super Bus",
                     style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Black),
                     color = MaterialTheme.colorScheme.onSurface
                 )
