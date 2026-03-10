@@ -34,6 +34,11 @@
             android:name=".ui.about.AboutActivity"
             android:exported="false"
             android:theme="@style/Theme.SuperBus" />
+
+        <activity
+            android:name=".ui.lines.LinesActivity"
+            android:exported="false"
+            android:theme="@style/Theme.SuperBus" />
     </application>
 
 </manifest>

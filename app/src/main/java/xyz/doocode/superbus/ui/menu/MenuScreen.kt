@@ -36,6 +36,9 @@ fun MenuScreen(
             MenuFeature.FAVORITES -> onNavigateTo(AppDestinations.FAVORITES)
             MenuFeature.MAP -> onNavigateTo(AppDestinations.MAP)
             MenuFeature.TRAFFIC -> onNavigateTo(AppDestinations.TRAFFIC)
+            MenuFeature.LINES -> {
+                context.startActivity(Intent(context, xyz.doocode.superbus.ui.lines.LinesActivity::class.java))
+            }
             else -> Toast.makeText(context, "TODO: ${feature.label}", Toast.LENGTH_SHORT).show()
         }
     }
