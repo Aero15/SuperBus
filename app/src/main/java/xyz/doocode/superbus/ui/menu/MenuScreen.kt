@@ -47,7 +47,7 @@ fun MenuScreen(
             Toast.makeText(context, "Erreur lien", Toast.LENGTH_SHORT).show()
         }
     }
-    
+
     val onUtilityClick: (UtilityItem) -> Unit = { utility ->
         Toast.makeText(context, "TODO: ${utility.label}", Toast.LENGTH_SHORT).show()
     }
@@ -88,7 +88,7 @@ fun MenuScreenContent(
                     modifier = Modifier
                         .weight(1f)
                         .verticalScroll(rememberScrollState())
-                        .padding(bottom = 80.dp)
+                        .padding(bottom = 8.dp)
                 ) {
                     MenuHeader(greeting = uiState.userGreeting, isCompact = true)
                     Spacer(modifier = Modifier.height(12.dp))
@@ -116,7 +116,7 @@ fun MenuScreenContent(
                     )
                     ServicesGrid(onItemClick = onServiceClick)
 
-                    Spacer(modifier = Modifier.height(32.dp))
+                    /*Spacer(modifier = Modifier.height(32.dp))
                     Text(
                         text = "Tableau de bord",
                         style = MaterialTheme.typography.titleMedium,
@@ -127,7 +127,7 @@ fun MenuScreenContent(
                         cacheSize = uiState.cacheSizeMb,
                         onClearHistory = onClearHistory,
                         onTrafficClick = { onNavigateTo(AppDestinations.TRAFFIC) }
-                    )
+                    )*/
 
                     Spacer(modifier = Modifier.height(32.dp))
                     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
@@ -138,7 +138,7 @@ fun MenuScreenContent(
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(bottom = 80.dp)
+                contentPadding = PaddingValues(bottom = 8.dp)
             ) {
                 item {
                     MenuHeader(greeting = uiState.userGreeting, isCompact = true)
@@ -169,7 +169,7 @@ fun MenuScreenContent(
                     ServicesRow(onItemClick = onServiceClick)
                 }
 
-                item {
+                /*item {
                     Text(
                         text = "Tableau de bord",
                         style = MaterialTheme.typography.titleMedium,
@@ -181,7 +181,7 @@ fun MenuScreenContent(
                         onClearHistory = onClearHistory,
                         onTrafficClick = { onNavigateTo(AppDestinations.TRAFFIC) }
                     )
-                }
+                }*/
 
                 item {
                     Text(

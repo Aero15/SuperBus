@@ -15,10 +15,10 @@ enum class MenuFeature(val label: String, val icon: ImageVector) {
 }
 
 enum class ExternalService(val label: String, val url: String, val icon: ImageVector) {
-    VELOCITE("Vélocité", "https://www.velocite.fr", Icons.AutoMirrored.Filled.DirectionsBike),
-    CITIZ("Citiz", "https://citiz.coop", Icons.Default.DirectionsCar),
-    SNCF("SNCF", "https://www.sncf-connect.com", Icons.Default.Train),
-    MOBIGO("Mobigo", "https://www.viamobigo.fr", Icons.Default.DirectionsBus)
+    VELOCITE("Vélocité", "https://velocite.ginko.voyage/", Icons.AutoMirrored.Filled.DirectionsBike),
+    CITIZ("Citiz", "https://bfc.citiz.coop/", Icons.Default.DirectionsCar),
+    MOBIGO("Mobigo", "https://www.viamobigo.fr", Icons.Default.DirectionsBus),
+    SNCF("SNCF", "https://www.sncf-connect.com", Icons.Default.Train)
 }
 
 enum class UtilityItem(val label: String, val icon: ImageVector) {

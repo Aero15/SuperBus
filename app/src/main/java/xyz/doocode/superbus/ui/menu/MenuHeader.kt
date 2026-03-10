@@ -22,7 +22,7 @@ fun MenuHeader(greeting: String, isCompact: Boolean) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(160.dp)
+            .height(200.dp)
             .background(
                 brush = Brush.verticalGradient(
                     colors = listOf(
@@ -41,7 +41,9 @@ fun MenuHeader(greeting: String, isCompact: Boolean) {
         ) {
             Spacer(modifier = Modifier.height(16.dp))
             Row(
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .padding(vertical = 16.dp)
             ) {
                 Surface(
                     shape = CircleShape,
@@ -89,14 +91,17 @@ fun MenuHeader(greeting: String, isCompact: Boolean) {
 @Composable
 fun MenuHeaderLightPreview() {
     MaterialTheme {
-        MenuHeader(greeting = "Bonjour, Voyageur !", isCompact = true)
+        MenuHeader(greeting = "Bonjour", isCompact = true)
     }
 }
 
-@Preview(showBackground = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
+@Preview(
+    showBackground = true,
+    uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES
+)
 @Composable
 fun MenuHeaderDarkPreview() {
     MaterialTheme {
-        MenuHeader(greeting = "Bonjour, Voyageur !", isCompact = true)
+        MenuHeader(greeting = "Bonjour", isCompact = true)
     }
 }

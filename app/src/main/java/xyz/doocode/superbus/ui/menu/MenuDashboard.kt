@@ -32,7 +32,7 @@ fun DashboardSection(
         Card(
             modifier = Modifier.weight(1f),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-            onClick = {} 
+            onClick = {}
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
