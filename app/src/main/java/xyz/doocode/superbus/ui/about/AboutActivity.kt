@@ -1,18 +1,13 @@
 package xyz.doocode.superbus.ui.about
 
-import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.annotation.DrawableRes
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -30,20 +25,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.UriHandler
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import xyz.doocode.superbus.ui.theme.SuperBusTheme
 
 class AboutActivity : ComponentActivity() {
@@ -217,6 +211,18 @@ fun AppIdentitySection() {
 
 @Composable
 fun InfoCardsSection(uriHandler: UriHandler) {
+    val lastUpdate = LocalDate.of(2026, 3, 10)
+    val formattedDate = lastUpdate.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL))
+
+    AboutInfoCard(
+        icon = Icons.Default.DateRange,
+        label = "Mise à jour le",
+        value = formattedDate,
+        color = MaterialTheme.colorScheme.secondaryContainer,
+        textColor = MaterialTheme.colorScheme.onSecondaryContainer
+    )
+    Spacer(modifier = Modifier.height(2.dp))
+
     AboutInfoCard(
         icon = Icons.Default.Business,
         label = "Organisation",
@@ -333,17 +339,10 @@ fun AboutInfoCard(
     }
 }
 
-@Preview(showBackground = true)
+@PreviewScreenSizes
+@PreviewLightDark
 @Composable
 fun AboutScreenPreview() {
-    SuperBusTheme {
-        AboutScreen(onBack = {})
-    }
-}
-
-@Preview(showBackground = true, widthDp = 800, heightDp = 400)
-@Composable
-fun AboutScreenTabletPreview() {
     SuperBusTheme {
         AboutScreen(onBack = {})
     }
