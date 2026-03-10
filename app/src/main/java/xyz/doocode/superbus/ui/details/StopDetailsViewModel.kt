@@ -113,10 +113,13 @@ class StopDetailsViewModel(application: Application) : AndroidViewModel(applicat
                 if (currentStopName != null || currentStopId != null) {
                     val response = when {
                         currentStopId != null && detailsFromId ->
-                            ApiClient.ginkoService.getTempsLieu(idArret = currentStopId!!, nb = 3)
+                            ApiClient.ginkoService.getTempsLieu(
+                                idArret = currentStopId!!,
+                                nb = 5
+                            )
 
                         currentStopName != null && !detailsFromId ->
-                            ApiClient.ginkoService.getTempsLieu(nom = currentStopName!!, nb = 3)
+                            ApiClient.ginkoService.getTempsLieu(nom = currentStopName!!, nb = 5)
 
                         else -> null
                     }

@@ -13,6 +13,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -26,7 +27,8 @@ fun LineBadge(
     numLigne: String,
     couleurFond: String,
     couleurTexte: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    shape: Shape = RoundedCornerShape(6.dp)
 ) {
     val backgroundColor = remember(couleurFond) {
         parseColorSafe(couleurFond, Color.Gray)
@@ -40,7 +42,7 @@ fun LineBadge(
         modifier = modifier
             .background(
                 color = backgroundColor,
-                shape = RoundedCornerShape(6.dp)
+                shape = shape
             )
             .padding(horizontal = 6.dp, vertical = 2.dp)
             .widthIn(min = 28.dp),

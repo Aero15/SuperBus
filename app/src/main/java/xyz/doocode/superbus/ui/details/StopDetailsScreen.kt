@@ -2,13 +2,22 @@ package xyz.doocode.superbus.ui.details
 
 import android.app.Activity
 import android.content.Context
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Lightbulb
@@ -20,17 +29,19 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import xyz.doocode.superbus.ui.details.components.*
 import androidx.lifecycle.viewmodel.compose.viewModel
 import xyz.doocode.superbus.core.util.setKeepScreenOn
 import xyz.doocode.superbus.ui.components.EmptyDataView
 import xyz.doocode.superbus.ui.components.ErrorView
 import xyz.doocode.superbus.ui.components.LoadingView
 import androidx.core.content.edit
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,6 +61,8 @@ fun StopDetailsScreen(
     val isFavorite by viewModel.isFavorite.collectAsState()
     val title = stopName ?: "Arrêt"
 
+    val isSingleItem = (uiState as? StopDetailsUiState.Success)?.groupedArrivals?.size == 1
+
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val pullRefreshState = rememberPullToRefreshState()
 
@@ -66,21 +79,84 @@ fun StopDetailsScreen(
         activity?.setKeepScreenOn(keepScreenOn)
     }
 
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+
+    fun toggleScreenOn() {
+        keepScreenOn = !keepScreenOn
+        prefs.edit { putBoolean("keep_screen_on", keepScreenOn) }
+        scope.launch {
+            snackbarHostState.currentSnackbarData?.dismiss()
+            snackbarHostState.showSnackbar(
+                message = if (keepScreenOn) "L'écran restera allumé" else "L'option est maintenant désactivée",
+                withDismissAction = true,
+                duration = SnackbarDuration.Short
+            )
+        }
+    }
+
     var showMenu by remember { mutableStateOf(false) }
+    var forcedExpandState by remember { mutableStateOf<Boolean?>(null) }
+    var focusedItemKey by remember { mutableStateOf<String?>(null) }
+
+    BackHandler(enabled = focusedItemKey != null) {
+        focusedItemKey = null
+    }
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState) { data ->
+                val isSuccess = data.visuals.message == "L'écran restera allumé"
+                SwipeToDismissBox(
+                    state = rememberSwipeToDismissBoxState(),
+                    backgroundContent = {}
+                ) {
+                    Snackbar(
+                        snackbarData = data,
+                        containerColor = if (isSuccess) Color(0xFF4CAF50) else MaterialTheme.colorScheme.surfaceContainerHighest,
+                        contentColor = if (isSuccess) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                        actionColor = if (isSuccess) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                        dismissActionContentColor = if (isSuccess) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        },
         topBar = {
             LargeTopAppBar(
                 title = {
-                    Text(
-                        text = title,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                    if (title.contains(" - ")) {
+                        val parts = title.split(" - ", limit = 2)
+                        Column {
+                            Text(
+                                text = parts[0],
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Text(
+                                text = parts[1],
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    } else {
+                        Text(
+                            text = title,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(onClick = {
+                        if (focusedItemKey != null) {
+                            focusedItemKey = null
+                        } else {
+                            onBackClick()
+                        }
+                    }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Retour"
@@ -88,6 +164,15 @@ fun StopDetailsScreen(
                     }
                 },
                 actions = {
+                    if (keepScreenOn) {
+                        IconButton(onClick = { toggleScreenOn() }) {
+                            Icon(
+                                imageVector = Icons.Default.Lightbulb,
+                                contentDescription = "Désactiver l'écran toujours allumé",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
                     IconButton(onClick = viewModel::toggleFavorite) {
                         Icon(
                             imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
@@ -133,11 +218,25 @@ fun StopDetailsScreen(
                                     }
                                 },
                                 onClick = {
-                                    keepScreenOn = !keepScreenOn
-                                    prefs.edit { putBoolean("keep_screen_on", keepScreenOn) }
+                                    toggleScreenOn()
                                     showMenu = false
                                 }
                             )
+                            if (!isSingleItem) {
+                                DropdownMenuItem(
+                                    text = { Text(if (forcedExpandState != false) "Tout réduire" else "Tout développer") },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = if (forcedExpandState != false) Icons.Default.ArrowUpward else Icons.Default.ArrowDownward,
+                                            contentDescription = null
+                                        )
+                                    },
+                                    onClick = {
+                                        forcedExpandState = forcedExpandState == false
+                                        showMenu = false
+                                    }
+                                )
+                            }
                         }
                     }
                 },
@@ -153,49 +252,133 @@ fun StopDetailsScreen(
                 .padding(innerPadding)
                 .fillMaxSize()
         ) {
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(/*if (LocalWindowInfo.current.containerSize.width.dp > 600.dp) 2 else*/
-                    1
-                ),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxSize()
-            ) {
-                when (val state = uiState) {
-                    is StopDetailsUiState.Loading -> {
-                        item {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(200.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                LoadingView("Chargement des temps d'attente...")
+            val state = uiState
+
+            // Auto-clear focus if item is gone
+            LaunchedEffect(state, focusedItemKey) {
+                if (state is StopDetailsUiState.Success && focusedItemKey != null) {
+                    if (!state.groupedArrivals.containsKey(focusedItemKey)) {
+                        focusedItemKey = null
+                    }
+                }
+            }
+
+            val arrivalsList = remember(state) {
+                if (state is StopDetailsUiState.Success) state.groupedArrivals.toList() else emptyList()
+            }
+
+            val showFocusMode =
+                state is StopDetailsUiState.Success && (state.groupedArrivals.size == 1 || focusedItemKey != null)
+
+            if (showFocusMode && arrivalsList.isNotEmpty()) {
+                val initialPage = remember(focusedItemKey, arrivalsList) {
+                    if (focusedItemKey != null) {
+                        val index = arrivalsList.indexOfFirst { it.first == focusedItemKey }
+                        if (index >= 0) index else 0
+                    } else 0
+                }
+
+                val pagerState = rememberPagerState(initialPage = initialPage) {
+                    arrivalsList.size
+                }
+
+                LaunchedEffect(pagerState, arrivalsList) {
+                    snapshotFlow { pagerState.currentPage }.collect { page ->
+                        if (focusedItemKey != null && page in arrivalsList.indices) {
+                            focusedItemKey = arrivalsList[page].first
+                        }
+                    }
+                }
+
+                Box(modifier = Modifier.fillMaxSize()) {
+                    HorizontalPager(
+                        state = pagerState,
+                        contentPadding = PaddingValues(0.dp),
+                        pageSpacing = 0.dp,
+                        modifier = Modifier.fillMaxSize(),
+                        verticalAlignment = Alignment.Top
+                    ) { page ->
+                        val (key, arrivals) = arrivalsList[page]
+                        val parts = key.split("|")
+                        FocusArrivalCard(
+                            numLigne = parts.getOrNull(0) ?: "?",
+                            destination = parts.getOrNull(1) ?: "?",
+                            couleurFond = arrivals.first().couleurFond,
+                            couleurTexte = arrivals.first().couleurTexte,
+                            times = arrivals
+                        )
+                    }
+
+                    if (pagerState.pageCount > 1) {
+                        Row(
+                            Modifier
+                                .wrapContentHeight()
+                                .fillMaxWidth()
+                                .align(Alignment.TopCenter)
+                                .padding(top = 32.dp),
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            repeat(pagerState.pageCount) { iteration ->
+                                val color =
+                                    if (pagerState.currentPage == iteration) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(
+                                        alpha = 0.3f
+                                    )
+                                Box(
+                                    modifier = Modifier
+                                        .padding(4.dp)
+                                        .clip(CircleShape)
+                                        .background(color)
+                                        .size(8.dp)
+                                )
                             }
                         }
                     }
+                }
+            } else {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(1),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    when (state) {
+                        is StopDetailsUiState.Loading -> {
+                            item {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(200.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    LoadingView("Chargement des temps d'attente...")
+                                }
+                            }
+                        }
 
-                    is StopDetailsUiState.Error -> {
-                        item { ErrorView(state.message) { viewModel.init(stopName, stopId) } }
-                    }
+                        is StopDetailsUiState.Error -> {
+                            item { ErrorView(state.message) { viewModel.init(stopName, stopId) } }
+                        }
 
-                    is StopDetailsUiState.Empty -> {
-                        item { EmptyDataView() }
-                    }
+                        is StopDetailsUiState.Empty -> {
+                            item { EmptyDataView() }
+                        }
 
-                    is StopDetailsUiState.Success -> {
-                        val list = state.groupedArrivals.toList()
-                        items(list) { (key, arrivals) ->
-                            val parts = key.split("|")
-                            ArrivalCard(
-                                numLigne = parts.getOrNull(0) ?: "?",
-                                destination = parts.getOrNull(1) ?: "?",
-                                couleurFond = arrivals.first().couleurFond,
-                                couleurTexte = arrivals.first().couleurTexte,
-                                times = arrivals,
-                                initialExpoMode = list.size < 3
-                            )
+                        is StopDetailsUiState.Success -> {
+                            val list = state.groupedArrivals.toList()
+                            items(list) { (key, arrivals) ->
+                                val parts = key.split("|")
+                                ArrivalCard(
+                                    numLigne = parts.getOrNull(0) ?: "?",
+                                    destination = parts.getOrNull(1) ?: "?",
+                                    couleurFond = arrivals.first().couleurFond,
+                                    couleurTexte = arrivals.first().couleurTexte,
+                                    times = arrivals.take(3),
+                                    initialExpoMode = list.size < 3,
+                                    forcedExpandState = forcedExpandState,
+                                    onLongClick = { focusedItemKey = key }
+                                )
+                            }
                         }
                     }
                 }
