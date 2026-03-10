@@ -7,6 +7,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDownward
@@ -159,13 +164,6 @@ fun StopDetailsScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = viewModel::toggleFavorite) {
-                        Icon(
-                            imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                            contentDescription = if (isFavorite) "Retirer des favoris" else "Ajouter aux favoris",
-                            tint = if (isFavorite) MaterialTheme.colorScheme.primary else LocalContentColor.current
-                        )
-                    }
                     if (keepScreenOn) {
                         IconButton(onClick = { toggleScreenOn() }) {
                             Icon(
@@ -174,6 +172,13 @@ fun StopDetailsScreen(
                                 tint = MaterialTheme.colorScheme.primary
                             )
                         }
+                    }
+                    IconButton(onClick = viewModel::toggleFavorite) {
+                        Icon(
+                            imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                            contentDescription = if (isFavorite) "Retirer des favoris" else "Ajouter aux favoris",
+                            tint = if (isFavorite) MaterialTheme.colorScheme.primary else LocalContentColor.current
+                        )
                     }
                     Box {
                         IconButton(onClick = { showMenu = true }) {
@@ -258,20 +263,77 @@ fun StopDetailsScreen(
                 }
             }
 
-            val focusedEntry = if (state is StopDetailsUiState.Success && focusedItemKey != null) {
-                state.groupedArrivals.entries.find { it.key == focusedItemKey }?.toPair()
-            } else null
+            val arrivalsList = remember(state) {
+                if (state is StopDetailsUiState.Success) state.groupedArrivals.toList() else emptyList()
+            }
 
-            if (state is StopDetailsUiState.Success && (state.groupedArrivals.size == 1 || focusedEntry != null)) {
-                val (key, arrivals) = focusedEntry ?: state.groupedArrivals.toList().first()
-                val parts = key.split("|")
-                FocusArrivalCard(
-                    numLigne = parts.getOrNull(0) ?: "?",
-                    destination = parts.getOrNull(1) ?: "?",
-                    couleurFond = arrivals.first().couleurFond,
-                    couleurTexte = arrivals.first().couleurTexte,
-                    times = arrivals
-                )
+            val showFocusMode =
+                state is StopDetailsUiState.Success && (state.groupedArrivals.size == 1 || focusedItemKey != null)
+
+            if (showFocusMode && arrivalsList.isNotEmpty()) {
+                val initialPage = remember(focusedItemKey, arrivalsList) {
+                    if (focusedItemKey != null) {
+                        val index = arrivalsList.indexOfFirst { it.first == focusedItemKey }
+                        if (index >= 0) index else 0
+                    } else 0
+                }
+
+                val pagerState = rememberPagerState(initialPage = initialPage) {
+                    arrivalsList.size
+                }
+
+                LaunchedEffect(pagerState, arrivalsList) {
+                    snapshotFlow { pagerState.currentPage }.collect { page ->
+                        if (focusedItemKey != null && page in arrivalsList.indices) {
+                            focusedItemKey = arrivalsList[page].first
+                        }
+                    }
+                }
+
+                Box(modifier = Modifier.fillMaxSize()) {
+                    HorizontalPager(
+                        state = pagerState,
+                        contentPadding = PaddingValues(0.dp),
+                        pageSpacing = 0.dp,
+                        modifier = Modifier.fillMaxSize(),
+                        verticalAlignment = Alignment.Top
+                    ) { page ->
+                        val (key, arrivals) = arrivalsList[page]
+                        val parts = key.split("|")
+                        FocusArrivalCard(
+                            numLigne = parts.getOrNull(0) ?: "?",
+                            destination = parts.getOrNull(1) ?: "?",
+                            couleurFond = arrivals.first().couleurFond,
+                            couleurTexte = arrivals.first().couleurTexte,
+                            times = arrivals
+                        )
+                    }
+
+                    if (pagerState.pageCount > 1) {
+                        Row(
+                            Modifier
+                                .wrapContentHeight()
+                                .fillMaxWidth()
+                                .align(Alignment.TopCenter)
+                                .padding(top = 32.dp),
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            repeat(pagerState.pageCount) { iteration ->
+                                val color =
+                                    if (pagerState.currentPage == iteration) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(
+                                        alpha = 0.3f
+                                    )
+                                Box(
+                                    modifier = Modifier
+                                        .padding(4.dp)
+                                        .clip(CircleShape)
+                                        .background(color)
+                                        .size(8.dp)
+                                )
+                            }
+                        }
+                    }
+                }
             } else {
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(1),
