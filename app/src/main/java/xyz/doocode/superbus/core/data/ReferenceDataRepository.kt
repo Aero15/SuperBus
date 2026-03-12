@@ -37,6 +37,24 @@ class ReferenceDataRepository(context: Context) {
         }
     }
 
+    suspend fun getDetailsVariante(
+        idLigne: String,
+        idVariante: String,
+        forceRefresh: Boolean = false
+    ): List<Arret> {
+        val cacheKeyData = "cache_variante_${idLigne}_${idVariante}_data"
+        val cacheKeyTimestamp = "cache_variante_${idLigne}_${idVariante}_timestamp"
+
+        return getData(
+            cacheKeyData = cacheKeyData,
+            cacheKeyTimestamp = cacheKeyTimestamp,
+            typeToken = object : TypeToken<List<Arret>>() {}.type,
+            forceRefresh = forceRefresh
+        ) {
+            ApiClient.ginkoService.getDetailsVariante(idLigne, idVariante).objects
+        }
+    }
+
     suspend fun getArrets(forceRefresh: Boolean = false): List<Arret> {
         return getData(
             cacheKeyData = KEY_ARRETS_DATA,
