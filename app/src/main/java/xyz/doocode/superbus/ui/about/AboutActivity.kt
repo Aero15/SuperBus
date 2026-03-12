@@ -56,84 +56,105 @@ class AboutActivity : ComponentActivity() {
 @Composable
 fun AboutScreen(onBack: () -> Unit) {
     val uriHandler = LocalUriHandler.current
+    var selectedTabIndex by remember { mutableIntStateOf(0) }
+    val tabs = listOf("Général", "Données & Licences")
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("À propos") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Retour")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface
+            Column {
+                TopAppBar(
+                    title = { Text("À propos") },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Retour")
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.Transparent,
+                        scrolledContainerColor = MaterialTheme.colorScheme.surface
+                    )
                 )
-            )
-        }
-    ) { innerPadding ->
-        BoxWithConstraints(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        ) {
-            val isLandscape = maxWidth > maxHeight
-            val isWideScreen = maxWidth > 600.dp && isLandscape
-
-            if (isWideScreen) {
-                // Tablet / Landscape Layout
-                Row(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 32.dp),
-                    horizontalArrangement = Arrangement.spacedBy(32.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Left Column: Logo & Branding
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .verticalScroll(rememberScrollState()),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        AppIdentitySection()
-                    }
-
-                    // Right Column: Info Cards
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .verticalScroll(rememberScrollState()),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        InfoCardsSection(uriHandler)
-                        Spacer(modifier = Modifier.height(24.dp))
-                        FooterSection()
+                PrimaryTabRow(selectedTabIndex = selectedTabIndex) {
+                    tabs.forEachIndexed { index, title ->
+                        Tab(
+                            selected = selectedTabIndex == index,
+                            onClick = { selectedTabIndex = index },
+                            text = { Text(title) }
+                        )
                     }
                 }
-            } else {
-                // Mobile / Portrait Layout
-                LazyColumn(
+            }
+        }
+    ) { innerPadding ->
+        Box(modifier = Modifier.padding(innerPadding)) {
+            when (selectedTabIndex) {
+                0 -> AboutGeneralContent(uriHandler)
+                1 -> AboutDataLicenseContent(uriHandler)
+            }
+        }
+    }
+}
+
+@Composable
+fun AboutGeneralContent(uriHandler: UriHandler) {
+    BoxWithConstraints(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        val isLandscape = maxWidth > maxHeight
+        val isWideScreen = maxWidth > 600.dp && isLandscape
+
+        if (isWideScreen) {
+            // Tablet / Landscape Layout
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 32.dp),
+                horizontalArrangement = Arrangement.spacedBy(32.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Left Column: Logo & Branding
+                Column(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 16.dp),
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState()),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    AppIdentitySection()
+                }
+
+                // Right Column: Info Cards
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    item {
-                        Spacer(modifier = Modifier.height(24.dp))
-                        AppIdentitySection()
-                        Spacer(modifier = Modifier.height(48.dp))
-                    }
+                    InfoCardsSection(uriHandler)
+                    Spacer(modifier = Modifier.height(24.dp))
+                    FooterSection()
+                }
+            }
+        } else {
+            // Mobile / Portrait Layout
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                item {
+                    Spacer(modifier = Modifier.height(24.dp))
+                    AppIdentitySection()
+                    Spacer(modifier = Modifier.height(48.dp))
+                }
 
-                    item {
-                        InfoCardsSection(uriHandler)
-                        Spacer(modifier = Modifier.height(48.dp))
-                        FooterSection()
-                        Spacer(modifier = Modifier.height(24.dp))
-                    }
+                item {
+                    InfoCardsSection(uriHandler)
+                    Spacer(modifier = Modifier.height(48.dp))
+                    FooterSection()
+                    Spacer(modifier = Modifier.height(24.dp))
                 }
             }
         }
@@ -211,7 +232,7 @@ fun AppIdentitySection() {
 
 @Composable
 fun InfoCardsSection(uriHandler: UriHandler) {
-    val lastUpdate = LocalDate.of(2026, 3, 10)
+    val lastUpdate = LocalDate.of(2026, 3, 12)
     val formattedDate = lastUpdate.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL))
 
     AboutInfoCard(
@@ -334,6 +355,135 @@ fun AboutInfoCard(
                     modifier = Modifier.size(20.dp),
                     tint = textColor.copy(alpha = 0.5f)
                 )
+            }
+        }
+    }
+}
+
+@Composable
+fun AboutDataLicenseContent(uriHandler: UriHandler) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        item {
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                ),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "Source des données",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Les données du réseau Ginko sont mises à disposition gratuitement en \"Open Data\".",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+        }
+
+        item {
+            Text(
+                text = "Licence et Utilisation",
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(top = 16.dp)
+            )
+        }
+
+        item {
+            Text(
+                text = "Les données sont mises à disposition sous Licence ODbL (Open Database Licence). L'utilisation de l'API et/ou le téléchargement du jeu de données GTFS vaut acceptation de la licence.",
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+
+        item {
+            Text(
+                text = "Cette licence nous impose notamment de mentionner la provenance des informations utilisées par nos développements.",
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+
+        item {
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                ),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "Conditions",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "• Mentionner la paternité\n• Partage aux conditions identiques\n• Garder ouvert la base de données dérivée",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+        }
+
+        item {
+            Text(
+                text = "Liens utiles",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(top = 16.dp)
+            )
+        }
+
+        item {
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Button(
+                    onClick = { uriHandler.openUri("https://ginko.voyage/") },
+                    contentPadding = PaddingValues(18.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.OpenInNew,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Site web Ginko Mobilités")
+                }
+                OutlinedButton(
+                    onClick = { uriHandler.openUri("https://api.ginko.voyage") },
+                    contentPadding = PaddingValues(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        Icons.Default.Code,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Documentation API de Ginko")
+                }
+                OutlinedButton(
+                    onClick = { uriHandler.openUri("https://opendatacommons.org/licenses/odbl/") },
+                    contentPadding = PaddingValues(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        Icons.Default.Gavel,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Licence ODbL")
+                }
             }
         }
     }
