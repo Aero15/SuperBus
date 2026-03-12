@@ -16,7 +16,6 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:label="@string/app_name"
             android:theme="@style/Theme.SuperBus">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -29,7 +28,7 @@
             android:name=".ui.details.StopDetailsActivity"
             android:exported="false"
             android:theme="@style/Theme.SuperBus" />
-            
+
         <activity
             android:name=".ui.about.AboutActivity"
             android:exported="false"
@@ -37,6 +36,11 @@
 
         <activity
             android:name=".ui.lines.LinesActivity"
+            android:exported="false"
+            android:theme="@style/Theme.SuperBus" />
+
+        <activity
+            android:name=".ui.linedetails.LineDetailsActivity"
             android:exported="false"
             android:theme="@style/Theme.SuperBus" />
     </application>

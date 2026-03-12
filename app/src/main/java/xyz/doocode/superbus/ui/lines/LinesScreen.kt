@@ -20,16 +20,38 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.painterResource
 import xyz.doocode.superbus.core.dto.Ligne
+import xyz.doocode.superbus.core.dto.Variante
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LinesScreen(
     onNavigateBack: () -> Unit,
-    onLineClick: (Ligne) -> Unit,
+    onVariantSelected: (Ligne, Variante) -> Unit,
     viewModel: LinesViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var selectedLine by remember { mutableStateOf<Ligne?>(null) }
+    val sheetState = rememberModalBottomSheetState()
+
+    if (selectedLine != null) {
+        ModalBottomSheet(
+            onDismissRequest = { selectedLine = null },
+            sheetState = sheetState
+        ) {
+            LineVariantsSheetContent(
+                line = selectedLine!!,
+                onVariantClick = { variant ->
+                    onVariantSelected(selectedLine!!, variant)
+                    selectedLine = null
+                }
+            )
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -117,7 +139,7 @@ fun LinesScreen(
                         groupedLines = uiState.lineGroups,
                         collapsedSections = uiState.collapsedSections,
                         onToggleSection = viewModel::toggleSection,
-                        onLineClick = onLineClick,
+                        onLineClick = { line -> selectedLine = line },
                         modifier = Modifier.fillMaxSize()
                     )
                 }
