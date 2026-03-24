@@ -78,7 +78,7 @@ fun SuperBusApp() {
                 .padding(innerPadding)
                 .fillMaxSize()
             when (currentDestination) {
-                AppDestinations.MAP -> MapScreen(modifier)
+                //AppDestinations.MAP -> MapScreen(modifier)
                 AppDestinations.FAVORITES -> {
                     val context = androidx.compose.ui.platform.LocalContext.current
                     FavoritesScreen(
@@ -124,7 +124,7 @@ enum class AppDestinations(
     val selectedIcon: ImageVector,
     val unselectedIcon: ImageVector,
 ) {
-    MAP("Carte", Icons.Default.Place, Icons.Outlined.Place),
+    //MAP("Carte", Icons.Default.Place, Icons.Outlined.Place),
     FAVORITES("Favoris", Icons.Default.Favorite, Icons.Outlined.FavoriteBorder),
     SEARCH("Chercher", Icons.Default.Search, Icons.Outlined.Search),
     TRAFFIC("Infos", Icons.Default.Info, Icons.Outlined.Info),

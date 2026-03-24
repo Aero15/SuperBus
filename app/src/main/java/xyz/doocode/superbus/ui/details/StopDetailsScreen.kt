@@ -36,6 +36,9 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import xyz.doocode.superbus.ui.details.components.*
 import androidx.lifecycle.viewmodel.compose.viewModel
 import xyz.doocode.superbus.core.util.setKeepScreenOn
@@ -56,6 +59,22 @@ fun StopDetailsScreen(
 ) {
     LaunchedEffect(stopName, stopId) {
         viewModel.init(stopName, stopId, detailsFromId)
+    }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME || event == Lifecycle.Event.ON_START) {
+                viewModel.startAutoRefresh()
+            } else if (event == Lifecycle.Event.ON_PAUSE || event == Lifecycle.Event.ON_STOP) {
+                viewModel.stopAutoRefresh()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            viewModel.stopAutoRefresh()
+        }
     }
 
     val uiState by viewModel.uiState.collectAsState()
@@ -305,9 +324,11 @@ fun StopDetailsScreen(
                 }
 
                 BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-                    Box(modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
+                    ) {
                         HorizontalPager(
                             state = pagerState,
                             contentPadding = PaddingValues(0.dp),
