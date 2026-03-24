@@ -70,7 +70,6 @@ class StopDetailsViewModel(application: Application) : AndroidViewModel(applicat
             loadData(forceRefresh = true)
             // Récupérer détails de l'arrêt (getDetailsArret) si l'id est présent
         }
-        startAutoRefresh()
     }
 
     private val name: String get() = currentStopName ?: ""
@@ -85,7 +84,7 @@ class StopDetailsViewModel(application: Application) : AndroidViewModel(applicat
 
     fun refresh() {
         val now = System.currentTimeMillis()
-        if (now - lastRefreshTime < 15000) {
+        if (now - lastRefreshTime < 10000) {
             _isRefreshing.value = false
             return
         }
@@ -93,16 +92,21 @@ class StopDetailsViewModel(application: Application) : AndroidViewModel(applicat
         loadData(forceRefresh = true)
     }
 
-    private fun startAutoRefresh() {
+    fun startAutoRefresh() {
         pollingJob?.cancel()
         pollingJob = viewModelScope.launch {
             while (true) {
                 if (!_isRefreshing.value) {
                     loadData(forceRefresh = false)
                 }
-                delay(30000)
+                delay(10000)
             }
         }
+    }
+
+    fun stopAutoRefresh() {
+        pollingJob?.cancel()
+        pollingJob = null
     }
 
     private fun loadData(forceRefresh: Boolean) {
