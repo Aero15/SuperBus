@@ -10,7 +10,9 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -270,6 +272,18 @@ fun StopDetailsScreen(
             val showFocusMode =
                 state is StopDetailsUiState.Success && (state.groupedArrivals.size == 1 || focusedItemKey != null)
 
+            LaunchedEffect(showFocusMode, scrollBehavior) {
+                if (showFocusMode) {
+                    androidx.compose.animation.core.animate(
+                        initialValue = scrollBehavior.state.heightOffset,
+                        targetValue = scrollBehavior.state.heightOffsetLimit,
+                        animationSpec = androidx.compose.animation.core.tween(durationMillis = 300)
+                    ) { value, _ ->
+                        scrollBehavior.state.heightOffset = value
+                    }
+                }
+            }
+
             if (showFocusMode && arrivalsList.isNotEmpty()) {
                 val initialPage = remember(focusedItemKey, arrivalsList) {
                     if (focusedItemKey != null) {
@@ -290,46 +304,52 @@ fun StopDetailsScreen(
                     }
                 }
 
-                Box(modifier = Modifier.fillMaxSize()) {
-                    HorizontalPager(
-                        state = pagerState,
-                        contentPadding = PaddingValues(0.dp),
-                        pageSpacing = 0.dp,
-                        modifier = Modifier.fillMaxSize(),
-                        verticalAlignment = Alignment.Top
-                    ) { page ->
-                        val (key, arrivals) = arrivalsList[page]
-                        val parts = key.split("|")
-                        FocusArrivalCard(
-                            numLigne = parts.getOrNull(0) ?: "?",
-                            destination = parts.getOrNull(1) ?: "?",
-                            couleurFond = arrivals.first().couleurFond,
-                            couleurTexte = arrivals.first().couleurTexte,
-                            times = arrivals
-                        )
-                    }
-
-                    if (pagerState.pageCount > 1) {
-                        Row(
-                            Modifier
-                                .wrapContentHeight()
+                BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                    Box(modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())) {
+                        HorizontalPager(
+                            state = pagerState,
+                            contentPadding = PaddingValues(0.dp),
+                            pageSpacing = 0.dp,
+                            modifier = Modifier
                                 .fillMaxWidth()
-                                .align(Alignment.TopCenter)
-                                .padding(top = 32.dp),
-                            horizontalArrangement = Arrangement.Center
-                        ) {
-                            repeat(pagerState.pageCount) { iteration ->
-                                val color =
-                                    if (pagerState.currentPage == iteration) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(
-                                        alpha = 0.3f
+                                .height(this@BoxWithConstraints.maxHeight),
+                            verticalAlignment = Alignment.Top
+                        ) { page ->
+                            val (key, arrivals) = arrivalsList[page]
+                            val parts = key.split("|")
+                            FocusArrivalCard(
+                                numLigne = parts.getOrNull(0) ?: "?",
+                                destination = parts.getOrNull(1) ?: "?",
+                                couleurFond = arrivals.first().couleurFond,
+                                couleurTexte = arrivals.first().couleurTexte,
+                                times = arrivals
+                            )
+                        }
+
+                        if (pagerState.pageCount > 1) {
+                            Row(
+                                Modifier
+                                    .wrapContentHeight()
+                                    .fillMaxWidth()
+                                    .align(Alignment.TopCenter)
+                                    .padding(top = 32.dp),
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                repeat(pagerState.pageCount) { iteration ->
+                                    val color =
+                                        if (pagerState.currentPage == iteration) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(
+                                            alpha = 0.3f
+                                        )
+                                    Box(
+                                        modifier = Modifier
+                                            .padding(4.dp)
+                                            .clip(CircleShape)
+                                            .background(color)
+                                            .size(8.dp)
                                     )
-                                Box(
-                                    modifier = Modifier
-                                        .padding(4.dp)
-                                        .clip(CircleShape)
-                                        .background(color)
-                                        .size(8.dp)
-                                )
+                                }
                             }
                         }
                     }
@@ -374,7 +394,7 @@ fun StopDetailsScreen(
                                     couleurFond = arrivals.first().couleurFond,
                                     couleurTexte = arrivals.first().couleurTexte,
                                     times = arrivals.take(3),
-                                    initialExpoMode = list.size < 3,
+                                    initialExpoMode = list.size < 4,
                                     forcedExpandState = forcedExpandState,
                                     onLongClick = { focusedItemKey = key }
                                 )
