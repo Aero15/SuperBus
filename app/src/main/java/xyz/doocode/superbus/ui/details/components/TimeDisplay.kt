@@ -22,7 +22,7 @@ import xyz.doocode.superbus.core.dto.Temps
 import xyz.doocode.superbus.ui.theme.SuperBusTheme
 
 @Composable
-fun TimeDisplayExpo(temps: Temps, accentColor: Color) {
+fun TimeDisplayExpo(temps: Temps, accentColor: Color, textScale: Float = 1f) {
     val isRealTime = temps.fiable
     val timeStr = temps.temps
 
@@ -68,23 +68,28 @@ fun TimeDisplayExpo(temps: Temps, accentColor: Color) {
             Text(
                 text = mainText,
                 style = MaterialTheme.typography.displayLarge.copy(
-                    fontWeight = if (isUrgent) FontWeight.Black else FontWeight.Normal
+                    fontWeight = if (isUrgent) FontWeight.Black else FontWeight.Normal,
+                    fontSize = MaterialTheme.typography.displayLarge.fontSize * textScale
                 ),
                 color = animatedColor,
-                lineHeight = 40.sp,
-                modifier = Modifier.offset(y = 4.dp)
+                lineHeight = 40.sp * textScale,
+                modifier = Modifier.offset(y = 4.dp * textScale)
             )
             Text(
                 text = subText,
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontSize = MaterialTheme.typography.bodyMedium.fontSize * textScale
+                ),
                 color = animatedColor,
-                modifier = Modifier.offset(y = (-4).dp)
+                modifier = Modifier.offset(y = (-4).dp * textScale)
             )
         } else {
             // Display for text like "Proche" or unparseable formats
             Text(
                 text = timeStr,
-                style = MaterialTheme.typography.headlineMedium,
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontSize = MaterialTheme.typography.headlineMedium.fontSize * textScale
+                ),
                 fontWeight = FontWeight.Bold,
                 color = animatedColor
             )
@@ -93,10 +98,10 @@ fun TimeDisplayExpo(temps: Temps, accentColor: Color) {
         if (!isRealTime) {
             Text(
                 text = "Théorique",
-                style = MaterialTheme.typography.labelSmall,
+                style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp * textScale),
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.error,
-                fontSize = 11.sp
+                fontSize = 11.sp * textScale
             )
         }
     }

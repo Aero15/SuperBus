@@ -24,7 +24,7 @@ import xyz.doocode.superbus.core.dto.Temps
 import xyz.doocode.superbus.ui.theme.SuperBusTheme
 
 @Composable
-fun FocusTimeDisplay(temps: Temps, isPrimary: Boolean) {
+fun FocusTimeDisplay(temps: Temps, isPrimary: Boolean, textScale: Float = 1f) {
     val timeStr = temps.temps
     val isRealTime = temps.fiable
 
@@ -49,11 +49,13 @@ fun FocusTimeDisplay(temps: Temps, isPrimary: Boolean) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         if (durationMinutes != null) {
             val styleNumber =
-                if (isPrimary) MaterialTheme.typography.displayLarge.copy(fontSize = 140.sp) else MaterialTheme.typography.displayMedium.copy(
-                    fontSize = 60.sp
+                if (isPrimary) MaterialTheme.typography.displayLarge.copy(fontSize = 140.sp * textScale) else MaterialTheme.typography.displayMedium.copy(
+                    fontSize = 60.sp * textScale
                 )
             val styleUnit =
-                if (isPrimary) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.titleLarge
+                if (isPrimary) MaterialTheme.typography.headlineMedium.copy(fontSize = MaterialTheme.typography.headlineMedium.fontSize * textScale) else MaterialTheme.typography.titleLarge.copy(
+                    fontSize = MaterialTheme.typography.titleLarge.fontSize * textScale
+                )
 
             val (mainText, subText) = if (durationMinutes <= 99) {
                 durationMinutes.toString() to "min"
@@ -67,8 +69,8 @@ fun FocusTimeDisplay(temps: Temps, isPrimary: Boolean) {
                 style = styleNumber,
                 fontWeight = fontWeight,
                 color = animatedColor,
-                lineHeight = 20.sp,
-                modifier = if (isPrimary) Modifier.offset(y = 16.dp) else Modifier
+                lineHeight = 20.sp * textScale,
+                modifier = if (isPrimary) Modifier.offset(y = 16.dp * textScale) else Modifier
             )
             Text(
                 text = subText,
@@ -84,7 +86,9 @@ fun FocusTimeDisplay(temps: Temps, isPrimary: Boolean) {
                     "h"
                 )
             val styleText =
-                if (isPrimary) MaterialTheme.typography.displayMedium.copy(fontSize = 48.sp) else MaterialTheme.typography.displaySmall
+                if (isPrimary) MaterialTheme.typography.displayMedium.copy(fontSize = 48.sp * textScale) else MaterialTheme.typography.displaySmall.copy(
+                    fontSize = MaterialTheme.typography.displaySmall.fontSize * textScale
+                )
 
             Text(
                 text = displayStr,
@@ -95,12 +99,12 @@ fun FocusTimeDisplay(temps: Temps, isPrimary: Boolean) {
             )
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(8.dp * textScale))
 
         if (!isRealTime) {
             Text(
                 text = "Théorique",
-                style = MaterialTheme.typography.titleSmall,
+                style = MaterialTheme.typography.titleSmall.copy(fontSize = MaterialTheme.typography.titleSmall.fontSize * textScale),
                 color = MaterialTheme.colorScheme.error
             )
         }

@@ -1,5 +1,7 @@
 package xyz.doocode.superbus.ui.details.components
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
@@ -19,6 +21,28 @@ import androidx.compose.ui.unit.dp
 import xyz.doocode.superbus.core.dto.Temps
 import xyz.doocode.superbus.ui.components.LineBadge
 import xyz.doocode.superbus.ui.theme.SuperBusTheme
+import android.content.Context
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material3.Icon
+import androidx.compose.material3.SmallFloatingActionButton
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.core.content.edit
+import kotlin.math.roundToInt
 
 @Composable
 fun FocusArrivalCard(
@@ -175,17 +199,76 @@ private fun FocusHeader(
     }
 }
 
+enum class FontSizeEditMode { None, Primary, Secondary }
+
 @Composable
 private fun FocusTimesContent(
     times: List<Temps>,
     lineColor: Color,
     modifier: Modifier = Modifier
 ) {
+    val haptic = LocalHapticFeedback.current
+    val context = LocalContext.current
+    val prefs =
+        remember { context.getSharedPreferences("superbus_app_settings", Context.MODE_PRIVATE) }
+
+    var textScalePrimary by remember {
+        mutableFloatStateOf(
+            prefs.getFloat(
+                "focus_primary_text_scale",
+                1f
+            )
+        )
+    }
+    var textScaleSecondary by remember {
+        mutableFloatStateOf(
+            prefs.getFloat(
+                "focus_secondary_text_scale",
+                1f
+            )
+        )
+    }
+
+    val animatedTextScalePrimary by androidx.compose.animation.core.animateFloatAsState(
+        targetValue = textScalePrimary,
+        animationSpec = androidx.compose.animation.core.tween(300)
+    )
+    val animatedTextScaleSecondary by androidx.compose.animation.core.animateFloatAsState(
+        targetValue = textScaleSecondary,
+        animationSpec = androidx.compose.animation.core.tween(300)
+    )
+
+    var editingMode by remember { mutableStateOf(FontSizeEditMode.None) }
+
+    fun setPrimary(scale: Float) {
+        val s = scale.coerceIn(0.5f, 2.5f)
+        textScalePrimary = s
+        prefs.edit { putFloat("focus_primary_text_scale", s) }
+    }
+
+    fun setSecondary(scale: Float) {
+        val s = scale.coerceIn(0.5f, 2.5f)
+        textScaleSecondary = s
+        prefs.edit { putFloat("focus_secondary_text_scale", s) }
+    }
+
+    BackHandler(enabled = editingMode != FontSizeEditMode.None) {
+        editingMode = FontSizeEditMode.None
+    }
+
     val firstTimeStr = times.firstOrNull()?.temps
     val isNotServed = firstTimeStr != null && firstTimeStr.equals("Non desservi", ignoreCase = true)
 
     Column(
-        modifier = modifier,
+        modifier = modifier.pointerInput(editingMode) {
+            detectTapGestures(
+                onTap = {
+                    if (editingMode != FontSizeEditMode.None) {
+                        editingMode = FontSizeEditMode.None
+                    }
+                }
+            )
+        },
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         if (isNotServed) {
@@ -202,35 +285,152 @@ private fun FocusTimesContent(
             // Top time (Primary)
             val topTimes = times.take(1)
             if (topTimes.isNotEmpty()) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceAround,
-                    verticalAlignment = Alignment.Bottom
-                ) {
-                    topTimes.forEachIndexed { index, time ->
-                        FocusTimeDisplay(time, isPrimary = index == 0)
+                Box(modifier = Modifier
+                    .fillMaxWidth()
+                    .pointerInput(Unit) {
+                        detectTapGestures(
+                            onLongPress = {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                editingMode = FontSizeEditMode.Primary
+                            },
+                            onTap = {
+                                if (editingMode != FontSizeEditMode.None) editingMode =
+                                    FontSizeEditMode.None
+                            }
+                        )
+                    }) {
+                    val borderMod = if (editingMode == FontSizeEditMode.Primary) Modifier
+                        .border(
+                            2.dp,
+                            MaterialTheme.colorScheme.primary,
+                            RoundedCornerShape(12.dp)
+                        )
+                        .padding(8.dp) else Modifier
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .then(borderMod),
+                        horizontalArrangement = Arrangement.SpaceAround,
+                        verticalAlignment = Alignment.Bottom
+                    ) {
+                        topTimes.forEachIndexed { index, time ->
+                            FocusTimeDisplay(
+                                time,
+                                isPrimary = index == 0,
+                                textScale = animatedTextScalePrimary
+                            )
+                        }
+                    }
+                    if (editingMode == FontSizeEditMode.Primary) {
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.CenterStart)
+                                .padding(start = 16.dp)
+                                .background(
+                                    MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
+                                    RoundedCornerShape(8.dp)
+                                )
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                "${(textScalePrimary * 100).roundToInt()}%",
+                                style = MaterialTheme.typography.titleLarge
+                            )
+                        }
+                        Column(
+                            modifier = Modifier
+                                .align(Alignment.CenterEnd)
+                                .padding(end = 16.dp),
+                            verticalArrangement = Arrangement.spacedBy(1.dp)
+                        ) {
+                            SmallFloatingActionButton(
+                                onClick = { setPrimary(textScalePrimary + 0.1f) },
+                                shape = androidx.compose.foundation.shape.CircleShape
+                            ) { Icon(Icons.Default.Add, "Augmenter la taille") }
+                            SmallFloatingActionButton(
+                                onClick = { setPrimary(textScalePrimary - 0.1f) },
+                                shape = androidx.compose.foundation.shape.CircleShape
+                            ) { Icon(Icons.Default.Remove, "Réduire la taille") }
+                        }
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(32.dp)) // Fixed spacer instead of weight for cleaner layout in both modes? 
-            // Or keep flexible spacing. In landscape, vertical space might be tight.
-            // Let's use a smaller fixed spacer or flexible weight depending on parent.
-            // But to reuse easily, let's keep it simple.
+            Spacer(modifier = Modifier.height(32.dp))
 
             // Bottom 3 times
             val bottomTimes = times.drop(1).take(3)
             if (bottomTimes.isNotEmpty()) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    bottomTimes.forEach { time ->
+                Box(modifier = Modifier
+                    .fillMaxWidth()
+                    .pointerInput(Unit) {
+                        detectTapGestures(
+                            onLongPress = {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                editingMode = FontSizeEditMode.Secondary
+                            },
+                            onTap = {
+                                if (editingMode != FontSizeEditMode.None) editingMode =
+                                    FontSizeEditMode.None
+                            }
+                        )
+                    }) {
+                    val borderMod = if (editingMode == FontSizeEditMode.Secondary) Modifier
+                        .border(
+                            2.dp,
+                            MaterialTheme.colorScheme.primary,
+                            RoundedCornerShape(12.dp)
+                        )
+                        .padding(8.dp) else Modifier
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .then(borderMod),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        bottomTimes.forEach { time ->
+                            Box(
+                                modifier = Modifier.weight(1f),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                TimeDisplayExpo(
+                                    time,
+                                    lineColor,
+                                    textScale = animatedTextScaleSecondary
+                                )
+                            }
+                        }
+                    }
+                    if (editingMode == FontSizeEditMode.Secondary) {
                         Box(
-                            modifier = Modifier.weight(1f),
-                            contentAlignment = Alignment.Center
+                            modifier = Modifier
+                                .align(Alignment.CenterStart)
+                                .padding(start = 16.dp)
+                                .background(
+                                    MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
+                                    RoundedCornerShape(8.dp)
+                                )
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
                         ) {
-                            TimeDisplayExpo(time, lineColor)
+                            Text(
+                                "${(textScaleSecondary * 100).roundToInt()}%",
+                                style = MaterialTheme.typography.titleLarge
+                            )
+                        }
+                        Column(
+                            modifier = Modifier
+                                .align(Alignment.CenterEnd)
+                                .padding(end = 16.dp),
+                            verticalArrangement = Arrangement.spacedBy(1.dp)
+                        ) {
+                            SmallFloatingActionButton(
+                                onClick = { setSecondary(textScaleSecondary + 0.1f) },
+                                shape = androidx.compose.foundation.shape.CircleShape
+                            ) { Icon(Icons.Default.Add, "Augmenter la taille") }
+                            SmallFloatingActionButton(
+                                onClick = { setSecondary(textScaleSecondary - 0.1f) },
+                                shape = androidx.compose.foundation.shape.CircleShape
+                            ) { Icon(Icons.Default.Remove, "Réduire la taille") }
                         }
                     }
                 }
