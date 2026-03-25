@@ -4,22 +4,11 @@ import android.app.Activity
 import android.content.Context
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.background
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Lightbulb
@@ -29,7 +18,6 @@ import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -39,12 +27,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import xyz.doocode.superbus.ui.details.components.*
 import androidx.lifecycle.viewmodel.compose.viewModel
 import xyz.doocode.superbus.core.util.setKeepScreenOn
-import xyz.doocode.superbus.ui.components.EmptyDataView
-import xyz.doocode.superbus.ui.components.ErrorView
-import xyz.doocode.superbus.ui.components.LoadingView
 import androidx.core.content.edit
 import kotlinx.coroutines.launch
 
@@ -304,125 +288,18 @@ fun StopDetailsScreen(
             }
 
             if (showFocusMode && arrivalsList.isNotEmpty()) {
-                val initialPage = remember(focusedItemKey, arrivalsList) {
-                    if (focusedItemKey != null) {
-                        val index = arrivalsList.indexOfFirst { it.first == focusedItemKey }
-                        if (index >= 0) index else 0
-                    } else 0
-                }
-
-                val pagerState = rememberPagerState(initialPage = initialPage) {
-                    arrivalsList.size
-                }
-
-                LaunchedEffect(pagerState, arrivalsList) {
-                    snapshotFlow { pagerState.currentPage }.collect { page ->
-                        if (focusedItemKey != null && page in arrivalsList.indices) {
-                            focusedItemKey = arrivalsList[page].first
-                        }
-                    }
-                }
-
-                BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState())
-                    ) {
-                        HorizontalPager(
-                            state = pagerState,
-                            contentPadding = PaddingValues(0.dp),
-                            pageSpacing = 0.dp,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(this@BoxWithConstraints.maxHeight),
-                            verticalAlignment = Alignment.Top
-                        ) { page ->
-                            val (key, arrivals) = arrivalsList[page]
-                            val parts = key.split("|")
-                            FocusArrivalCard(
-                                numLigne = parts.getOrNull(0) ?: "?",
-                                destination = parts.getOrNull(1) ?: "?",
-                                couleurFond = arrivals.first().couleurFond,
-                                couleurTexte = arrivals.first().couleurTexte,
-                                times = arrivals
-                            )
-                        }
-
-                        if (pagerState.pageCount > 1) {
-                            Row(
-                                Modifier
-                                    .wrapContentHeight()
-                                    .fillMaxWidth()
-                                    .align(Alignment.TopCenter)
-                                    .padding(top = 32.dp),
-                                horizontalArrangement = Arrangement.Center
-                            ) {
-                                repeat(pagerState.pageCount) { iteration ->
-                                    val color =
-                                        if (pagerState.currentPage == iteration) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(
-                                            alpha = 0.3f
-                                        )
-                                    Box(
-                                        modifier = Modifier
-                                            .padding(4.dp)
-                                            .clip(CircleShape)
-                                            .background(color)
-                                            .size(8.dp)
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
+                StopDetailsFocusContent(
+                    arrivalsList = arrivalsList,
+                    focusedItemKey = focusedItemKey,
+                    onFocusedItemChanged = { focusedItemKey = it }
+                )
             } else {
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(1),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    when (state) {
-                        is StopDetailsUiState.Loading -> {
-                            item {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(200.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    LoadingView("Chargement des temps d'attente...")
-                                }
-                            }
-                        }
-
-                        is StopDetailsUiState.Error -> {
-                            item { ErrorView(state.message) { viewModel.init(stopName, stopId) } }
-                        }
-
-                        is StopDetailsUiState.Empty -> {
-                            item { EmptyDataView() }
-                        }
-
-                        is StopDetailsUiState.Success -> {
-                            val list = state.groupedArrivals.toList()
-                            items(list) { (key, arrivals) ->
-                                val parts = key.split("|")
-                                ArrivalCard(
-                                    numLigne = parts.getOrNull(0) ?: "?",
-                                    destination = parts.getOrNull(1) ?: "?",
-                                    couleurFond = arrivals.first().couleurFond,
-                                    couleurTexte = arrivals.first().couleurTexte,
-                                    times = arrivals.take(3),
-                                    initialExpoMode = list.size < 4,
-                                    forcedExpandState = forcedExpandState,
-                                    onLongClick = { focusedItemKey = key }
-                                )
-                            }
-                        }
-                    }
-                }
+                StopDetailsListContent(
+                    state = state,
+                    forcedExpandState = forcedExpandState,
+                    onRetry = { viewModel.init(stopName, stopId) },
+                    onItemLongClick = { focusedItemKey = it }
+                )
             }
         }
     }

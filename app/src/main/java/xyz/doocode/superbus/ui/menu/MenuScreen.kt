@@ -34,7 +34,7 @@ fun MenuScreen(
     val onFeatureClick: (MenuFeature) -> Unit = { feature ->
         when (feature) {
             MenuFeature.FAVORITES -> onNavigateTo(AppDestinations.FAVORITES)
-            MenuFeature.MAP -> onNavigateTo(AppDestinations.MAP)
+            //MenuFeature.MAP -> onNavigateTo(AppDestinations.MAP)
             MenuFeature.TRAFFIC -> onNavigateTo(AppDestinations.TRAFFIC)
             MenuFeature.LINES -> {
                 context.startActivity(Intent(context, xyz.doocode.superbus.ui.lines.LinesActivity::class.java))
