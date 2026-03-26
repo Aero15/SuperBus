@@ -22,6 +22,7 @@ fun StopDetailsFocusContent(
     focusedItemKey: String?,
     onFocusedItemChanged: (String) -> Unit,
     activeSubscriptionKeys: Set<String> = emptySet(),
+    currentlySpeakingKey: String? = null,
     onToggleTts: (key: String, numLigne: String, destination: String) -> Unit = { _, _, _ -> }
 ) {
     val initialPage = remember(focusedItemKey, arrivalsList) {
@@ -33,6 +34,15 @@ fun StopDetailsFocusContent(
 
     val pagerState = rememberPagerState(initialPage = initialPage) {
         arrivalsList.size
+    }
+
+    LaunchedEffect(currentlySpeakingKey, arrivalsList) {
+        if (currentlySpeakingKey != null) {
+            val index = arrivalsList.indexOfFirst { it.first == currentlySpeakingKey }
+            if (index >= 0 && index != pagerState.currentPage) {
+                pagerState.animateScrollToPage(index)
+            }
+        }
     }
 
     LaunchedEffect(pagerState, arrivalsList) {

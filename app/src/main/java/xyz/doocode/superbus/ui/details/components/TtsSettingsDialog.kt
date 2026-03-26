@@ -194,8 +194,7 @@ fun TtsSettingsDialog(
                                 volume,
                                 announceSecondArrival,
                                 announceSecondArrivalOnlyUnder10Min,
-                                askBeforeExit,
-                                currentSettings.runInBackground
+                                askBeforeExit
                             )
                         )
                     }) {
@@ -232,8 +231,7 @@ fun TtsSettingsDialog(
                         volume,
                         announceSecondArrival,
                         announceSecondArrivalOnlyUnder10Min,
-                        askBeforeExit,
-                        currentSettings.runInBackground
+                        askBeforeExit
                     )
                 )
                 onDismiss()

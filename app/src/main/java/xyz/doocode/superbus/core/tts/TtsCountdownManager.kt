@@ -43,6 +43,9 @@ class TtsCountdownManager(context: Context) {
     private val _isTtsReady = MutableStateFlow(false)
     val isTtsReady: StateFlow<Boolean> = _isTtsReady.asStateFlow()
 
+    private val _currentlySpeakingKey = MutableStateFlow<String?>(null)
+    val currentlySpeakingKey: StateFlow<String?> = _currentlySpeakingKey.asStateFlow()
+
     private var lastGroupedArrivals: Map<String, List<xyz.doocode.superbus.core.dto.Temps>> =
         emptyMap()
 
@@ -154,7 +157,7 @@ class TtsCountdownManager(context: Context) {
 
         val subscriptions = _activeSubscriptions.value.toMap()
         val hasMultipleSubscriptions = subscriptions.size > 1
-        val announcements = mutableListOf<String>()
+        val announcements = mutableListOf<Pair<String, String>>()
         val keysToRemove = mutableListOf<String>()
 
         for ((key, sub) in subscriptions) {
@@ -187,7 +190,7 @@ class TtsCountdownManager(context: Context) {
             currentMap[key] = updated
             _activeSubscriptions.value = currentMap
 
-            announcements.add(text)
+            announcements.add(key to text)
 
             // Remove subscription when countdown reaches 0
             if (minutes <= 0) {
@@ -267,15 +270,18 @@ class TtsCountdownManager(context: Context) {
         }
     }
 
-    private fun queueAnnouncements(announcements: List<String>) {
+    private fun queueAnnouncements(announcements: List<Pair<String, String>>) {
         announcementJob?.cancel()
         announcementJob = scope.launch {
-            for ((index, text) in announcements.withIndex()) {
+            for ((index, item) in announcements.withIndex()) {
+                val (key, text) = item
                 if (index > 0) {
                     delay(500) // Pause between announcements
                 }
+                _currentlySpeakingKey.value = key
                 speak(text)
                 awaitSpeechDone()
+                _currentlySpeakingKey.value = null
             }
         }
     }

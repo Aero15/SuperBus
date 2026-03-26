@@ -81,6 +81,7 @@ fun StopDetailsScreen(
     val isRefreshing by viewModel.isRefreshing.collectAsState()
     val isFavorite by viewModel.isFavorite.collectAsState()
     val ttsSubscriptions by viewModel.ttsManager.activeSubscriptions.collectAsState()
+    val currentlySpeakingKey by viewModel.ttsManager.currentlySpeakingKey.collectAsState()
     val title = stopName ?: "Arrêt"
 
     val isSingleItem = (uiState as? StopDetailsUiState.Success)?.groupedArrivals?.size == 1
@@ -140,46 +141,15 @@ fun StopDetailsScreen(
 
     // Exit confirmation dialog
     if (showExitConfirmation) {
-        AlertDialog(
+        xyz.doocode.superbus.ui.details.components.ExitConfirmationDialog(
             onDismissRequest = { showExitConfirmation = false },
-            title = { Text("Quitter ?") },
-            text = {
-                Column {
-                    Text("Des annonces vocales sont en cours. En quittant, elles seront supprimées.")
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { doNotAskExitAgain = !doNotAskExitAgain },
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Checkbox(
-                            checked = doNotAskExitAgain,
-                            onCheckedChange = null
-                        )
-                        Text(
-                            text = "Ne plus demander",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
+            onConfirm = { doNotAskAgain ->
+                showExitConfirmation = false
+                if (doNotAskAgain) {
+                    viewModel.saveTtsSettings(ttsSettings.copy(askBeforeExit = false))
                 }
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    showExitConfirmation = false
-                    if (doNotAskExitAgain) {
-                        viewModel.saveTtsSettings(ttsSettings.copy(askBeforeExit = false))
-                    }
-                    viewModel.clearTtsSubscriptions()
-                    onBackClick()
-                }) {
-                    Text("Quitter")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showExitConfirmation = false }) {
-                    Text("Annuler")
-                }
+                viewModel.clearTtsSubscriptions()
+                onBackClick()
             }
         )
     }
@@ -188,47 +158,12 @@ fun StopDetailsScreen(
     if (showLineSelectionDialog) {
         val successState = uiState as? StopDetailsUiState.Success
         if (successState != null) {
-            AlertDialog(
+            xyz.doocode.superbus.ui.details.components.LineSelectionDialog(
+                keysList = successState.groupedArrivals.keys.toList(),
+                ttsSubscriptionsKeys = ttsSubscriptions.keys,
                 onDismissRequest = { showLineSelectionDialog = false },
-                title = { Text("Activer l'annonce vocale") },
-                text = {
-                    androidx.compose.foundation.lazy.LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        val keysList = successState.groupedArrivals.keys.toList()
-                        items(keysList.size) { index ->
-                            val key = keysList[index]
-                            val parts = key.split("|")
-                            val isSubscribed = key in ttsSubscriptions
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        viewModel.toggleTtsSubscription(
-                                            key,
-                                            parts.getOrNull(0) ?: "?",
-                                            parts.getOrNull(1) ?: "?"
-                                        )
-                                    },
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Checkbox(
-                                    checked = isSubscribed,
-                                    onCheckedChange = null // Handled by Row click
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "${parts.getOrNull(0)} vers ${parts.getOrNull(1)}",
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-                            }
-                        }
-                    }
-                },
-                confirmButton = {
-                    TextButton(onClick = { showLineSelectionDialog = false }) {
-                        Text("Terminer")
-                    }
+                onToggleTtsSubscription = { key, numLigne, destination ->
+                    viewModel.toggleTtsSubscription(key, numLigne, destination)
                 }
             )
         } else {
@@ -541,6 +476,7 @@ fun StopDetailsScreen(
                     focusedItemKey = focusedItemKey,
                     onFocusedItemChanged = { focusedItemKey = it },
                     activeSubscriptionKeys = ttsSubscriptions.keys,
+                    currentlySpeakingKey = currentlySpeakingKey,
                     onToggleTts = { key, numLigne, destination ->
                         viewModel.toggleTtsSubscription(key, numLigne, destination)
                     }
