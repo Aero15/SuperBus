@@ -3,6 +3,10 @@ package xyz.doocode.superbus.ui.details
 import android.app.Activity
 import android.content.Context
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -13,15 +17,22 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.RecordVoiceOver
+import androidx.compose.material.icons.filled.VoiceOverOff
 import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -29,10 +40,12 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import xyz.doocode.superbus.core.util.setKeepScreenOn
+import xyz.doocode.superbus.ui.details.components.StopDetailsUtils
+import xyz.doocode.superbus.ui.details.components.TtsSettingsDialog
 import androidx.core.content.edit
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun StopDetailsScreen(
     stopName: String?,
@@ -52,6 +65,9 @@ fun StopDetailsScreen(
                 viewModel.startAutoRefresh()
             } else if (event == Lifecycle.Event.ON_PAUSE || event == Lifecycle.Event.ON_STOP) {
                 viewModel.stopAutoRefresh()
+                if (viewModel.hasTtsSubscriptions()) {
+                    viewModel.announceTtsPause()
+                }
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -64,6 +80,7 @@ fun StopDetailsScreen(
     val uiState by viewModel.uiState.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
     val isFavorite by viewModel.isFavorite.collectAsState()
+    val ttsSubscriptions by viewModel.ttsManager.activeSubscriptions.collectAsState()
     val title = stopName ?: "Arrêt"
 
     val isSingleItem = (uiState as? StopDetailsUiState.Success)?.groupedArrivals?.size == 1
@@ -103,13 +120,228 @@ fun StopDetailsScreen(
     var showMenu by remember { mutableStateOf(false) }
     var forcedExpandState by remember { mutableStateOf<Boolean?>(null) }
     var focusedItemKey by remember { mutableStateOf<String?>(null) }
+    var showExitConfirmation by remember { mutableStateOf(false) }
+    var showTtsSettings by remember { mutableStateOf(false) }
+    var doNotAskExitAgain by remember { mutableStateOf(false) }
+    var showLineSelectionDialog by remember { mutableStateOf(false) }
 
-    BackHandler(enabled = focusedItemKey != null) {
-        focusedItemKey = null
+    // Back handler: confirm exit when TTS subscriptions are active
+    val ttsSettings = viewModel.getTtsSettings()
+    BackHandler(enabled = true) {
+        if (focusedItemKey != null) {
+            focusedItemKey = null
+        } else if (viewModel.hasTtsSubscriptions() && ttsSettings.askBeforeExit) {
+            showExitConfirmation = true
+        } else {
+            if (viewModel.hasTtsSubscriptions()) viewModel.clearTtsSubscriptions()
+            onBackClick()
+        }
+    }
+
+    // Exit confirmation dialog
+    if (showExitConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showExitConfirmation = false },
+            title = { Text("Quitter ?") },
+            text = {
+                Column {
+                    Text("Des annonces vocales sont en cours. En quittant, elles seront supprimées.")
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { doNotAskExitAgain = !doNotAskExitAgain },
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            checked = doNotAskExitAgain,
+                            onCheckedChange = null
+                        )
+                        Text(
+                            text = "Ne plus demander",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    showExitConfirmation = false
+                    if (doNotAskExitAgain) {
+                        viewModel.saveTtsSettings(ttsSettings.copy(askBeforeExit = false))
+                    }
+                    viewModel.clearTtsSubscriptions()
+                    onBackClick()
+                }) {
+                    Text("Quitter")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showExitConfirmation = false }) {
+                    Text("Annuler")
+                }
+            }
+        )
+    }
+
+    // Line selection for TTS (List view)
+    if (showLineSelectionDialog) {
+        val successState = uiState as? StopDetailsUiState.Success
+        if (successState != null) {
+            AlertDialog(
+                onDismissRequest = { showLineSelectionDialog = false },
+                title = { Text("Activer l'annonce vocale") },
+                text = {
+                    androidx.compose.foundation.lazy.LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        val keysList = successState.groupedArrivals.keys.toList()
+                        items(keysList.size) { index ->
+                            val key = keysList[index]
+                            val parts = key.split("|")
+                            val isSubscribed = key in ttsSubscriptions
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        viewModel.toggleTtsSubscription(
+                                            key,
+                                            parts.getOrNull(0) ?: "?",
+                                            parts.getOrNull(1) ?: "?"
+                                        )
+                                    },
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Checkbox(
+                                    checked = isSubscribed,
+                                    onCheckedChange = null // Handled by Row click
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "${parts.getOrNull(0)} vers ${parts.getOrNull(1)}",
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { showLineSelectionDialog = false }) {
+                        Text("Terminer")
+                    }
+                }
+            )
+        } else {
+            showLineSelectionDialog = false
+        }
+    }
+
+    // TTS Settings dialog
+    if (showTtsSettings) {
+        TtsSettingsDialog(
+            currentSettings = viewModel.getTtsSettings(),
+            onDismiss = { showTtsSettings = false },
+            onSave = { viewModel.saveTtsSettings(it) },
+            onTest = { testSettings -> viewModel.ttsManager.testTTS(testSettings) }
+        )
     }
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        floatingActionButton = {
+            if (uiState is StopDetailsUiState.Success) {
+                val successState = uiState as StopDetailsUiState.Success
+                if (successState.groupedArrivals.isNotEmpty()) {
+                    val currentFabKey = if (isSingleItem) {
+                        successState.groupedArrivals.keys.firstOrNull()
+                    } else {
+                        focusedItemKey
+                    }
+                    val currentFabArrivals = currentFabKey?.let { successState.groupedArrivals[it] }
+
+                    val isFabSubscribed = if (currentFabKey != null) {
+                        currentFabKey in ttsSubscriptions
+                    } else {
+                        ttsSubscriptions.isNotEmpty()
+                    }
+
+                    val defaultFabContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                    val defaultFabContentColor = MaterialTheme.colorScheme.onSurface
+
+                    val targetLigneColor =
+                        if (currentFabKey != null && currentFabArrivals != null && isFabSubscribed) {
+                            StopDetailsUtils.parseLineColor(
+                                couleurFond = currentFabArrivals.firstOrNull()?.couleurFond ?: "",
+                                defaultColor = MaterialTheme.colorScheme.primary
+                            )
+                        } else if (isFabSubscribed) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            defaultFabContainerColor
+                        }
+
+                    val targetTextColor =
+                        if (currentFabKey != null && currentFabArrivals != null && isFabSubscribed) {
+                            StopDetailsUtils.parseLineColor(
+                                couleurFond = currentFabArrivals.firstOrNull()?.couleurTexte ?: "",
+                                defaultColor = MaterialTheme.colorScheme.onPrimary
+                            )
+                        } else if (isFabSubscribed) {
+                            MaterialTheme.colorScheme.onPrimary
+                        } else {
+                            defaultFabContentColor
+                        }
+
+                    val fabContainerColor by animateColorAsState(
+                        targetValue = targetLigneColor,
+                        label = "fabColor"
+                    )
+                    val fabContentColor by animateColorAsState(
+                        targetValue = targetTextColor,
+                        label = "fabContent"
+                    )
+
+                    Surface(
+                        modifier = Modifier
+                            .semantics {
+                                role = Role.Button
+                                contentDescription = "Annonce vocale"
+                            }
+                            .combinedClickable(
+                                onClick = {
+                                    if (currentFabKey != null) {
+                                        val parts = currentFabKey.split("|")
+                                        viewModel.toggleTtsSubscription(
+                                            currentFabKey,
+                                            parts.getOrNull(0) ?: "?",
+                                            parts.getOrNull(1) ?: "?"
+                                        )
+                                    } else {
+                                        showLineSelectionDialog = true
+                                    }
+                                },
+                                onLongClick = {
+                                    showTtsSettings = true
+                                }
+                            ),
+                        shape = FloatingActionButtonDefaults.shape,
+                        color = fabContainerColor,
+                        contentColor = fabContentColor,
+                        shadowElevation = 6.dp
+                    ) {
+                        Box(
+                            modifier = Modifier.defaultMinSize(minWidth = 56.dp, minHeight = 56.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = if (isFabSubscribed) Icons.Default.RecordVoiceOver else Icons.Default.VoiceOverOff,
+                                contentDescription = null
+                            )
+                        }
+                    }
+                }
+            }
+        },
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState) { data ->
                 val isSuccess = data.visuals.message == "L'écran restera allumé"
@@ -158,6 +390,8 @@ fun StopDetailsScreen(
                     IconButton(onClick = {
                         if (focusedItemKey != null) {
                             focusedItemKey = null
+                        } else if (viewModel.hasTtsSubscriptions()) {
+                            showExitConfirmation = true
                         } else {
                             onBackClick()
                         }
@@ -242,6 +476,20 @@ fun StopDetailsScreen(
                                     }
                                 )
                             }
+                            HorizontalDivider()
+                            DropdownMenuItem(
+                                text = { Text("Réglages vocaux") },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Default.RecordVoiceOver,
+                                        contentDescription = null
+                                    )
+                                },
+                                onClick = {
+                                    showTtsSettings = true
+                                    showMenu = false
+                                }
+                            )
                         }
                     }
                 },
@@ -291,7 +539,11 @@ fun StopDetailsScreen(
                 StopDetailsFocusContent(
                     arrivalsList = arrivalsList,
                     focusedItemKey = focusedItemKey,
-                    onFocusedItemChanged = { focusedItemKey = it }
+                    onFocusedItemChanged = { focusedItemKey = it },
+                    activeSubscriptionKeys = ttsSubscriptions.keys,
+                    onToggleTts = { key, numLigne, destination ->
+                        viewModel.toggleTtsSubscription(key, numLigne, destination)
+                    }
                 )
             } else {
                 StopDetailsListContent(

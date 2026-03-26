@@ -20,7 +20,9 @@ import xyz.doocode.superbus.ui.details.components.FocusArrivalCard
 fun StopDetailsFocusContent(
     arrivalsList: List<Pair<String, List<Temps>>>,
     focusedItemKey: String?,
-    onFocusedItemChanged: (String) -> Unit
+    onFocusedItemChanged: (String) -> Unit,
+    activeSubscriptionKeys: Set<String> = emptySet(),
+    onToggleTts: (key: String, numLigne: String, destination: String) -> Unit = { _, _, _ -> }
 ) {
     val initialPage = remember(focusedItemKey, arrivalsList) {
         if (focusedItemKey != null) {
@@ -41,52 +43,54 @@ fun StopDetailsFocusContent(
         }
     }
 
-    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-        ) {
-            HorizontalPager(
-                state = pagerState,
-                contentPadding = PaddingValues(0.dp),
-                pageSpacing = 0.dp,
+    Box(modifier = Modifier.fillMaxSize()) {
+        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+            Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(this@BoxWithConstraints.maxHeight),
-                verticalAlignment = Alignment.Top
-            ) { page ->
-                val (key, arrivals) = arrivalsList[page]
-                val parts = key.split("|")
-                FocusArrivalCard(
-                    numLigne = parts.getOrNull(0) ?: "?",
-                    destination = parts.getOrNull(1) ?: "?",
-                    couleurFond = arrivals.first().couleurFond,
-                    couleurTexte = arrivals.first().couleurTexte,
-                    times = arrivals
-                )
-            }
-
-            if (pagerState.pageCount > 1) {
-                Row(
-                    Modifier
-                        .wrapContentHeight()
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+            ) {
+                HorizontalPager(
+                    state = pagerState,
+                    contentPadding = PaddingValues(0.dp),
+                    pageSpacing = 0.dp,
+                    modifier = Modifier
                         .fillMaxWidth()
-                        .align(Alignment.TopCenter)
-                        .padding(top = 32.dp),
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    repeat(pagerState.pageCount) { iteration ->
-                        val color =
-                            if (pagerState.currentPage == iteration) MaterialTheme.colorScheme.primary
-                            else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
-                        Box(
-                            modifier = Modifier
-                                .padding(4.dp)
-                                .clip(CircleShape)
-                                .background(color)
-                                .size(8.dp)
-                        )
+                        .height(this@BoxWithConstraints.maxHeight),
+                    verticalAlignment = Alignment.Top
+                ) { page ->
+                    val (key, arrivals) = arrivalsList[page]
+                    val parts = key.split("|")
+                    FocusArrivalCard(
+                        numLigne = parts.getOrNull(0) ?: "?",
+                        destination = parts.getOrNull(1) ?: "?",
+                        couleurFond = arrivals.first().couleurFond,
+                        couleurTexte = arrivals.first().couleurTexte,
+                        times = arrivals
+                    )
+                }
+
+                if (pagerState.pageCount > 1) {
+                    Row(
+                        Modifier
+                            .wrapContentHeight()
+                            .fillMaxWidth()
+                            .align(Alignment.TopCenter)
+                            .padding(top = 32.dp),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        repeat(pagerState.pageCount) { iteration ->
+                            val color =
+                                if (pagerState.currentPage == iteration) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+                            Box(
+                                modifier = Modifier
+                                    .padding(4.dp)
+                                    .clip(CircleShape)
+                                    .background(color)
+                                    .size(8.dp)
+                            )
+                        }
                     }
                 }
             }

@@ -232,7 +232,7 @@ fun AppIdentitySection() {
 
 @Composable
 fun InfoCardsSection(uriHandler: UriHandler) {
-    val lastUpdate = LocalDate.of(2026, 3, 24)
+    val lastUpdate = LocalDate.of(2026, 3, 26)
     val formattedDate = lastUpdate.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL))
 
     AboutInfoCard(

@@ -15,6 +15,8 @@ import xyz.doocode.superbus.core.data.FavoritesRepository
 import xyz.doocode.superbus.core.dto.Temps
 import xyz.doocode.superbus.core.dto.TempsLieu
 import xyz.doocode.superbus.core.manager.FavoritesManager
+import xyz.doocode.superbus.core.tts.TtsCountdownManager
+import xyz.doocode.superbus.core.tts.TtsSettings
 
 
 sealed interface StopDetailsUiState {
@@ -32,6 +34,12 @@ class StopDetailsViewModel(application: Application) : AndroidViewModel(applicat
 
     private val repository = FavoritesRepository.getInstance(application)
     private val favoritesManager = FavoritesManager(application)
+
+    val ttsManager = TtsCountdownManager(application)
+
+    init {
+        ttsManager.init()
+    }
 
     private val _uiState = MutableStateFlow<StopDetailsUiState>(StopDetailsUiState.Loading)
     val uiState: StateFlow<StopDetailsUiState> = _uiState.asStateFlow()
@@ -141,6 +149,7 @@ class StopDetailsViewModel(application: Application) : AndroidViewModel(applicat
                                 }
 
                             _uiState.value = StopDetailsUiState.Success(res.objects, grouped)
+                            ttsManager.onArrivalsUpdated(grouped)
                         }
                     }
                 } else {
@@ -157,8 +166,25 @@ class StopDetailsViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
 
+    fun toggleTtsSubscription(key: String, numLigne: String, destination: String) {
+        ttsManager.toggleSubscription(key, numLigne, destination)
+    }
+
+    fun isTtsSubscribed(key: String): Boolean = ttsManager.isSubscribed(key)
+
+    fun hasTtsSubscriptions(): Boolean = ttsManager.hasActiveSubscriptions()
+
+    fun clearTtsSubscriptions() = ttsManager.clearAllSubscriptions()
+
+    fun announceTtsPause() = ttsManager.announcePause()
+
+    fun saveTtsSettings(settings: TtsSettings) = ttsManager.saveSettings(settings)
+
+    fun getTtsSettings(): TtsSettings = ttsManager.getSettings()
+
     override fun onCleared() {
         super.onCleared()
         pollingJob?.cancel()
+        ttsManager.shutdown()
     }
 }
