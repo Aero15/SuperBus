@@ -237,33 +237,25 @@ class TtsCountdownManager(context: Context) {
     ): String {
         return if (hasMultiple) {
             val firstPart = when {
-                minutes > 1 -> "Dans $minutes minutes, ligne $numLigne, direction $destination"
-                minutes == 1 -> "En approche, ligne $numLigne, direction $destination"
-                else -> "Départ imminent, ligne $numLigne, direction $destination"
+                minutes > 1 -> "Départ, dans $minutes minutes, pour la ligne $numLigne, direction $destination"
+                minutes == 1 -> "Arrivée imminente, de la ligne $numLigne, direction $destination"
+                else -> "Départ imminent, de la ligne $numLigne, direction $destination"
             }
 
             val nextPart = if (nextMinutes != null) {
-                when {
-                    nextMinutes > 1 -> ", le suivant dans $nextMinutes minutes"
-                    nextMinutes == 1 -> ", le suivant en approche"
-                    else -> ", le suivant est imminent"
-                }
+                ", le prochain, dans $nextMinutes minutes"
             } else ""
 
             firstPart + nextPart
         } else {
             val firstPart = when {
-                minutes > 1 -> if (nextMinutes != null) "Prochain passage dans $minutes minutes" else "Dans $minutes minutes"
-                minutes == 1 -> "En approche"
+                minutes > 1 -> "Départ, dans $minutes minutes"
+                minutes == 1 -> "Arrivée imminente"
                 else -> "Départ imminent"
             }
 
             val nextPart = if (nextMinutes != null) {
-                when {
-                    nextMinutes > 1 -> ", le suivant dans $nextMinutes minutes"
-                    nextMinutes == 1 -> ", le suivant en approche"
-                    else -> ", le suivant est imminent"
-                }
+                ", le prochain, dans $nextMinutes minutes"
             } else ""
 
             firstPart + nextPart
