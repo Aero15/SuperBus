@@ -15,6 +15,8 @@ import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Fullscreen
+import androidx.compose.material.icons.filled.FullscreenExit
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.RecordVoiceOver
@@ -125,6 +127,7 @@ fun StopDetailsScreen(
     var showTtsSettings by remember { mutableStateOf(false) }
     var doNotAskExitAgain by remember { mutableStateOf(false) }
     var showLineSelectionDialog by remember { mutableStateOf(false) }
+    var showUnfavoriteConfirmation by remember { mutableStateOf(false) }
 
     // Back handler: confirm exit when TTS subscriptions are active
     val ttsSettings = viewModel.getTtsSettings()
@@ -169,6 +172,28 @@ fun StopDetailsScreen(
         } else {
             showLineSelectionDialog = false
         }
+    }
+
+    // Unfavorite confirmation dialog
+    if (showUnfavoriteConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showUnfavoriteConfirmation = false },
+            title = { Text("Retirer des favoris") },
+            text = { Text("Voulez-vous retirer cet arrêt de vos favoris ?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showUnfavoriteConfirmation = false
+                    viewModel.toggleFavorite()
+                }) {
+                    Text("Retirer")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showUnfavoriteConfirmation = false }) {
+                    Text("Annuler")
+                }
+            }
+        )
     }
 
     // TTS Settings dialog
@@ -347,7 +372,10 @@ fun StopDetailsScreen(
                             )
                         }
                     }
-                    IconButton(onClick = viewModel::toggleFavorite) {
+                    IconButton(onClick = {
+                        if (isFavorite) showUnfavoriteConfirmation = true
+                        else viewModel.toggleFavorite()
+                    }) {
                         Icon(
                             imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                             contentDescription = if (isFavorite) "Retirer des favoris" else "Ajouter aux favoris",
@@ -397,6 +425,25 @@ fun StopDetailsScreen(
                                 }
                             )
                             if (!isSingleItem) {
+                                DropdownMenuItem(
+                                    text = { Text(if (focusedItemKey != null) "Quitter le plein écran" else "Plein écran") },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = if (focusedItemKey != null) Icons.Default.FullscreenExit else Icons.Default.Fullscreen,
+                                            contentDescription = null
+                                        )
+                                    },
+                                    onClick = {
+                                        if (focusedItemKey != null) {
+                                            focusedItemKey = null
+                                        } else {
+                                            focusedItemKey =
+                                                (uiState as? StopDetailsUiState.Success)
+                                                    ?.groupedArrivals?.keys?.firstOrNull()
+                                        }
+                                        showMenu = false
+                                    }
+                                )
                                 DropdownMenuItem(
                                     text = { Text(if (forcedExpandState != false) "Tout réduire" else "Tout développer") },
                                     leadingIcon = {
