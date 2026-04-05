@@ -9,7 +9,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -43,8 +42,7 @@ fun FavoriteTile(
     isEditing: Boolean = false,
     onClick: () -> Unit,
     onRename: () -> Unit = {},
-    onRemove: () -> Unit = {},
-    onEnableEditing: () -> Unit = {}
+    onRemove: () -> Unit = {}
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "shake")
     val rotation by if (isEditing) {
@@ -242,19 +240,6 @@ fun FavoriteTile(
                     onClick = {
                         showContextMenu = false
                         onRename()
-                    }
-                )
-                DropdownMenuItem(
-                    text = { Text("Réorganiser") },
-                    leadingIcon = {
-                        Icon(
-                            Icons.Default.GridView,
-                            contentDescription = null
-                        )
-                    },
-                    onClick = {
-                        showContextMenu = false
-                        onEnableEditing()
                     }
                 )
                 DropdownMenuItem(

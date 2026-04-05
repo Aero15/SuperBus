@@ -280,8 +280,7 @@ fun FavoritesScreen(
                                             station.id,
                                             station.detailsFromId
                                         )
-                                    },
-                                    onEnableEditing = { viewModel.startEditing() }
+                                    }
                                 )
                             }
                         }
