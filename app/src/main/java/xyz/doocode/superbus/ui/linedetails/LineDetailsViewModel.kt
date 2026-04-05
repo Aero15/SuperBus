@@ -79,7 +79,7 @@ class LineDetailsViewModel(
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        error = e.localizedMessage ?: "Erreur chargement arrêts"
+                        error = e.localizedMessage ?: "Erreur chargement des stations"
                     )
                 }
             }

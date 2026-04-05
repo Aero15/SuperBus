@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import xyz.doocode.superbus.core.api.ApiClient
 import xyz.doocode.superbus.core.data.FavoritesRepository
+import xyz.doocode.superbus.core.dto.Arret
 import xyz.doocode.superbus.core.dto.Temps
 import xyz.doocode.superbus.core.dto.TempsLieu
 import xyz.doocode.superbus.core.manager.FavoritesManager
@@ -50,11 +51,18 @@ class StopDetailsViewModel(application: Application) : AndroidViewModel(applicat
     private val _isFavorite = MutableStateFlow(false)
     val isFavorite: StateFlow<Boolean> = _isFavorite.asStateFlow()
 
+    private val _nearbyStops = MutableStateFlow<List<Arret>>(emptyList())
+    val nearbyStops: StateFlow<List<Arret>> = _nearbyStops.asStateFlow()
+
+    private val _isLoadingNearbyStops = MutableStateFlow(false)
+    val isLoadingNearbyStops: StateFlow<Boolean> = _isLoadingNearbyStops.asStateFlow()
+
     private var currentStopName: String? = null
     private var currentStopId: String? = null
     private var detailsFromId: Boolean = true
     private var pollingJob: Job? = null
     private var lastRefreshTime = 0L
+    private var nearbyStopsLoaded = false
 
     fun init(stopName: String?, stopId: String?, detailsFromId: Boolean = true) {
         val isNew = (currentStopName != stopName || currentStopId != stopId)
@@ -75,8 +83,10 @@ class StopDetailsViewModel(application: Application) : AndroidViewModel(applicat
         }
 
         if (isNew) {
+            nearbyStopsLoaded = false
+            _nearbyStops.value = emptyList()
             loadData(forceRefresh = true)
-            // Récupérer détails de l'arrêt (getDetailsArret) si l'id est présent
+            // Récupérer détails de la station (getDetailsArret) si l'id est présent
         }
     }
 
@@ -141,7 +151,12 @@ class StopDetailsViewModel(application: Application) : AndroidViewModel(applicat
 
                         if (arrivals.isEmpty()) {
                             _uiState.value = StopDetailsUiState.Empty
+                            if (!nearbyStopsLoaded && currentStopId != null) {
+                                loadNearbyStops()
+                            }
                         } else {
+                            nearbyStopsLoaded = false
+                            _nearbyStops.value = emptyList()
                             val grouped = arrivals
                                 .groupBy { "${it.numLignePublic}|${it.destination}" }
                                 .mapValues { (_, list) ->
@@ -162,6 +177,40 @@ class StopDetailsViewModel(application: Application) : AndroidViewModel(applicat
                 }
             } finally {
                 _isRefreshing.value = false
+            }
+        }
+    }
+
+    private fun loadNearbyStops() {
+        viewModelScope.launch {
+            _isLoadingNearbyStops.value = true
+            try {
+                val stopId = currentStopId ?: return@launch
+                val stop = ApiClient.ginkoService.getDetailsArret(stopId).objects
+                val rawNearby =
+                    ApiClient.ginkoService.getArretsProches(stop.latitude, stop.longitude).objects
+
+                // Group by name exactly like SearchViewModel does
+                val grouped = rawNearby
+                    .filter { it.id != stopId }
+                    .onEach { if (it.duplicates == null) it.duplicates = emptyList() }
+                    .groupBy { it.nom }
+                    .map { (_, stops) ->
+                        val sorted = stops.sortedBy { it.id }
+                        sorted.first().copy(
+                            duplicates = sorted.onEach {
+                                if (it.duplicates == null) it.duplicates = emptyList()
+                            }
+                        )
+                    }
+                    .sortedBy { it.nom }
+
+                _nearbyStops.value = grouped
+                nearbyStopsLoaded = true
+            } catch (_: Exception) {
+                // Affichage silencieux — les stations à proximité sont facultatives
+            } finally {
+                _isLoadingNearbyStops.value = false
             }
         }
     }

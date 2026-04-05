@@ -35,7 +35,7 @@ fun FakeSearchBar(onClick: () -> Unit) {
             )
             Spacer(modifier = Modifier.width(16.dp))
             Text(
-                text = "Rechercher un arrêt, une ligne...",
+                text = "Rechercher une station, une ligne...",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

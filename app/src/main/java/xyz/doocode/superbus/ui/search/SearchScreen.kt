@@ -100,7 +100,6 @@ fun SearchScreen(
     // Bottom Sheet State
     var selectedStop by remember { mutableStateOf<Arret?>(null) }
     var showBottomSheet by remember { mutableStateOf(false) }
-    val sheetState = rememberModalBottomSheetState()
 
     // Connect to Favorites Repository
     val favoritesRepository = remember { FavoritesRepository.getInstance(context) }
@@ -134,7 +133,7 @@ fun SearchScreen(
                     EmptyResultsView(query = searchQuery)
                 } else {
                     Text(
-                        text = "${state.stops.size} arrêts trouvés",
+                        text = "${state.stops.size} stations trouvées",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
@@ -179,218 +178,35 @@ fun SearchScreen(
                     }
 
                     if (showBottomSheet && selectedStop != null) {
-                        ModalBottomSheet(
+                        StopVariantsBottomSheet(
+                            stop = selectedStop!!,
                             onDismissRequest = { showBottomSheet = false },
-                            sheetState = sheetState
-                        ) {
-                            Column(modifier = Modifier.padding(bottom = 32.dp)) {
-                                Text(
-                                    text = "${selectedStop?.nom}",
-                                    fontWeight = FontWeight.Bold,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    modifier = Modifier.padding(16.dp)
+                            onGroupedClick = {
+                                showBottomSheet = false
+                                openStopDetails(selectedStop!!, false)
+                            },
+                            onDuplicateClick = { duplicate ->
+                                showBottomSheet = false
+                                openStopDetails(duplicate, true)
+                            },
+                            isGroupedFavorite = favorites.any { it.id == selectedStop!!.id && !it.detailsFromId },
+                            isDuplicateFavorite = { duplicate ->
+                                favorites.any { it.id == duplicate.id && it.detailsFromId }
+                            },
+                            onToggleGroupedFavorite = {
+                                viewModel.toggleFavorite(
+                                    selectedStop!!,
+                                    false
                                 )
-                                HorizontalDivider()
-                                LazyColumn(modifier = Modifier.background(MaterialTheme.colorScheme.surface)) {
-                                    // 1. Recommended Item (Grouped)
-                                    item {
-                                        var showMenu by remember { mutableStateOf(false) }
-
-                                        val isFav =
-                                            favorites.any { it.id == selectedStop!!.id && !it.detailsFromId }
-
-                                        Box {
-                                            ListItem(
-                                                headlineContent = {
-                                                    val parts =
-                                                        selectedStop!!.nom.split(" - ", limit = 2)
-                                                    if (parts.size == 2) {
-                                                        Column {
-                                                            Text(
-                                                                text = parts[0],
-                                                                style = MaterialTheme.typography.labelMedium,
-                                                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(
-                                                                    alpha = 0.8f
-                                                                )
-                                                            )
-                                                            Text(
-                                                                text = parts[1],
-                                                                fontWeight = FontWeight.Bold,
-                                                                color = MaterialTheme.colorScheme.primary,
-                                                                style = MaterialTheme.typography.bodyLarge
-                                                            )
-                                                        }
-                                                    } else {
-                                                        Text(
-                                                            text = selectedStop!!.nom,
-                                                            fontWeight = FontWeight.Bold,
-                                                            color = MaterialTheme.colorScheme.primary
-                                                        )
-                                                    }
-                                                },
-                                                supportingContent = {
-                                                    Text("Voir les horaires de tous les quais")
-                                                },
-                                                leadingContent = {
-                                                    val icon =
-                                                        if (isFav) Icons.Default.Favorite else Icons.Default.Search
-                                                    val tint =
-                                                        if (isFav) Color(0xFFE91E63) else MaterialTheme.colorScheme.primary
-                                                    Icon(
-                                                        imageVector = icon,
-                                                        contentDescription = if (isFav) "Favori" else "Rechercher par nom",
-                                                        tint = tint
-                                                    )
-                                                },
-                                                trailingContent = {
-                                                    Surface(
-                                                        color = MaterialTheme.colorScheme.primary,
-                                                        shape = MaterialTheme.shapes.extraSmall
-                                                    ) {
-                                                        Text(
-                                                            text = "Recommandé",
-                                                            style = MaterialTheme.typography.labelSmall,
-                                                            modifier = Modifier.padding(
-                                                                horizontal = 6.dp,
-                                                                vertical = 2.dp
-                                                            ),
-                                                            color = MaterialTheme.colorScheme.onPrimary
-                                                        )
-                                                    }
-                                                },
-                                                colors = ListItemDefaults.colors(
-                                                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(
-                                                        alpha = 0.3f
-                                                    )
-                                                ),
-                                                modifier = Modifier
-                                                    .padding(horizontal = 8.dp, vertical = 8.dp)
-                                                    .clip(MaterialTheme.shapes.medium)
-                                                    .pointerInput(Unit) {
-                                                        detectTapGestures(
-                                                            onTap = {
-                                                                showBottomSheet = false
-                                                                openStopDetails(
-                                                                    selectedStop!!,
-                                                                    false
-                                                                )
-                                                            },
-                                                            onLongPress = { showMenu = true }
-                                                        )
-                                                    }
-                                            )
-
-                                            StopActionsContainer(
-                                                expanded = showMenu,
-                                                onDismissRequest = { showMenu = false },
-                                                stopName = selectedStop!!.nom,
-                                                stopId = selectedStop!!.id,
-                                                isFavorite = isFav,
-                                                onToggleFavorite = {
-                                                    viewModel.toggleFavorite(
-                                                        selectedStop!!,
-                                                        false
-                                                    )
-                                                },
-                                                onFillQuery = { query ->
-                                                    viewModel.onSearchQueryChanged(query)
-                                                    showBottomSheet = false
-                                                }
-                                            )
-                                        }
-                                        HorizontalDivider(thickness = 0.5.dp)
-                                    }
-
-                                    // 2. Individual items (By ID)
-                                    items(selectedStop!!.duplicates) { duplicate ->
-                                        var showMenu by remember { mutableStateOf(false) }
-
-                                        val isTram = duplicate.id.startsWith("t_")
-                                        val isFav =
-                                            favorites.any { it.id == duplicate.id && it.detailsFromId }
-
-                                        val icon =
-                                            if (isFav) Icons.Default.Favorite else if (isTram) Icons.Default.Tram else Icons.Default.DirectionsBus
-                                        val iconColor =
-                                            if (isFav) Color(0xFFE91E63) else if (isTram) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.secondary
-
-                                        Box {
-                                            ListItem(
-                                                leadingContent = {
-                                                    Icon(
-                                                        imageVector = icon,
-                                                        contentDescription = if (isFav) "Favori" else if (isTram) "Arrêt de tram" else "Arrêt de bus",
-                                                        tint = iconColor
-                                                    )
-                                                },
-                                                headlineContent = {
-                                                    val parts =
-                                                        duplicate.nom.split(" - ", limit = 2)
-                                                    if (parts.size == 2) {
-                                                        Column {
-                                                            Text(
-                                                                text = parts[0],
-                                                                style = MaterialTheme.typography.labelMedium,
-                                                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(
-                                                                    alpha = 0.8f
-                                                                )
-                                                            )
-                                                            Text(
-                                                                text = parts[1],
-                                                                style = MaterialTheme.typography.bodyLarge
-                                                            )
-                                                        }
-                                                    } else {
-                                                        Text(
-                                                            text = duplicate.nom,
-                                                            style = MaterialTheme.typography.bodyLarge
-                                                        )
-                                                    }
-                                                },
-                                                trailingContent = {
-                                                    Text(
-                                                        text = "#${duplicate.id}",
-                                                        fontFamily = FontFamily.Monospace,
-                                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(
-                                                            alpha = 0.6f
-                                                        ),
-                                                        style = MaterialTheme.typography.bodyMedium
-                                                    )
-                                                },
-                                                modifier = Modifier.pointerInput(Unit) {
-                                                    detectTapGestures(
-                                                        onTap = {
-                                                            showBottomSheet = false
-                                                            openStopDetails(duplicate, true)
-                                                        },
-                                                        onLongPress = { showMenu = true }
-                                                    )
-                                                }
-                                            )
-
-                                            StopActionsContainer(
-                                                expanded = showMenu,
-                                                onDismissRequest = { showMenu = false },
-                                                stopName = duplicate.nom,
-                                                stopId = duplicate.id,
-                                                isFavorite = isFav,
-                                                onToggleFavorite = {
-                                                    viewModel.toggleFavorite(
-                                                        duplicate,
-                                                        true
-                                                    )
-                                                },
-                                                onFillQuery = { query ->
-                                                    viewModel.onSearchQueryChanged(query)
-                                                    showBottomSheet = false
-                                                }
-                                            )
-                                        }
-                                        HorizontalDivider(thickness = 0.5.dp)
-                                    }
-                                }
+                            },
+                            onToggleDuplicateFavorite = { duplicate ->
+                                viewModel.toggleFavorite(duplicate, true)
+                            },
+                            onFillQuery = { query ->
+                                viewModel.onSearchQueryChanged(query)
+                                showBottomSheet = false
                             }
-                        }
+                        )
                     }
                 }
             }

@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.outlined.NoTransfer
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -57,7 +58,7 @@ fun EmptyResultsView(query: String) {
     PlaceholderView(
         icon = Icons.Outlined.Search,
         title = "Aucun résultat",
-        subtitle = "Nous n'avons trouvé aucun arrêt correspondant à \"$query\"."
+        subtitle = "Nous n'avons trouvé aucune station correspondant à \"$query\"."
     )
 }
 
@@ -66,7 +67,16 @@ fun EmptyDataView() {
     PlaceholderView(
         icon = Icons.Outlined.Search,
         title = "Aucune donnée",
-        subtitle = "La liste des arrêts est vide."
+        subtitle = "La liste des stations est vide."
+    )
+}
+
+@Composable
+fun EmptyUpcomingPassagesView() {
+    PlaceholderView(
+        icon = Icons.Outlined.NoTransfer,
+        title = "Aucun passage à venir",
+        subtitle = "Pas de transport prévu pour le moment à cette station. Veuillez réessayer plus tard ou tenter de rejoindre une autre station à proximité."
     )
 }
 

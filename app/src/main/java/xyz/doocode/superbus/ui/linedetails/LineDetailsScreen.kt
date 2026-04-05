@@ -84,7 +84,7 @@ fun LineDetailsScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .focusRequester(focusRequester),
-                            placeholder = { Text("Rechercher un arrêt...") },
+                            placeholder = { Text("Rechercher une station") },
                             singleLine = true,
                             colors = TextFieldDefaults.colors(
                                 focusedContainerColor = Color.Transparent,

@@ -2,6 +2,7 @@ package xyz.doocode.superbus.ui.details
 
 import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -42,6 +43,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import xyz.doocode.superbus.core.util.setKeepScreenOn
+import xyz.doocode.superbus.core.dto.Arret
 import xyz.doocode.superbus.ui.details.components.StopDetailsUtils
 import xyz.doocode.superbus.ui.details.components.TtsSettingsDialog
 import androidx.core.content.edit
@@ -82,9 +84,11 @@ fun StopDetailsScreen(
     val uiState by viewModel.uiState.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
     val isFavorite by viewModel.isFavorite.collectAsState()
+    val nearbyStops by viewModel.nearbyStops.collectAsState()
+    val isLoadingNearbyStops by viewModel.isLoadingNearbyStops.collectAsState()
     val ttsSubscriptions by viewModel.ttsManager.activeSubscriptions.collectAsState()
     val currentlySpeakingKey by viewModel.ttsManager.currentlySpeakingKey.collectAsState()
-    val title = stopName ?: "Arrêt"
+    val title = stopName ?: "Station inconnue"
 
     val isSingleItem = (uiState as? StopDetailsUiState.Success)?.groupedArrivals?.size == 1
 
@@ -94,6 +98,15 @@ fun StopDetailsScreen(
     // Keep Screen On Logic
     val context = LocalContext.current
     val activity = context as? Activity
+
+    val openNearbyStop = { stop: Arret, fromId: Boolean ->
+        val intent = Intent(context, StopDetailsActivity::class.java).apply {
+            putExtra(StopDetailsActivity.EXTRA_STOP_NAME, stop.nom)
+            putExtra(StopDetailsActivity.EXTRA_STOP_ID, stop.id)
+            putExtra(StopDetailsActivity.EXTRA_DETAILS_FROM_ID, fromId)
+        }
+        context.startActivity(intent)
+    }
     val prefs =
         remember { context.getSharedPreferences("superbus_app_settings", Context.MODE_PRIVATE) }
     var keepScreenOn by remember {
@@ -179,7 +192,7 @@ fun StopDetailsScreen(
         AlertDialog(
             onDismissRequest = { showUnfavoriteConfirmation = false },
             title = { Text("Retirer des favoris") },
-            text = { Text("Voulez-vous retirer cet arrêt de vos favoris ?") },
+            text = { Text("Voulez-vous retirer cette station de vos favoris ?") },
             confirmButton = {
                 TextButton(onClick = {
                     showUnfavoriteConfirmation = false
@@ -532,8 +545,11 @@ fun StopDetailsScreen(
                 StopDetailsListContent(
                     state = state,
                     forcedExpandState = forcedExpandState,
+                    nearbyStops = nearbyStops,
+                    isLoadingNearbyStops = isLoadingNearbyStops,
                     onRetry = { viewModel.init(stopName, stopId) },
-                    onItemLongClick = { focusedItemKey = it }
+                    onItemLongClick = { focusedItemKey = it },
+                    onNearbyStopClick = openNearbyStop
                 )
             }
         }
