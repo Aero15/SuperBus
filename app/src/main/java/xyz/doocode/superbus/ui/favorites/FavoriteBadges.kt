@@ -11,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import xyz.doocode.superbus.core.dto.Ligne
@@ -19,7 +20,7 @@ import xyz.doocode.superbus.ui.components.parseColorSafe
 import xyz.doocode.superbus.ui.components.resolveBadgeContent
 
 @Composable
-fun EnlargedLineBadge(line: Ligne) {
+fun EnlargedLineBadge(line: Ligne, fontSize: TextUnit = 44.sp) {
     val bgColor = parseColorSafe(line.couleurFond, MaterialTheme.colorScheme.primary)
     val textColor = parseColorSafe(line.couleurTexte, MaterialTheme.colorScheme.onPrimary)
     val content = resolveBadgeContent(line.id, line.numLignePublic)
@@ -34,7 +35,7 @@ fun EnlargedLineBadge(line: Ligne) {
         BadgeBoxContent(
             content = content,
             textColor = textColor,
-            fontSize = 44.sp,
+            fontSize = fontSize,
             fontWeight = FontWeight.Black
         )
     }

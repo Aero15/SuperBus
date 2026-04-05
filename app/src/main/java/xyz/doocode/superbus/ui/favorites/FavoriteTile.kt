@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.sp
 import xyz.doocode.superbus.R
 import xyz.doocode.superbus.core.dto.FavoriteStation
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.border
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableFloatStateOf
@@ -104,19 +105,41 @@ fun FavoriteTile(
             } else if (validLines.size == 1) {
                 // Single Large Badge
                 val line = validLines.first()
+                val isSingleTram = line.numLignePublic.matches(Regex("T\\d+"))
+                if (isSingleTram) {
+                    Image(
+                        painter = painterResource(R.drawable.tram),
+                        contentDescription = null,
+                        modifier = Modifier.matchParentSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
                 Box(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(9.dp),
+                        .fillMaxSize(if (isSingleTram) 0.72f else 1f)
+                        .then(
+                            if (isSingleTram) Modifier
+                                .align(Alignment.TopEnd)
+                                .offset(x = 4.dp, y = -4.dp)
+                                .graphicsLayer { rotationZ = -5f }
+                                .border(
+                                    3.dp,
+                                    MaterialTheme.colorScheme.surfaceVariant,
+                                    RoundedCornerShape(12.dp)
+                                )
+                                .clip(RoundedCornerShape(12.dp))
+                            else Modifier.padding(9.dp)),
                     contentAlignment = Alignment.Center
                 ) {
-                    EnlargedLineBadge(line)
+                    EnlargedLineBadge(line, fontSize = if (isSingleTram) 38.sp else 44.sp)
                 }
             } else if (isTramDuo) {
                 Box(modifier = Modifier.fillMaxSize()) {
-                    Row(modifier = Modifier
-                        .fillMaxSize()
-                        .padding(4.dp)) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(4.dp)
+                    ) {
                         Spacer(modifier = Modifier.weight(1f))
                         Column(
                             modifier = Modifier
