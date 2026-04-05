@@ -220,96 +220,121 @@ fun StopDetailsScreen(
         )
     }
 
+    val showFocusMode =
+        uiState is StopDetailsUiState.Success && (isSingleItem || focusedItemKey != null)
+
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         floatingActionButton = {
             if (uiState is StopDetailsUiState.Success) {
                 val successState = uiState as StopDetailsUiState.Success
                 if (successState.groupedArrivals.isNotEmpty()) {
-                    val currentFabKey = if (isSingleItem) {
-                        successState.groupedArrivals.keys.firstOrNull()
-                    } else {
-                        focusedItemKey
-                    }
-                    val currentFabArrivals = currentFabKey?.let { successState.groupedArrivals[it] }
-
-                    val isFabSubscribed = if (currentFabKey != null) {
-                        currentFabKey in ttsSubscriptions
-                    } else {
-                        ttsSubscriptions.isNotEmpty()
-                    }
-
-                    val defaultFabContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-                    val defaultFabContentColor = MaterialTheme.colorScheme.onSurface
-
-                    val targetLigneColor =
-                        if (currentFabKey != null && currentFabArrivals != null && isFabSubscribed) {
-                            StopDetailsUtils.parseLineColor(
-                                couleurFond = currentFabArrivals.firstOrNull()?.couleurFond ?: "",
-                                defaultColor = MaterialTheme.colorScheme.primary
-                            )
-                        } else if (isFabSubscribed) {
-                            MaterialTheme.colorScheme.primary
+                    if (showFocusMode) {
+                        // TTS FAB — focus/single-line mode
+                        val currentFabKey = if (isSingleItem) {
+                            successState.groupedArrivals.keys.firstOrNull()
                         } else {
-                            defaultFabContainerColor
+                            focusedItemKey
+                        }
+                        val currentFabArrivals =
+                            currentFabKey?.let { successState.groupedArrivals[it] }
+
+                        val isFabSubscribed = if (currentFabKey != null) {
+                            currentFabKey in ttsSubscriptions
+                        } else {
+                            ttsSubscriptions.isNotEmpty()
                         }
 
-                    val targetTextColor =
-                        if (currentFabKey != null && currentFabArrivals != null && isFabSubscribed) {
-                            StopDetailsUtils.parseLineColor(
-                                couleurFond = currentFabArrivals.firstOrNull()?.couleurTexte ?: "",
-                                defaultColor = MaterialTheme.colorScheme.onPrimary
-                            )
-                        } else if (isFabSubscribed) {
-                            MaterialTheme.colorScheme.onPrimary
-                        } else {
-                            defaultFabContentColor
-                        }
+                        val defaultFabContainerColor =
+                            MaterialTheme.colorScheme.surfaceContainerHigh
+                        val defaultFabContentColor = MaterialTheme.colorScheme.onSurface
 
-                    val fabContainerColor by animateColorAsState(
-                        targetValue = targetLigneColor,
-                        label = "fabColor"
-                    )
-                    val fabContentColor by animateColorAsState(
-                        targetValue = targetTextColor,
-                        label = "fabContent"
-                    )
-
-                    Surface(
-                        modifier = Modifier
-                            .semantics {
-                                role = Role.Button
-                                contentDescription = "Annonce vocale"
+                        val targetLigneColor =
+                            if (currentFabKey != null && currentFabArrivals != null && isFabSubscribed) {
+                                StopDetailsUtils.parseLineColor(
+                                    couleurFond = currentFabArrivals.firstOrNull()?.couleurFond
+                                        ?: "",
+                                    defaultColor = MaterialTheme.colorScheme.primary
+                                )
+                            } else if (isFabSubscribed) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                defaultFabContainerColor
                             }
-                            .combinedClickable(
-                                onClick = {
-                                    if (currentFabKey != null) {
-                                        val parts = currentFabKey.split("|")
-                                        viewModel.toggleTtsSubscription(
-                                            currentFabKey,
-                                            parts.getOrNull(0) ?: "?",
-                                            parts.getOrNull(1) ?: "?"
-                                        )
-                                    } else {
-                                        showLineSelectionDialog = true
-                                    }
-                                },
-                                onLongClick = {
-                                    showTtsSettings = true
+
+                        val targetTextColor =
+                            if (currentFabKey != null && currentFabArrivals != null && isFabSubscribed) {
+                                StopDetailsUtils.parseLineColor(
+                                    couleurFond = currentFabArrivals.firstOrNull()?.couleurTexte
+                                        ?: "",
+                                    defaultColor = MaterialTheme.colorScheme.onPrimary
+                                )
+                            } else if (isFabSubscribed) {
+                                MaterialTheme.colorScheme.onPrimary
+                            } else {
+                                defaultFabContentColor
+                            }
+
+                        val fabContainerColor by animateColorAsState(
+                            targetValue = targetLigneColor,
+                            label = "fabColor"
+                        )
+                        val fabContentColor by animateColorAsState(
+                            targetValue = targetTextColor,
+                            label = "fabContent"
+                        )
+
+                        Surface(
+                            modifier = Modifier
+                                .semantics {
+                                    role = Role.Button
+                                    contentDescription = "Annonce vocale"
                                 }
-                            ),
-                        shape = FloatingActionButtonDefaults.shape,
-                        color = fabContainerColor,
-                        contentColor = fabContentColor,
-                        shadowElevation = 6.dp
-                    ) {
-                        Box(
-                            modifier = Modifier.defaultMinSize(minWidth = 56.dp, minHeight = 56.dp),
-                            contentAlignment = Alignment.Center
+                                .combinedClickable(
+                                    onClick = {
+                                        if (currentFabKey != null) {
+                                            val parts = currentFabKey.split("|")
+                                            viewModel.toggleTtsSubscription(
+                                                currentFabKey,
+                                                parts.getOrNull(0) ?: "?",
+                                                parts.getOrNull(1) ?: "?"
+                                            )
+                                        } else {
+                                            showLineSelectionDialog = true
+                                        }
+                                    },
+                                    onLongClick = {
+                                        showTtsSettings = true
+                                    }
+                                ),
+                            shape = FloatingActionButtonDefaults.shape,
+                            color = fabContainerColor,
+                            contentColor = fabContentColor,
+                            shadowElevation = 6.dp
+                        ) {
+                            Box(
+                                modifier = Modifier.defaultMinSize(
+                                    minWidth = 56.dp,
+                                    minHeight = 56.dp
+                                ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = if (isFabSubscribed) Icons.Default.RecordVoiceOver else Icons.Default.VoiceOverOff,
+                                    contentDescription = null
+                                )
+                            }
+                        }
+                    } else {
+                        // Fullscreen FAB — list mode
+                        FloatingActionButton(
+                            onClick = {
+                                focusedItemKey = successState.groupedArrivals.keys.firstOrNull()
+                            }
                         ) {
                             Icon(
-                                imageVector = if (isFabSubscribed) Icons.Default.RecordVoiceOver else Icons.Default.VoiceOverOff,
-                                contentDescription = null
+                                imageVector = Icons.Default.Fullscreen,
+                                contentDescription = "Plein écran"
                             )
                         }
                     }
