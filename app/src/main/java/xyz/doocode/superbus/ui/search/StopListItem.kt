@@ -10,7 +10,11 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.DirectionsBus
+import androidx.compose.material.icons.filled.ManageSearch
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Train
+import androidx.compose.material.icons.filled.Tram
 import androidx.compose.material.icons.outlined.FolderOpen
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -64,8 +68,24 @@ fun StopListItem(
                 .padding(vertical = 12.dp, horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            val icon = if (isFavorite) Icons.Default.Favorite else Icons.Default.Place
-            val iconTint = if (isFavorite) Color(0xFFE91E63) else MaterialTheme.colorScheme.primary
+            val isGare = stop.nom.contains("Gare", ignoreCase = true)
+            val allTram = stop.duplicates.size > 1 && stop.duplicates.all { it.id.startsWith("t_") }
+            val icon = when {
+                isFavorite -> Icons.Default.Favorite
+                isGare -> Icons.Default.Train
+                allTram -> Icons.Default.Tram
+                stop.duplicates.size > 1 -> Icons.Default.ManageSearch
+                stop.id.startsWith("t_") -> Icons.Default.Tram
+                else -> Icons.Default.DirectionsBus
+            }
+            val iconTint = when {
+                isFavorite -> Color(0xFFE91E63)
+                isGare -> Color(0xFFBC2CD2)
+                allTram -> Color(0xFF4CAF50)
+                stop.duplicates.size > 1 -> Color(0xFFFFB300)
+                stop.id.startsWith("t_") -> Color(0xFF4CAF50)
+                else -> Color(0xFFFF6D00)
+            }
 
             Icon(
                 imageVector = icon,
