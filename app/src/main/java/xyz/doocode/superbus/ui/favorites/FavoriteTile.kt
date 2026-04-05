@@ -1,5 +1,6 @@
 package xyz.doocode.superbus.ui.favorites
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -21,8 +22,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import xyz.doocode.superbus.R
 import xyz.doocode.superbus.core.dto.FavoriteStation
 import androidx.compose.animation.core.*
 import androidx.compose.runtime.getValue
@@ -83,11 +87,13 @@ fun FavoriteTile(
                 .aspectRatio(1f) // Square
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(12.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant)
-                .padding(4.dp),
+                .background(MaterialTheme.colorScheme.surfaceVariant),
             contentAlignment = Alignment.Center
         ) {
             val validLines = station.lines
+            val isTramDuo = validLines.size == 2 && validLines.all {
+                it.numLignePublic.matches(Regex("T\\d+"))
+            }
 
             if (validLines.isEmpty()) {
                 Text(
@@ -101,15 +107,41 @@ fun FavoriteTile(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(6.dp),
+                        .padding(9.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     EnlargedLineBadge(line)
                 }
+            } else if (isTramDuo) {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    Row(modifier = Modifier
+                        .fillMaxSize()
+                        .padding(4.dp)) {
+                        Spacer(modifier = Modifier.weight(1f))
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight(),
+                            verticalArrangement = Arrangement.SpaceEvenly,
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            SmallLineBadge(validLines[0])
+                            SmallLineBadge(validLines[1])
+                        }
+                    }
+                    Image(
+                        painter = painterResource(R.drawable.tram),
+                        contentDescription = null,
+                        modifier = Modifier.matchParentSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
             } else {
                 // Grid 2x2
                 Column(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(4.dp),
                     verticalArrangement = Arrangement.SpaceEvenly
                 ) {
                     val row1 = validLines.take(2)

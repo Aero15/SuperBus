@@ -26,7 +26,8 @@ fun FocusArrivalCard(
     destination: String,
     couleurFond: String,
     couleurTexte: String,
-    times: List<Temps>
+    times: List<Temps>,
+    ligneId: String = ""
 ) {
     val lineColor = StopDetailsUtils.parseLineColor(couleurFond)
     val gradientColors = StopDetailsUtils.getGradientColors(lineColor)
@@ -67,6 +68,7 @@ fun FocusArrivalCard(
                         destination = destination,
                         couleurFond = couleurFond,
                         couleurTexte = couleurTexte,
+                        ligneId = ligneId,
                         isLandscape = true
                     )
                 }
@@ -119,6 +121,7 @@ fun FocusArrivalCard(
                     destination = destination,
                     couleurFond = couleurFond,
                     couleurTexte = couleurTexte,
+                    ligneId = ligneId,
                     modifier = Modifier.padding(top = 24.dp)
                 )
 
@@ -141,6 +144,7 @@ private fun FocusHeader(
     destination: String,
     couleurFond: String,
     couleurTexte: String,
+    ligneId: String = "",
     modifier: Modifier = Modifier,
     isLandscape: Boolean = false
 ) {
@@ -156,6 +160,7 @@ private fun FocusHeader(
             numLigne = numLigne,
             couleurFond = couleurFond,
             couleurTexte = couleurTexte,
+            ligneId = ligneId,
             modifier = Modifier
                 .scale(badgeScale)
                 .height(50.dp)

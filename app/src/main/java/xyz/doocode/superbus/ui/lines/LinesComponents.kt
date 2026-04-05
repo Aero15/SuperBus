@@ -53,6 +53,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import xyz.doocode.superbus.core.dto.Ligne
 import xyz.doocode.superbus.core.dto.Variante
+import xyz.doocode.superbus.ui.components.BadgeBoxContent
+import xyz.doocode.superbus.ui.components.BadgeContent
+import xyz.doocode.superbus.ui.components.resolveBadgeContent
 
 @Composable
 fun LinesGrid(
@@ -199,8 +202,7 @@ fun LineCard(
     LineBadge(
         line = line,
         onClick = onClick,
-        size = 56.dp,
-        fontSize = 18.sp
+        size = 56.dp
     )
 }
 
@@ -212,6 +214,8 @@ fun LineBadge(
     size: Dp = 48.dp,
     fontSize: TextUnit = 16.sp
 ) {
+    val content = resolveBadgeContent(line.id, line.numLignePublic)
+
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
@@ -220,12 +224,10 @@ fun LineBadge(
             .background(parseColorSafe(line.couleurFond))
             .let { if (onClick != null) it.clickable(onClick = onClick) else it }
     ) {
-        Text(
-            text = line.numLignePublic,
-            color = parseColorSafe(line.couleurTexte),
-            fontWeight = FontWeight.Bold,
-            fontSize = fontSize,
-            maxLines = 1
+        BadgeBoxContent(
+            content = content,
+            textColor = parseColorSafe(line.couleurTexte),
+            fontSize = fontSize
         )
     }
 }

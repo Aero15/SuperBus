@@ -120,6 +120,7 @@ fun StopDetailsListContent(
                         destination = parts.getOrNull(1) ?: "?",
                         couleurFond = arrivals.first().couleurFond,
                         couleurTexte = arrivals.first().couleurTexte,
+                        ligneId = arrivals.first().idLigne,
                         times = arrivals.take(3),
                         initialExpoMode = list.size < 4,
                         forcedExpandState = forcedExpandState,

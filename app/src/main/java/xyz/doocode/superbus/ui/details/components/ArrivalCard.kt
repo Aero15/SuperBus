@@ -32,6 +32,7 @@ fun ArrivalCard(
     couleurFond: String,
     couleurTexte: String,
     times: List<Temps>,
+    ligneId: String = "",
     initialExpoMode: Boolean = false,
     forcedExpandState: Boolean? = null,
     onLongClick: (() -> Unit)? = null
@@ -86,6 +87,7 @@ fun ArrivalCard(
                     destination = destination,
                     couleurFond = couleurFond,
                     couleurTexte = couleurTexte,
+                    ligneId = ligneId,
                     isExpanded = isExpanded,
                     onToggleExpand = { isExpanded = !isExpanded },
                     onLongClick = onLongClick
@@ -130,6 +132,7 @@ fun ArrivalCardHeader(
     destination: String,
     couleurFond: String,
     couleurTexte: String,
+    ligneId: String = "",
     isExpanded: Boolean,
     onToggleExpand: () -> Unit,
     onLongClick: (() -> Unit)? = null
@@ -151,7 +154,8 @@ fun ArrivalCardHeader(
         LineBadge(
             numLigne = numLigne,
             couleurFond = couleurFond,
-            couleurTexte = couleurTexte
+            couleurTexte = couleurTexte,
+            ligneId = ligneId
         )
         Spacer(modifier = Modifier.width(16.dp))
         Text(

@@ -76,6 +76,7 @@ fun StopDetailsFocusContent(
                         destination = parts.getOrNull(1) ?: "?",
                         couleurFond = arrivals.first().couleurFond,
                         couleurTexte = arrivals.first().couleurTexte,
+                        ligneId = arrivals.first().idLigne,
                         times = arrivals
                     )
                 }

@@ -6,21 +6,23 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import xyz.doocode.superbus.core.dto.Ligne
+import xyz.doocode.superbus.ui.components.BadgeBoxContent
 import xyz.doocode.superbus.ui.components.parseColorSafe
+import xyz.doocode.superbus.ui.components.resolveBadgeContent
 
 @Composable
 fun EnlargedLineBadge(line: Ligne) {
     val bgColor = parseColorSafe(line.couleurFond, MaterialTheme.colorScheme.primary)
     val textColor = parseColorSafe(line.couleurTexte, MaterialTheme.colorScheme.onPrimary)
+    val content = resolveBadgeContent(line.id, line.numLignePublic)
 
     Box(
         modifier = Modifier
@@ -29,10 +31,10 @@ fun EnlargedLineBadge(line: Ligne) {
             .background(bgColor),
         contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = line.numLignePublic,
-            color = textColor,
-            style = MaterialTheme.typography.displaySmall, // Large text
+        BadgeBoxContent(
+            content = content,
+            textColor = textColor,
+            fontSize = 44.sp,
             fontWeight = FontWeight.Black
         )
     }
@@ -42,20 +44,20 @@ fun EnlargedLineBadge(line: Ligne) {
 fun SmallLineBadge(line: Ligne) {
     val bgColor = parseColorSafe(line.couleurFond, MaterialTheme.colorScheme.primary)
     val textColor = parseColorSafe(line.couleurTexte, MaterialTheme.colorScheme.onPrimary)
+    val content = resolveBadgeContent(line.id, line.numLignePublic)
 
     Box(
         modifier = Modifier
-            .size(40.dp) // Fixed small size
+            .size(40.dp)
             .clip(RoundedCornerShape(6.dp))
             .background(bgColor),
         contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = line.numLignePublic,
-            color = textColor,
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.Bold,
-            maxLines = 1
+        BadgeBoxContent(
+            content = content,
+            textColor = textColor,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold
         )
     }
 }
