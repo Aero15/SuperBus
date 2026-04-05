@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -68,6 +69,7 @@ fun FavoritesScreen(
             if (isEditing) {
                 TopAppBar(
                     title = { Text("Réorganiser") },
+                    windowInsets = WindowInsets(0),
                     navigationIcon = {
                         IconButton(onClick = { viewModel.cancelEditing() }) {
                             Icon(Icons.Default.Close, contentDescription = "Annuler")
@@ -86,6 +88,7 @@ fun FavoritesScreen(
                 Column {
                     TopAppBar(
                         title = { Text("Favoris", fontWeight = FontWeight.Bold) },
+                        windowInsets = WindowInsets(0),
                         actions = {
                             Box {
                                 IconButton(onClick = { showMenu = true }) {
