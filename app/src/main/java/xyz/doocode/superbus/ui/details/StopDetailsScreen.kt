@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.FullscreenExit
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.RecordVoiceOver
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.VoiceOverOff
 import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material3.*
@@ -175,7 +176,7 @@ fun StopDetailsScreen(
         val successState = uiState as? StopDetailsUiState.Success
         if (successState != null) {
             xyz.doocode.superbus.ui.details.components.LineSelectionDialog(
-                keysList = successState.groupedArrivals.keys.toList(),
+                groupedArrivals = successState.groupedArrivals,
                 ttsSubscriptionsKeys = ttsSubscriptions.keys,
                 onDismissRequest = { showLineSelectionDialog = false },
                 onToggleTtsSubscription = { key, numLigne, destination ->
@@ -472,11 +473,46 @@ fun StopDetailsScreen(
                                 )
                             }
                             HorizontalDivider()
+                            Box(
+                                modifier = Modifier.padding(
+                                    start = 16.dp,
+                                    top = 10.dp,
+                                    bottom = 2.dp
+                                )
+                            ) {
+                                Text(
+                                    text = "Annonces sonores",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
                             DropdownMenuItem(
-                                text = { Text("Réglages vocaux") },
+                                text = { Text("Gérer les annonces") },
                                 leadingIcon = {
                                     Icon(
                                         imageVector = Icons.Default.RecordVoiceOver,
+                                        contentDescription = null
+                                    )
+                                },
+                                trailingIcon = {
+                                    if (ttsSubscriptions.isNotEmpty()) {
+                                        Icon(
+                                            imageVector = Icons.Filled.CheckCircle,
+                                            contentDescription = "Actif",
+                                            tint = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                },
+                                onClick = {
+                                    showLineSelectionDialog = true
+                                    showMenu = false
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Réglages des annonces") },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Default.Settings,
                                         contentDescription = null
                                     )
                                 },
