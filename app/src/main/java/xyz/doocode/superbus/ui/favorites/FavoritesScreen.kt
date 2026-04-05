@@ -2,6 +2,7 @@ package xyz.doocode.superbus.ui.favorites
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -20,7 +21,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.layout.onSizeChanged
+import kotlinx.coroutines.delay
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
@@ -175,6 +179,24 @@ fun FavoritesScreen(
             } else {
                 Box(modifier = Modifier.fillMaxSize()) {
                     val gridState = rememberLazyGridState()
+                    var gridHeightPx by remember { mutableStateOf(0) }
+
+                    LaunchedEffect(draggedItem != null) {
+                        while (draggedItem != null) {
+                            val threshold = 160f
+                            val speed = 22f
+                            val y = touchPosition.y
+                            val delta = when {
+                                y in 0f..threshold -> -(1f - y / threshold) * speed
+                                gridHeightPx > 0 && y > gridHeightPx - threshold ->
+                                    (1f - (gridHeightPx - y) / threshold) * speed
+
+                                else -> 0f
+                            }
+                            if (delta != 0f) gridState.scrollBy(delta)
+                            delay(16L)
+                        }
+                    }
 
                     LazyVerticalGrid(
                         state = gridState,
@@ -184,6 +206,7 @@ fun FavoritesScreen(
                         contentPadding = PaddingValues(bottom = 16.dp),
                         modifier = Modifier
                             .fillMaxSize()
+                            .onSizeChanged { gridHeightPx = it.height }
                             .pointerInput(isEditing) {
                                 if (isEditing) {
                                     detectDragGesturesAfterLongPress(
