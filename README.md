@@ -1,8 +1,8 @@
-# Super Bus
+# SuperBus
 
 Superbus (temporary name) is a mobile app aiming to be a better alternative to the "Ginko Mobilités" app. It is an application that provides real-time waiting times for bus and tram services.
 
-[![Captures d'écrans](./preview.png)](./preview.png)
+[![Screenshots of SuperBus](./wiki/preview.png)](./wiki/preview.png)
 
 **[WARNING] This project still under development and many bugs aren't resolved. As this is a Proof of Concept project, the final result may be entierely different.**
 
@@ -37,7 +37,11 @@ Here is a list of features I would like to add:
 - Support for Ginko Vélocité, Mobigo, SNCF, Citiz
 - Map view + detection of nearby stations
 
-[![Concepts et dessins sur papier](./sketchs.png)](./sketchs.png)
+[![Sketches and concepts for SuperBus](./wiki/sketches.png)](./wiki/sketches.png)
+
+Some drawings and vectorial images was made with Inkscape.
+
+[![Drawing the tram of Ginko Besançon with Inkscape](./wiki/inkscape.png)](./wiki/inkscape.png)
 
 ## Build this app
 
