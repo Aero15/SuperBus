@@ -19,6 +19,39 @@ class FavoritesViewModel(application: Application) : AndroidViewModel(applicatio
 
     private val _localFavorites = MutableStateFlow<List<FavoriteStation>>(emptyList())
 
+    // Undo / Redo stacks — scoped to the current editing session
+    private val _undoStack = ArrayDeque<List<FavoriteStation>>()
+    private val _redoStack = ArrayDeque<List<FavoriteStation>>()
+    val canUndo = MutableStateFlow(false)
+    val canRedo = MutableStateFlow(false)
+
+    private fun pushUndo() {
+        _undoStack.addLast(_localFavorites.value)
+        if (_undoStack.size > 50) _undoStack.removeFirst()
+        _redoStack.clear()
+        canUndo.value = true
+        canRedo.value = false
+    }
+
+    /** Call once at the start of a drag gesture to snapshot the pre-drag state. */
+    fun captureUndoBeforeDrag() = pushUndo()
+
+    fun undo() {
+        if (_undoStack.isEmpty()) return
+        _redoStack.addLast(_localFavorites.value)
+        _localFavorites.value = _undoStack.removeLast()
+        canUndo.value = _undoStack.isNotEmpty()
+        canRedo.value = true
+    }
+
+    fun redo() {
+        if (_redoStack.isEmpty()) return
+        _undoStack.addLast(_localFavorites.value)
+        _localFavorites.value = _redoStack.removeLast()
+        canUndo.value = true
+        canRedo.value = _redoStack.isNotEmpty()
+    }
+
     // Combine repository data with search query or use local list during editing
     val favorites: StateFlow<List<FavoriteStation>> = combine(
         repository.favorites,
@@ -75,12 +108,14 @@ class FavoritesViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     fun deleteSelected() {
+        pushUndo()
         val keys = selectedIds.value
         _localFavorites.value = _localFavorites.value.filter { it.selectionKey() !in keys }
         selectedIds.value = emptySet()
     }
 
     fun renameInEditMode(station: FavoriteStation, newName: String) {
+        pushUndo()
         _localFavorites.value = _localFavorites.value.map {
             if (it.selectionKey() == station.selectionKey()) it.copy(name = newName) else it
         }
@@ -91,6 +126,8 @@ class FavoritesViewModel(application: Application) : AndroidViewModel(applicatio
             val currentList = repository.favorites.first()
             _localFavorites.value = ArrayList(currentList)
             selectedIds.value = emptySet()
+            _undoStack.clear(); _redoStack.clear()
+            canUndo.value = false; canRedo.value = false
             isEditing.value = true
         }
     }
@@ -100,6 +137,8 @@ class FavoritesViewModel(application: Application) : AndroidViewModel(applicatio
             val currentList = repository.favorites.first()
             _localFavorites.value = ArrayList(currentList)
             selectedIds.value = setOf(station.selectionKey())
+            _undoStack.clear(); _redoStack.clear()
+            canUndo.value = false; canRedo.value = false
             isEditing.value = true
         }
     }
@@ -109,6 +148,8 @@ class FavoritesViewModel(application: Application) : AndroidViewModel(applicatio
             repository.updateFavoritesOrder(_localFavorites.value)
             isEditing.value = false
             selectedIds.value = emptySet()
+            _undoStack.clear(); _redoStack.clear()
+            canUndo.value = false; canRedo.value = false
         }
     }
 
@@ -116,6 +157,8 @@ class FavoritesViewModel(application: Application) : AndroidViewModel(applicatio
         isEditing.value = false
         _localFavorites.value = emptyList()
         selectedIds.value = emptySet()
+        _undoStack.clear(); _redoStack.clear()
+        canUndo.value = false; canRedo.value = false
     }
 
     fun moveFavorite(fromIndex: Int, toIndex: Int) {

@@ -18,6 +18,8 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.automirrored.filled.Undo
+import androidx.compose.material.icons.automirrored.filled.Redo
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -60,6 +62,8 @@ fun FavoritesScreen(
     val searchQuery by viewModel.searchQuery.collectAsState()
     val isEditing by viewModel.isEditing.collectAsState()
     val selectedIds by viewModel.selectedIds.collectAsState()
+    val canUndo by viewModel.canUndo.collectAsState()
+    val canRedo by viewModel.canRedo.collectAsState()
 
     BackHandler(enabled = isEditing) { viewModel.cancelEditing() }
 
@@ -125,6 +129,12 @@ fun FavoritesScreen(
                         }
                     },
                     actions = {
+                        IconButton(onClick = { viewModel.undo() }, enabled = canUndo) {
+                            Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = "Annuler")
+                        }
+                        IconButton(onClick = { viewModel.redo() }, enabled = canRedo) {
+                            Icon(Icons.AutoMirrored.Filled.Redo, contentDescription = "Rétablir")
+                        }
                         IconButton(onClick = { viewModel.saveOrder() }) {
                             Icon(Icons.Default.Check, contentDescription = "Enregistrer")
                         }
@@ -315,6 +325,7 @@ fun FavoritesScreen(
                                             if (item != null) {
                                                 val index = item.index
                                                 if (index in favorites.indices) {
+                                                    viewModel.captureUndoBeforeDrag()
                                                     draggedItem = favorites[index]
                                                     draggedItemSize = item.size
                                                     touchPosition = offset
