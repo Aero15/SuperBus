@@ -26,6 +26,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.LaunchedEffect
+import androidx.activity.compose.BackHandler
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.layout.onSizeChanged
 import kotlinx.coroutines.delay
@@ -59,6 +60,8 @@ fun FavoritesScreen(
     val searchQuery by viewModel.searchQuery.collectAsState()
     val isEditing by viewModel.isEditing.collectAsState()
     val selectedIds by viewModel.selectedIds.collectAsState()
+
+    BackHandler(enabled = isEditing) { viewModel.cancelEditing() }
 
     var showMenu by remember { mutableStateOf(false) }
     var showSearchBar by remember { mutableStateOf(false) }
@@ -373,6 +376,11 @@ fun FavoritesScreen(
                                             viewModel.toggleSelection(station)
                                         } else {
                                             onStationClick(station)
+                                        }
+                                    },
+                                    onLongPress = {
+                                        if (!isEditing) {
+                                            viewModel.startEditingWithSelection(station)
                                         }
                                     },
                                     onRename = {

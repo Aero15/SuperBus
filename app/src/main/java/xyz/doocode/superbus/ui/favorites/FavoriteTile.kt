@@ -10,8 +10,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -33,10 +31,8 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.border
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.graphicsLayer
 
 @Composable
@@ -46,6 +42,7 @@ fun FavoriteTile(
     isSelected: Boolean = false,
     isSingleSelection: Boolean = false,
     onClick: () -> Unit,
+    onLongPress: () -> Unit = {},
     onRename: () -> Unit = {},
     onRemove: () -> Unit = {}
 ) {
@@ -66,8 +63,6 @@ fun FavoriteTile(
         }
     }
 
-    var showContextMenu by remember { mutableStateOf(false) }
-
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -78,7 +73,7 @@ fun FavoriteTile(
                 if (!isEditing) {
                     detectTapGestures(
                         onTap = { onClick() },
-                        onLongPress = { showContextMenu = true }
+                        onLongPress = { onLongPress() }
                     )
                 } else {
                     detectTapGestures(onTap = { onClick() })
@@ -305,30 +300,5 @@ fun FavoriteTile(
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.fillMaxWidth()
         )
-
-        // Context Menu (non-editing mode)
-        if (!isEditing) {
-            DropdownMenu(
-                expanded = showContextMenu,
-                onDismissRequest = { showContextMenu = false }
-            ) {
-                DropdownMenuItem(
-                    text = { Text("Renommer") },
-                    leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
-                    onClick = {
-                        showContextMenu = false
-                        onRename()
-                    }
-                )
-                DropdownMenuItem(
-                    text = { Text("Retirer des favoris") },
-                    leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) },
-                    onClick = {
-                        showContextMenu = false
-                        onRemove()
-                    }
-                )
-            }
-        }
     }
 }

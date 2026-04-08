@@ -87,11 +87,19 @@ class FavoritesViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     fun startEditing() {
-        // Copy current repo list to local list for editing
         viewModelScope.launch {
             val currentList = repository.favorites.first()
             _localFavorites.value = ArrayList(currentList)
             selectedIds.value = emptySet()
+            isEditing.value = true
+        }
+    }
+
+    fun startEditingWithSelection(station: FavoriteStation) {
+        viewModelScope.launch {
+            val currentList = repository.favorites.first()
+            _localFavorites.value = ArrayList(currentList)
+            selectedIds.value = setOf(station.selectionKey())
             isEditing.value = true
         }
     }
