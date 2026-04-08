@@ -83,6 +83,7 @@ class StopDetailsViewModel(application: Application) : AndroidViewModel(applicat
         }
 
         if (isNew) {
+            _uiState.value = StopDetailsUiState.Loading
             nearbyStopsLoaded = false
             _nearbyStops.value = emptyList()
             loadData(forceRefresh = true)
@@ -168,8 +169,10 @@ class StopDetailsViewModel(application: Application) : AndroidViewModel(applicat
                         }
                     }
                 } else {
-                    _uiState.value =
-                        StopDetailsUiState.Error("Aucun identifiant de la station est disponible")
+                    if (forceRefresh) {
+                        _uiState.value =
+                            StopDetailsUiState.Error("Aucun identifiant de la station est disponible")
+                    }
                 }
             } catch (e: Exception) {
                 if (_uiState.value !is StopDetailsUiState.Success) {
