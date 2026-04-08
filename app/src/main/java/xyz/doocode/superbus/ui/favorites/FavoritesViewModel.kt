@@ -54,11 +54,44 @@ class FavoritesViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
+    // --- Selection state (edit mode only) ---
+    val selectedIds = MutableStateFlow<Set<String>>(emptySet())
+
+    private fun FavoriteStation.selectionKey() = "${id}_${detailsFromId}"
+
+    fun toggleSelection(station: FavoriteStation) {
+        val key = station.selectionKey()
+        val current = selectedIds.value
+        selectedIds.value = if (key in current) current - key else current + key
+    }
+
+    fun selectAll() {
+        selectedIds.value = _localFavorites.value.map { it.selectionKey() }.toSet()
+    }
+
+    fun invertSelection() {
+        val all = _localFavorites.value.map { it.selectionKey() }.toSet()
+        selectedIds.value = all - selectedIds.value
+    }
+
+    fun deleteSelected() {
+        val keys = selectedIds.value
+        _localFavorites.value = _localFavorites.value.filter { it.selectionKey() !in keys }
+        selectedIds.value = emptySet()
+    }
+
+    fun renameInEditMode(station: FavoriteStation, newName: String) {
+        _localFavorites.value = _localFavorites.value.map {
+            if (it.selectionKey() == station.selectionKey()) it.copy(name = newName) else it
+        }
+    }
+
     fun startEditing() {
         // Copy current repo list to local list for editing
         viewModelScope.launch {
             val currentList = repository.favorites.first()
             _localFavorites.value = ArrayList(currentList)
+            selectedIds.value = emptySet()
             isEditing.value = true
         }
     }
@@ -67,12 +100,14 @@ class FavoritesViewModel(application: Application) : AndroidViewModel(applicatio
         viewModelScope.launch {
             repository.updateFavoritesOrder(_localFavorites.value)
             isEditing.value = false
+            selectedIds.value = emptySet()
         }
     }
 
     fun cancelEditing() {
         isEditing.value = false
         _localFavorites.value = emptyList()
+        selectedIds.value = emptySet()
     }
 
     fun moveFavorite(fromIndex: Int, toIndex: Int) {
@@ -82,6 +117,26 @@ class FavoritesViewModel(application: Application) : AndroidViewModel(applicatio
             currentList.add(toIndex, item)
             _localFavorites.value = currentList
         }
+    }
+
+    fun moveSelectedFavorites(anchorItem: FavoriteStation, toIndex: Int) {
+        val currentList = _localFavorites.value.toMutableList()
+        val selKeys = selectedIds.value
+        if (selKeys.size <= 1) {
+            val fromIndex =
+                currentList.indexOfFirst { it.selectionKey() == anchorItem.selectionKey() }
+            moveFavorite(fromIndex, toIndex)
+            return
+        }
+        val selectedInOrder = currentList.filter { it.selectionKey() in selKeys }
+        val notSelected = currentList.filter { it.selectionKey() !in selKeys }
+        // Map toIndex (in full list) to an insert position within notSelected
+        val insertAt = currentList.take((toIndex + 1).coerceAtMost(currentList.size))
+            .count { it.selectionKey() !in selKeys }
+            .coerceIn(0, notSelected.size)
+        val result = notSelected.toMutableList()
+        result.addAll(insertAt, selectedInOrder)
+        _localFavorites.value = result
     }
 
     fun onSearchQueryChanged(query: String) {
