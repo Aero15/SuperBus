@@ -16,9 +16,19 @@ import xyz.doocode.superbus.core.dto.jcdecaux.Station
 import xyz.doocode.superbus.core.manager.FavoritesManager
 import xyz.doocode.superbus.core.util.removeAccents
 
+sealed interface SearchResult {
+    data class Stop(val arret: Arret, val displayName: String) : SearchResult
+    data class VeloStation(val station: Station, val displayName: String) : SearchResult
+}
+
 sealed interface SearchUiState {
     data object Loading : SearchUiState
-    data class Success(val stops: List<Arret>, val stations: List<Station>) : SearchUiState
+    data class Success(
+        val stops: List<Arret>,
+        val stations: List<Station>,
+        val merged: List<SearchResult>
+    ) : SearchUiState
+
     data class Error(val message: String) : SearchUiState
     data object Empty : SearchUiState // No data from API
 }
@@ -92,7 +102,28 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
                                         )
                         }
                     }
-                SearchUiState.Success(filteredStops, filteredStations)
+                val mergedResults: List<SearchResult> =
+                    (filteredStops.map { stop ->
+                        SearchResult.Stop(stop, stop.nom)
+                    } +
+                            filteredStations.map { station ->
+                                SearchResult.VeloStation(
+                                    station,
+                                    formatStationName(station.name)
+                                )
+                            })
+                        .sortedBy { result ->
+                            when (result) {
+                                is SearchResult.Stop ->
+                                    result.displayName
+
+                                is SearchResult.VeloStation ->
+                                    result.displayName
+                            }
+                                .removeAccents()
+                                .uppercase()
+                        }
+                SearchUiState.Success(filteredStops, filteredStations, mergedResults)
             }
         }
             .stateIn(
