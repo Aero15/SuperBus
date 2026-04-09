@@ -36,7 +36,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -285,6 +287,7 @@ fun FavoritesScreen(
                 Box(modifier = Modifier.fillMaxSize()) {
                     val gridState = rememberLazyGridState()
                     var gridHeightPx by remember { mutableStateOf(0) }
+                    val haptic = LocalHapticFeedback.current
                     val currentFavorites by rememberUpdatedState(favorites)
                     val currentIsEditing by rememberUpdatedState(isEditing)
                     val currentSelectedIds by rememberUpdatedState(selectedIds)
@@ -328,6 +331,7 @@ fun FavoritesScreen(
                                             val list = currentFavorites
                                             if (index in list.indices) {
                                                 val station = list[index]
+                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                                 if (!currentIsEditing) {
                                                     viewModel.startEditingWithSelectionSync(
                                                         station,
