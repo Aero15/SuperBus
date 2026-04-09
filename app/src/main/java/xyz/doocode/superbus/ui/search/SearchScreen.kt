@@ -120,7 +120,7 @@ fun SearchScreen(
             is SearchUiState.Error -> {
                 ErrorView(
                     message = state.message,
-                    onRetry = viewModel::loadStops
+                    onRetry = viewModel::loadData
                 )
             }
 
@@ -129,11 +129,11 @@ fun SearchScreen(
             }
 
             is SearchUiState.Success -> {
-                if (state.stops.isEmpty()) {
+                if (state.stops.isEmpty() && state.stations.isEmpty()) {
                     EmptyResultsView(query = searchQuery)
                 } else {
                     Text(
-                        text = "${state.stops.size} stations trouvées",
+                        text = "${state.stops.size + state.stations.size} résultats",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
@@ -172,6 +172,16 @@ fun SearchScreen(
                                 },
                                 onDuplicateClick = { duplicate ->
                                     openStopDetails(duplicate, true)
+                                }
+                            )
+                        }
+
+                        items(state.stations) { station ->
+                            StationListItem(
+                                station = station,
+                                searchQuery = searchQuery,
+                                onClick = {
+                                    // TODO: Implement display of Velocite station
                                 }
                             )
                         }
