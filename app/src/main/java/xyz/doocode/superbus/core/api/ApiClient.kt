@@ -1,5 +1,6 @@
 package xyz.doocode.superbus.core.api
 
+import com.google.gson.GsonBuilder
 import java.util.concurrent.TimeUnit
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -28,15 +29,20 @@ object ApiClient {
         buildRetrofit(GINKO_BASE_URL, client).create(GinkoApiService::class.java)
     }
 
-    /** Lazy-loaded JCDecauxApiService instance. */
+    /** Lazy-loaded JCDecauxApiService instance (with ISO 8601 date support). */
     val jcDecauxService: JCDecauxApiService by lazy {
         val client =
             createOkHttpClient(
                 apiKeyParamName = "apiKey",
                 apiKeyValue = BuildConfig.VELOCITE_API_KEY
             )
+        val gson =
+            GsonBuilder()
+                .registerTypeAdapter(Long::class.java, DateDeserializer)
+                .registerTypeAdapter(Long::class.javaObjectType, DateDeserializer)
+                .create()
 
-        buildRetrofit(JCDECAUX_BASE_URL, client).create(JCDecauxApiService::class.java)
+        buildRetrofit(JCDECAUX_BASE_URL, client, gson).create(JCDecauxApiService::class.java)
     }
 
     /**
@@ -87,12 +93,16 @@ object ApiClient {
         return builder.build()
     }
 
-    /** Builds a Retrofit instance for a specific base URL and client. */
-    private fun buildRetrofit(baseUrl: String, client: OkHttpClient): Retrofit {
+    /** Builds a Retrofit instance for a specific base URL, client and optional Gson instance. */
+    private fun buildRetrofit(
+        baseUrl: String,
+        client: OkHttpClient,
+        gson: com.google.gson.Gson = com.google.gson.Gson()
+    ): Retrofit {
         return Retrofit.Builder()
             .baseUrl(baseUrl)
             .client(client)
-            .addConverterFactory(GsonConverterFactory.create())
+            .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
     }
 }
