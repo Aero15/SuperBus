@@ -169,7 +169,7 @@ fun StopListItem(
                     modifier = Modifier.clickable { onVariantsClick() }
                 ) {
                     Text(
-                        text = "${stop.duplicates.size} variantes",
+                        text = "${stop.duplicates.size} quais",
                         style = MaterialTheme.typography.labelSmall,
                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp),
                         color = MaterialTheme.colorScheme.onTertiaryContainer

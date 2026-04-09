@@ -25,12 +25,11 @@ import xyz.doocode.superbus.core.dto.ginko.Arret
 /**
  * Bottom sheet partagé affichant les variantes (quais) d'une station groupée.
  *
- * - Utilisation minimale (écran détails) : seuls [stop], [onDismissRequest],
- *   [onGroupedClick] et [onDuplicateClick] sont requis.
+ * - Utilisation minimale (écran détails) : seuls [stop], [onDismissRequest], [onGroupedClick] et
+ * [onDuplicateClick] sont requis.
  * - Utilisation complète (écran recherche) : passer en plus [isGroupedFavorite],
- *   [isDuplicateFavorite], [onToggleGroupedFavorite], [onToggleDuplicateFavorite]
- *   et [onFillQuery] pour activer les indicateurs favoris et le menu contextuel
- *   au appui long.
+ * [isDuplicateFavorite], [onToggleGroupedFavorite], [onToggleDuplicateFavorite] et [onFillQuery]
+ * pour activer les indicateurs favoris et le menu contextuel au appui long.
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -48,10 +47,7 @@ fun StopVariantsBottomSheet(
     val sheetState = rememberModalBottomSheetState()
     val hasActions = onFillQuery != null
 
-    ModalBottomSheet(
-        onDismissRequest = onDismissRequest,
-        sheetState = sheetState
-    ) {
+    ModalBottomSheet(onDismissRequest = onDismissRequest, sheetState = sheetState) {
         Column(modifier = Modifier.padding(bottom = 32.dp)) {
             Text(
                 text = stop.nom,
@@ -70,7 +66,8 @@ fun StopVariantsBottomSheet(
                     val groupedIcon =
                         if (isGroupedFavorite) Icons.Default.Favorite else Icons.Default.Search
                     val groupedIconTint =
-                        if (isGroupedFavorite) Color(0xFFE91E63) else MaterialTheme.colorScheme.primary
+                        if (isGroupedFavorite) Color(0xFFE91E63)
+                        else MaterialTheme.colorScheme.primary
 
                     Box {
                         ListItem(
@@ -81,9 +78,11 @@ fun StopVariantsBottomSheet(
                                         Text(
                                             text = parts[0],
                                             style = MaterialTheme.typography.labelMedium,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(
-                                                alpha = 0.8f
-                                            )
+                                            color =
+                                                MaterialTheme.colorScheme
+                                                    .onSurfaceVariant.copy(
+                                                        alpha = 0.8f
+                                                    )
                                         )
                                         Text(
                                             text = parts[1],
@@ -116,32 +115,37 @@ fun StopVariantsBottomSheet(
                                     Text(
                                         text = "Recommandé",
                                         style = MaterialTheme.typography.labelSmall,
-                                        modifier = Modifier.padding(
-                                            horizontal = 6.dp,
-                                            vertical = 2.dp
-                                        ),
+                                        modifier =
+                                            Modifier.padding(
+                                                horizontal = 6.dp,
+                                                vertical = 2.dp
+                                            ),
                                         color = MaterialTheme.colorScheme.onPrimary
                                     )
                                 }
                             },
-                            colors = ListItemDefaults.colors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(
-                                    alpha = 0.3f
-                                )
-                            ),
-                            modifier = Modifier
-                                .padding(horizontal = 8.dp, vertical = 8.dp)
-                                .clip(MaterialTheme.shapes.medium)
-                                .then(
-                                    if (hasActions) {
-                                        Modifier.combinedClickable(
-                                            onClick = onGroupedClick,
-                                            onLongClick = { showMenu = true }
-                                        )
-                                    } else {
-                                        Modifier.clickable { onGroupedClick() }
-                                    }
-                                )
+                            colors =
+                                ListItemDefaults.colors(
+                                    containerColor =
+                                        MaterialTheme.colorScheme.primaryContainer
+                                            .copy(alpha = 0.3f)
+                                ),
+                            modifier =
+                                Modifier
+                                    .padding(horizontal = 8.dp, vertical = 8.dp)
+                                    .clip(MaterialTheme.shapes.medium)
+                                    .then(
+                                        if (hasActions) {
+                                            Modifier.combinedClickable(
+                                                onClick = onGroupedClick,
+                                                onLongClick = {
+                                                    showMenu = true
+                                                }
+                                            )
+                                        } else {
+                                            Modifier.clickable { onGroupedClick() }
+                                        }
+                                    )
                         )
 
                         if (hasActions && onToggleGroupedFavorite != null && onFillQuery != null) {
@@ -165,17 +169,31 @@ fun StopVariantsBottomSheet(
 
                     val isFav = isDuplicateFavorite(duplicate)
                     val isTram = duplicate.id.startsWith("t_")
+                    val multipleTrams = stop.duplicates.count { it.id.startsWith("t_") } > 1
+                    val multipleBuses = stop.duplicates.count { !it.id.startsWith("t_") } > 1
+                    val idNumber = duplicate.id.filter { it.isDigit() }
 
-                    val dupIcon = when {
-                        isFav -> Icons.Default.Favorite
-                        isTram -> Icons.Default.Tram
-                        else -> Icons.Default.DirectionsBus
-                    }
-                    val dupIconTint = when {
-                        isFav -> Color(0xFFE91E63)
-                        isTram -> MaterialTheme.colorScheme.tertiary
-                        else -> MaterialTheme.colorScheme.secondary
-                    }
+                    val dupIcon =
+                        when {
+                            isFav -> Icons.Default.Favorite
+                            isTram -> Icons.Default.Tram
+                            else -> Icons.Default.DirectionsBus
+                        }
+                    val dupIconTint =
+                        when {
+                            isFav -> Color(0xFFE91E63)
+                            isTram -> Color(0xFF4CAF50)
+                            else -> Color(0xFFFF6D00)
+                        }
+                    val dupLabel =
+                        when {
+                            isTram && multipleTrams && idNumber.isNotEmpty() ->
+                                "Quai de tramway n°$idNumber"
+
+                            isTram -> "Quai de tramway"
+                            multipleBuses && idNumber.isNotEmpty() -> "Arrêt de bus n°$idNumber"
+                            else -> "Arrêt de bus"
+                        }
 
                     Box {
                         ListItem(
@@ -187,49 +205,41 @@ fun StopVariantsBottomSheet(
                                 )
                             },
                             headlineContent = {
-                                val parts = duplicate.nom.split(" - ", limit = 2)
-                                if (parts.size == 2) {
-                                    Column {
-                                        Text(
-                                            text = parts[0],
-                                            style = MaterialTheme.typography.labelMedium,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(
-                                                alpha = 0.8f
-                                            )
-                                        )
-                                        Text(
-                                            text = parts[1],
-                                            style = MaterialTheme.typography.bodyLarge
-                                        )
-                                    }
-                                } else {
-                                    Text(
-                                        text = duplicate.nom,
-                                        style = MaterialTheme.typography.bodyLarge
-                                    )
-                                }
+                                Text(
+                                    text = dupLabel,
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
                             },
                             trailingContent = {
                                 Text(
                                     text = "#${duplicate.id}",
                                     fontFamily = FontFamily.Monospace,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                                    color =
+                                        MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                                            alpha = 0.6f
+                                        ),
                                     style = MaterialTheme.typography.bodyMedium
                                 )
                             },
-                            modifier = Modifier.then(
-                                if (hasActions) {
-                                    Modifier.combinedClickable(
-                                        onClick = { onDuplicateClick(duplicate) },
-                                        onLongClick = { showMenu = true }
-                                    )
-                                } else {
-                                    Modifier.clickable { onDuplicateClick(duplicate) }
-                                }
-                            )
+                            modifier =
+                                Modifier.then(
+                                    if (hasActions) {
+                                        Modifier.combinedClickable(
+                                            onClick = {
+                                                onDuplicateClick(duplicate)
+                                            },
+                                            onLongClick = { showMenu = true }
+                                        )
+                                    } else {
+                                        Modifier.clickable {
+                                            onDuplicateClick(duplicate)
+                                        }
+                                    }
+                                )
                         )
 
-                        if (hasActions && onToggleDuplicateFavorite != null && onFillQuery != null) {
+                        if (hasActions && onToggleDuplicateFavorite != null && onFillQuery != null
+                        ) {
                             StopActionsContainer(
                                 expanded = showMenu,
                                 onDismissRequest = { showMenu = false },
