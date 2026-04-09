@@ -52,9 +52,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.drawscope.Stroke
-import xyz.doocode.superbus.core.dto.Arret
-import xyz.doocode.superbus.core.dto.Ligne
-import xyz.doocode.superbus.core.dto.Variante
+import xyz.doocode.superbus.core.dto.ginko.Arret
+import xyz.doocode.superbus.core.dto.ginko.Ligne
+import xyz.doocode.superbus.core.dto.ginko.Variante
 import xyz.doocode.superbus.ui.lines.LineBadge
 
 @OptIn(ExperimentalMaterial3Api::class)

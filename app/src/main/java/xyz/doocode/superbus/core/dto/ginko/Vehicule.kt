@@ -1,4 +1,4 @@
-package xyz.doocode.superbus.core.dto
+package xyz.doocode.superbus.core.dto.ginko
 
 data class VehiculeDR(
     val num: String,
@@ -19,3 +19,4 @@ data class VehiculeTR(
     val tauxDeCharge: Double,
     val position: String
 )
+

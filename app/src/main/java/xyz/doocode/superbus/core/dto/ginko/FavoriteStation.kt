@@ -1,4 +1,4 @@
-package xyz.doocode.superbus.core.dto
+package xyz.doocode.superbus.core.dto.ginko
 
 data class FavoriteStation(
     val id: String,
@@ -8,3 +8,4 @@ data class FavoriteStation(
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
 )
+

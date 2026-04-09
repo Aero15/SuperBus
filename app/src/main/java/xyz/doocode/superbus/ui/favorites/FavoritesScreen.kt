@@ -40,7 +40,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import xyz.doocode.superbus.core.dto.FavoriteStation
+import xyz.doocode.superbus.core.dto.ginko.FavoriteStation
 import xyz.doocode.superbus.ui.components.SearchBar
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.draw.alpha

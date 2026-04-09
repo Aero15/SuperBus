@@ -8,7 +8,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import xyz.doocode.superbus.ui.details.components.StopDetailsUtils.parseDurationMinutes
+import xyz.doocode.superbus.core.dto.ginko.Temps
 import java.util.Locale
 
 data class TtsSettings(
@@ -46,7 +46,7 @@ class TtsCountdownManager(context: Context) {
     private val _currentlySpeakingKey = MutableStateFlow<String?>(null)
     val currentlySpeakingKey: StateFlow<String?> = _currentlySpeakingKey.asStateFlow()
 
-    private var lastGroupedArrivals: Map<String, List<xyz.doocode.superbus.core.dto.Temps>> =
+    private var lastGroupedArrivals: Map<String, List<Temps>> =
         emptyMap()
 
     private var settings = loadSettings()
@@ -147,12 +147,12 @@ class TtsCountdownManager(context: Context) {
      * Called by the ViewModel when arrival data is refreshed.
      * Checks each subscription and announces if the minute count changed.
      */
-    fun onArrivalsUpdated(groupedArrivals: Map<String, List<xyz.doocode.superbus.core.dto.Temps>>) {
+    fun onArrivalsUpdated(groupedArrivals: Map<String, List<Temps>>) {
         lastGroupedArrivals = groupedArrivals
         internalProcessArrivals(groupedArrivals)
     }
 
-    private fun internalProcessArrivals(groupedArrivals: Map<String, List<xyz.doocode.superbus.core.dto.Temps>>) {
+    private fun internalProcessArrivals(groupedArrivals: Map<String, List<Temps>>) {
         if (!ttsReady || _activeSubscriptions.value.isEmpty()) return
 
         val subscriptions = _activeSubscriptions.value.toMap()

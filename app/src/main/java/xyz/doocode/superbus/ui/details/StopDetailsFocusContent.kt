@@ -13,7 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import xyz.doocode.superbus.core.dto.Temps
+import xyz.doocode.superbus.core.dto.ginko.Temps
 import xyz.doocode.superbus.ui.details.components.FocusArrivalCard
 
 @Composable

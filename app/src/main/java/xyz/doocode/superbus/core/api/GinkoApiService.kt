@@ -1,13 +1,13 @@
 package xyz.doocode.superbus.core.api
 
-import xyz.doocode.superbus.core.dto.Arret
-import xyz.doocode.superbus.core.dto.EtatLigne
-import xyz.doocode.superbus.core.dto.Ligne
-import xyz.doocode.superbus.core.dto.Message
-import xyz.doocode.superbus.core.dto.TempsLieu
-import xyz.doocode.superbus.core.dto.VehiculeDR
-import xyz.doocode.superbus.core.dto.VehiculeTR
-import xyz.doocode.superbus.core.dto.Affluence
+import xyz.doocode.superbus.core.dto.ginko.Arret
+import xyz.doocode.superbus.core.dto.ginko.EtatLigne
+import xyz.doocode.superbus.core.dto.ginko.Ligne
+import xyz.doocode.superbus.core.dto.ginko.Message
+import xyz.doocode.superbus.core.dto.ginko.TempsLieu
+import xyz.doocode.superbus.core.dto.ginko.VehiculeDR
+import xyz.doocode.superbus.core.dto.ginko.VehiculeTR
+import xyz.doocode.superbus.core.dto.ginko.Affluence
 import retrofit2.http.GET
 import retrofit2.http.Query
 

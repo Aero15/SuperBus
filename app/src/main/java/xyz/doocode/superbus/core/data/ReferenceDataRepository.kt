@@ -5,8 +5,8 @@ import android.content.SharedPreferences
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import xyz.doocode.superbus.core.api.ApiClient
-import xyz.doocode.superbus.core.dto.Arret
-import xyz.doocode.superbus.core.dto.Ligne
+import xyz.doocode.superbus.core.dto.ginko.Arret
+import xyz.doocode.superbus.core.dto.ginko.Ligne
 
 class ReferenceDataRepository(context: Context) {
 

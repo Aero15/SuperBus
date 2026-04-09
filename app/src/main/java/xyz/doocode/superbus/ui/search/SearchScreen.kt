@@ -36,7 +36,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
-import xyz.doocode.superbus.core.dto.Arret
+import xyz.doocode.superbus.core.dto.ginko.Arret
 import xyz.doocode.superbus.ui.components.StopActionsContainer
 import android.content.Intent
 import androidx.compose.material.icons.Icons

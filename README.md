@@ -13,7 +13,7 @@ Superbus (temporary name) is a mobile app aiming to be a better alternative to t
     - 🖼️ support landscape view, or tablets
     - 💡 feature to keep the screen on
     - 🌙 dark mode support
-- 📣 **Text-to-speech countdown**: announcement of waiting times (inspired by the [PANAM/SIEL screens of the Paris metro](https://youtu.be/M3j0xNkYBy0?si=6MJ926puqFzxaYgx&t=6))
+- 📣 **Text-to-speech countdown**: announcement of waiting times (inspired by the [PANAM/SIEL screens of the Paris metro](https://youtu.be/M3j0xNkYBy0?si=6MJ926puqFzxaYgx&t=5))
     - 1️⃣ just with one transit line
     - *️⃣ or for several lines simultaneously (with auto-swiping cards in full screen mode)
     - 💤 disabled countdown in background
@@ -56,5 +56,5 @@ This project need an API key to interact with Ginko API.
 You have to [ask Ginko](https://api.ginko.voyage/#prez) in order to receive your key from this page. You can get a temporary key if you don't want to ask.
 Then, edit `local.properties` to add this following line :
 ```ini
-apikey.ginko_mobilite=PUT_YOUR_GINKO_API_KEY_RIGHT_THERE
+apikey.ginko_mobilites=PUT_YOUR_GINKO_API_KEY_RIGHT_THERE
 ```

@@ -29,8 +29,11 @@ android {
 
         // Inject API Key from local.properties into BuildConfig
         // If the key is missing from local.properties, provide a placeholder.
-        val apiKey = localProperties.getProperty("apikey.ginko_mobilite") ?: ""
+        val apiKey = localProperties.getProperty("apikey.ginko_mobilites") ?: ""
         buildConfigField("String", "GINKO_API_KEY", "\"$apiKey\"")
+
+        val velociteApiKey = localProperties.getProperty("apikey.ginko_velocite") ?: ""
+        buildConfigField("String", "VELOCITE_API_KEY", "\"$velociteApiKey\"")
     }
 
     buildTypes {

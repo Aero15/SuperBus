@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.Surface
-import xyz.doocode.superbus.core.dto.Temps
+import xyz.doocode.superbus.core.dto.ginko.Temps
 import xyz.doocode.superbus.ui.theme.SuperBusTheme
 
 @Composable

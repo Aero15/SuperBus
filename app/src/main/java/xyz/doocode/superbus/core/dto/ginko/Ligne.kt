@@ -1,4 +1,4 @@
-package xyz.doocode.superbus.core.dto
+package xyz.doocode.superbus.core.dto.ginko
 
 data class Variante(
     val id: String,
@@ -27,3 +27,4 @@ data class EtatLigne(
     val couleurTexte: String,
     val etat: Int
 )
+

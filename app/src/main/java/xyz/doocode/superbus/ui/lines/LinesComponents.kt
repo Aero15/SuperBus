@@ -51,8 +51,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import xyz.doocode.superbus.core.dto.Ligne
-import xyz.doocode.superbus.core.dto.Variante
+import xyz.doocode.superbus.core.dto.ginko.Ligne
+import xyz.doocode.superbus.core.dto.ginko.Variante
 import xyz.doocode.superbus.ui.components.BadgeBoxContent
 import xyz.doocode.superbus.ui.components.BadgeContent
 import xyz.doocode.superbus.ui.components.resolveBadgeContent

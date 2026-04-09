@@ -20,7 +20,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import xyz.doocode.superbus.core.dto.Temps
+import xyz.doocode.superbus.core.dto.ginko.Temps
 import xyz.doocode.superbus.ui.components.LineBadge
 import xyz.doocode.superbus.ui.theme.SuperBusTheme
 

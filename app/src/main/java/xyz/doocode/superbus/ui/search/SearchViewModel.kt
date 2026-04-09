@@ -12,7 +12,7 @@ import kotlinx.coroutines.launch
 import xyz.doocode.superbus.core.api.ApiClient
 import xyz.doocode.superbus.core.data.FavoritesRepository
 import xyz.doocode.superbus.core.data.ReferenceDataRepository
-import xyz.doocode.superbus.core.dto.Arret
+import xyz.doocode.superbus.core.dto.ginko.Arret
 import xyz.doocode.superbus.core.manager.FavoritesManager
 import xyz.doocode.superbus.core.util.removeAccents
 

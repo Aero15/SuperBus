@@ -18,7 +18,7 @@ import androidx.compose.ui.layout.layout
 import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import xyz.doocode.superbus.core.dto.Arret
+import xyz.doocode.superbus.core.dto.ginko.Arret
 import xyz.doocode.superbus.ui.components.EmptyUpcomingPassagesView
 import xyz.doocode.superbus.ui.components.ErrorView
 import xyz.doocode.superbus.ui.components.StopListItem

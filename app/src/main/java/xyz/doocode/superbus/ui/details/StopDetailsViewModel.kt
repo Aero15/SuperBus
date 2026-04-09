@@ -12,9 +12,9 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import xyz.doocode.superbus.core.api.ApiClient
 import xyz.doocode.superbus.core.data.FavoritesRepository
-import xyz.doocode.superbus.core.dto.Arret
-import xyz.doocode.superbus.core.dto.Temps
-import xyz.doocode.superbus.core.dto.TempsLieu
+import xyz.doocode.superbus.core.dto.ginko.Arret
+import xyz.doocode.superbus.core.dto.ginko.Temps
+import xyz.doocode.superbus.core.dto.ginko.TempsLieu
 import xyz.doocode.superbus.core.manager.FavoritesManager
 import xyz.doocode.superbus.core.tts.TtsCountdownManager
 import xyz.doocode.superbus.core.tts.TtsSettings

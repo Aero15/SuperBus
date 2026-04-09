@@ -24,8 +24,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.painterResource
-import xyz.doocode.superbus.core.dto.Ligne
-import xyz.doocode.superbus.core.dto.Variante
+import xyz.doocode.superbus.core.dto.ginko.Ligne
+import xyz.doocode.superbus.core.dto.ginko.Variante
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

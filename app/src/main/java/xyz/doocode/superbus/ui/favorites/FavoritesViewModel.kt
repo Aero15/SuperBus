@@ -6,7 +6,7 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import xyz.doocode.superbus.core.data.FavoritesRepository
-import xyz.doocode.superbus.core.dto.FavoriteStation
+import xyz.doocode.superbus.core.dto.ginko.FavoriteStation
 import xyz.doocode.superbus.core.util.removeAccents
 
 class FavoritesViewModel(application: Application) : AndroidViewModel(application) {

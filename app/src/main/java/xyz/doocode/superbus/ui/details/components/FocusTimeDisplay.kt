@@ -20,7 +20,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Surface
 import androidx.compose.ui.tooling.preview.Preview
-import xyz.doocode.superbus.core.dto.Temps
+import xyz.doocode.superbus.core.dto.ginko.Temps
 import xyz.doocode.superbus.ui.theme.SuperBusTheme
 
 @Composable

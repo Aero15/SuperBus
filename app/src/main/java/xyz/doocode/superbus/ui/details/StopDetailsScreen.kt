@@ -44,7 +44,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import xyz.doocode.superbus.core.util.setKeepScreenOn
-import xyz.doocode.superbus.core.dto.Arret
+import xyz.doocode.superbus.core.dto.ginko.Arret
 import xyz.doocode.superbus.ui.details.components.StopDetailsUtils
 import xyz.doocode.superbus.ui.details.components.TtsSettingsDialog
 import androidx.core.content.edit

@@ -1,4 +1,4 @@
-package xyz.doocode.superbus.core.dto
+package xyz.doocode.superbus.core.dto.ginko
 
 data class Temps(
     val idArret: String,
@@ -35,3 +35,4 @@ data class TempsLieu(
     val latitude: Double,
     val longitude: Double
 )
+

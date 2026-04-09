@@ -14,7 +14,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import xyz.doocode.superbus.core.dto.Ligne
+import xyz.doocode.superbus.core.dto.ginko.Ligne
 import xyz.doocode.superbus.ui.components.BadgeBoxContent
 import xyz.doocode.superbus.ui.components.parseColorSafe
 import xyz.doocode.superbus.ui.components.resolveBadgeContent

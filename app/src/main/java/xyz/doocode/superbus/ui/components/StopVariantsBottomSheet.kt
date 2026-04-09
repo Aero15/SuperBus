@@ -20,7 +20,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import xyz.doocode.superbus.core.dto.Arret
+import xyz.doocode.superbus.core.dto.ginko.Arret
 
 /**
  * Bottom sheet partagé affichant les variantes (quais) d'une station groupée.

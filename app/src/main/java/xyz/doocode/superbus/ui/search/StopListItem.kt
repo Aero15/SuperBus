@@ -34,8 +34,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import xyz.doocode.superbus.core.dto.Arret
-import xyz.doocode.superbus.core.dto.Ligne
+import xyz.doocode.superbus.core.dto.ginko.Arret
+import xyz.doocode.superbus.core.dto.ginko.Ligne
 import xyz.doocode.superbus.core.util.removeAccents
 import xyz.doocode.superbus.ui.favorites.SmallLineBadge
 import xyz.doocode.superbus.ui.theme.SuperBusTheme

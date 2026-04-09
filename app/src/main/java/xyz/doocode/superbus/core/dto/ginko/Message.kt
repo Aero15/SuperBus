@@ -1,4 +1,4 @@
-package xyz.doocode.superbus.core.dto
+package xyz.doocode.superbus.core.dto.ginko
 
 data class Message(
     val id: Int,
@@ -11,3 +11,4 @@ data class Message(
     val arrets: List<String>,
     val supports: List<Int>
 )
+

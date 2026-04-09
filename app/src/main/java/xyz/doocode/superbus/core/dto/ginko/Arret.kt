@@ -1,4 +1,4 @@
-package xyz.doocode.superbus.core.dto
+package xyz.doocode.superbus.core.dto.ginko
 
 data class Arret(
     val id: String,
@@ -13,3 +13,4 @@ data class Arret(
     val groupedIds: List<String>
         get() = duplicates.map { it.id }
 }
+

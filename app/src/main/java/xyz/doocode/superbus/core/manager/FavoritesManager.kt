@@ -6,7 +6,7 @@ import kotlinx.coroutines.withContext
 import xyz.doocode.superbus.core.api.ApiClient
 import xyz.doocode.superbus.core.data.FavoritesRepository
 import xyz.doocode.superbus.core.data.ReferenceDataRepository
-import xyz.doocode.superbus.core.dto.Ligne
+import xyz.doocode.superbus.core.dto.ginko.Ligne
 
 class FavoritesManager(context: Context) {
 

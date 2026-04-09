@@ -26,7 +26,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import xyz.doocode.superbus.R
-import xyz.doocode.superbus.core.dto.FavoriteStation
+import xyz.doocode.superbus.core.dto.ginko.FavoriteStation
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.border
 import androidx.compose.foundation.isSystemInDarkTheme

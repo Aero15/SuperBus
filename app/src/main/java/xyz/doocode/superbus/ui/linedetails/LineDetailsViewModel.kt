@@ -11,9 +11,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import xyz.doocode.superbus.core.data.ReferenceDataRepository
-import xyz.doocode.superbus.core.dto.Arret
-import xyz.doocode.superbus.core.dto.Ligne
-import xyz.doocode.superbus.core.dto.Variante
+import xyz.doocode.superbus.core.dto.ginko.Arret
+import xyz.doocode.superbus.core.dto.ginko.Ligne
+import xyz.doocode.superbus.core.dto.ginko.Variante
 
 data class LineDetailsUiState(
     val line: Ligne? = null,

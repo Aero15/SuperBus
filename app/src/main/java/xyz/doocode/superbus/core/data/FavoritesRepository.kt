@@ -7,8 +7,8 @@ import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import xyz.doocode.superbus.core.dto.FavoriteStation
-import xyz.doocode.superbus.core.dto.Ligne
+import xyz.doocode.superbus.core.dto.ginko.FavoriteStation
+import xyz.doocode.superbus.core.dto.ginko.Ligne
 import androidx.core.content.edit
 
 class FavoritesRepository(context: Context) {

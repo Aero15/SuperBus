@@ -1,4 +1,4 @@
-package xyz.doocode.superbus.core.dto
+package xyz.doocode.superbus.core.dto.ginko
 
 data class Affluence(
     val heureDeDebut: String,
@@ -8,3 +8,4 @@ data class Affluence(
     val nbPassagersABord: Int,
     val tauxDeCharge: Double
 )
+
