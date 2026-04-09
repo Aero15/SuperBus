@@ -143,6 +143,21 @@ class FavoritesViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
+    /**
+     * Synchronous variant — starts edit mode immediately using the list already shown in the UI.
+     * Safe to call from a gesture handler without a coroutine wrapper.
+     */
+    fun startEditingWithSelectionSync(
+        station: FavoriteStation,
+        currentList: List<FavoriteStation>
+    ) {
+        _localFavorites.value = ArrayList(currentList)
+        selectedIds.value = setOf(station.selectionKey())
+        _undoStack.clear(); _redoStack.clear()
+        canUndo.value = false; canRedo.value = false
+        isEditing.value = true
+    }
+
     fun saveOrder() {
         viewModelScope.launch {
             repository.updateFavoritesOrder(_localFavorites.value)
@@ -182,7 +197,7 @@ class FavoritesViewModel(application: Application) : AndroidViewModel(applicatio
         val selectedInOrder = currentList.filter { it.selectionKey() in selKeys }
         val notSelected = currentList.filter { it.selectionKey() !in selKeys }
         // Map toIndex (in full list) to an insert position within notSelected
-        val insertAt = currentList.take((toIndex + 1).coerceAtMost(currentList.size))
+        val insertAt = currentList.take(toIndex.coerceIn(0, currentList.size))
             .count { it.selectionKey() !in selKeys }
             .coerceIn(0, notSelected.size)
         val result = notSelected.toMutableList()
