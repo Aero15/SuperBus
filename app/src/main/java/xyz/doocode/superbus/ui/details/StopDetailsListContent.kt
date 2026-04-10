@@ -1,20 +1,30 @@
 package xyz.doocode.superbus.ui.details
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DirectionsBus
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Tram
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -37,6 +47,7 @@ fun StopDetailsListContent(
     onNearbyStopClick: (stop: Arret, fromId: Boolean) -> Unit = { _, _ -> }
 ) {
     var selectedStop by remember { mutableStateOf<Arret?>(null) }
+    val expandedSections = remember { mutableStateMapOf(0 to true, 1 to true) }
 
     when (state) {
         is StopDetailsUiState.Loading -> {
@@ -113,19 +124,62 @@ fun StopDetailsListContent(
 
                     is StopDetailsUiState.Success -> {
                         val list = state.groupedArrivals.toList()
-                        items(list) { (key, arrivals) ->
-                            val parts = key.split("|")
-                            ArrivalCard(
-                                numLigne = parts.getOrNull(0) ?: "?",
-                                destination = parts.getOrNull(1) ?: "?",
-                                couleurFond = arrivals.first().couleurFond,
-                                couleurTexte = arrivals.first().couleurTexte,
-                                ligneId = arrivals.first().idLigne,
-                                times = arrivals.take(3),
-                                initialExpoMode = list.size < 4,
-                                forcedExpandState = forcedExpandState,
-                                onLongClick = { onItemLongClick(key) }
-                            )
+                        val groupedByMode =
+                            list.groupBy { (_, arrivals) -> arrivals.first().modeTransport }
+                        val hasMixedModes = groupedByMode.size > 1
+                        // Tram (1) en premier, Bus (0) ensuite
+                        val sortedModes = groupedByMode.keys.sortedDescending()
+
+                        sortedModes.forEach { mode ->
+                            val modeEntries = groupedByMode[mode] ?: emptyList()
+                            val isExpanded = expandedSections[mode] != false
+
+                            if (hasMixedModes) {
+                                item(key = "header_$mode") {
+                                    TransportSectionHeader(
+                                        mode = mode,
+                                        isExpanded = isExpanded,
+                                        onToggle = {
+                                            expandedSections[mode] = !isExpanded
+                                        }
+                                    )
+                                }
+                            }
+
+                            item(key = "section_$mode") {
+                                AnimatedVisibility(
+                                    visible = !hasMixedModes || isExpanded,
+                                    enter = expandVertically(
+                                        animationSpec = tween(
+                                            durationMillis = 300,
+                                            easing = FastOutSlowInEasing
+                                        )
+                                    ),
+                                    exit = shrinkVertically(
+                                        animationSpec = tween(
+                                            durationMillis = 300,
+                                            easing = FastOutSlowInEasing
+                                        )
+                                    )
+                                ) {
+                                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                        modeEntries.forEach { (key, arrivals) ->
+                                            val parts = key.split("|")
+                                            ArrivalCard(
+                                                numLigne = parts.getOrNull(0) ?: "?",
+                                                destination = parts.getOrNull(1) ?: "?",
+                                                couleurFond = arrivals.first().couleurFond,
+                                                couleurTexte = arrivals.first().couleurTexte,
+                                                ligneId = arrivals.first().idLigne,
+                                                times = arrivals.take(3),
+                                                initialExpoMode = list.size < 4,
+                                                forcedExpandState = forcedExpandState,
+                                                onLongClick = { onItemLongClick(key) }
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
 
@@ -148,6 +202,44 @@ fun StopDetailsListContent(
                 onNearbyStopClick(duplicate, true)
                 selectedStop = null
             }
+        )
+    }
+}
+
+@Composable
+private fun TransportSectionHeader(mode: Int, isExpanded: Boolean, onToggle: () -> Unit) {
+    val label = when (mode) {
+        0 -> "Bus"
+        1 -> "Tram"
+        else -> "Autre"
+    }
+    val icon = when (mode) {
+        1 -> Icons.Filled.Tram
+        else -> Icons.Filled.DirectionsBus
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onToggle() }
+            .padding(horizontal = 4.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Icon(imageVector = icon, contentDescription = null)
+            Text(
+                text = label,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+        }
+        Icon(
+            imageVector = if (isExpanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+            contentDescription = if (isExpanded) "Réduire" else "Développer"
         )
     }
 }

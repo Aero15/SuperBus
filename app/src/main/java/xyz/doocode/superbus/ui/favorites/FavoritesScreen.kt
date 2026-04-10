@@ -245,10 +245,10 @@ fun FavoritesScreen(
         ) {
             if (favorites.isNotEmpty()) {
                 Text(
-                    text = "${favorites.size} station(s)",
+                    text = "${favorites.size} favori(s)",
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(vertical = 8.dp)
+                    modifier = Modifier.padding(bottom = 8.dp)
                 )
             }
 
