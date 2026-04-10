@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import java.text.Normalizer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,6 +23,9 @@ import xyz.doocode.superbus.core.manager.FavoritesManager
 import xyz.doocode.superbus.core.tts.TtsCountdownManager
 import xyz.doocode.superbus.core.tts.TtsSettings
 
+private fun String.normalize(): String =
+    Normalizer.normalize(this, Normalizer.Form.NFD)
+        .replace(Regex("\\p{InCombiningDiacriticalMarks}+"), "")
 
 sealed interface StopDetailsUiState {
     data object Loading : StopDetailsUiState
@@ -202,12 +206,14 @@ class StopDetailsViewModel(application: Application) : AndroidViewModel(applicat
         if (matchedVelociteStationId == null) {
             try {
                 val stations = referenceDataRepository.getVelociteStations()
+                val normalizedNomExact = nomExact.trim().normalize()
                 val matched = stations.firstOrNull { station ->
                     val cleaned = station.name
                         .replaceFirst(Regex("^\\d+\\s*-\\s*"), "")
                         .replace(" (CB)", "")
                         .trim()
-                    cleaned.equals(nomExact.trim(), ignoreCase = true)
+                        .normalize()
+                    cleaned.equals(normalizedNomExact, ignoreCase = true)
                 }
                 matchedVelociteStationId = matched?.number
             } catch (_: Exception) {
