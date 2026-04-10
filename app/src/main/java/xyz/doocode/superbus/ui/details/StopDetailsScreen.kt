@@ -136,6 +136,7 @@ fun StopDetailsScreen(
 
     var showMenu by remember { mutableStateOf(false) }
     var forcedExpandState by remember { mutableStateOf<Boolean?>(null) }
+    var forcedSectionsExpandState by remember { mutableStateOf<Boolean?>(null) }
     var focusedItemKey by remember { mutableStateOf<String?>(null) }
     var showExitConfirmation by remember { mutableStateOf(false) }
     var showTtsSettings by remember { mutableStateOf(false) }
@@ -429,6 +430,20 @@ fun StopDetailsScreen(
                             expanded = showMenu,
                             onDismissRequest = { showMenu = false }
                         ) {
+                            // ── Écran ──────────────────────────────────────
+                            Box(
+                                modifier = Modifier.padding(
+                                    start = 16.dp,
+                                    top = 10.dp,
+                                    bottom = 2.dp
+                                )
+                            ) {
+                                Text(
+                                    text = "Écran",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
                             DropdownMenuItem(
                                 text = {
                                     Text(
@@ -483,20 +498,8 @@ fun StopDetailsScreen(
                                         showMenu = false
                                     }
                                 )
-                                DropdownMenuItem(
-                                    text = { Text(if (forcedExpandState != false) "Tout réduire" else "Tout développer") },
-                                    leadingIcon = {
-                                        Icon(
-                                            imageVector = if (forcedExpandState != false) Icons.Default.ArrowUpward else Icons.Default.ArrowDownward,
-                                            contentDescription = null
-                                        )
-                                    },
-                                    onClick = {
-                                        forcedExpandState = forcedExpandState == false
-                                        showMenu = false
-                                    }
-                                )
                             }
+                            // ── Annonces sonores ───────────────────────────
                             HorizontalDivider()
                             Box(
                                 modifier = Modifier.padding(
@@ -546,6 +549,50 @@ fun StopDetailsScreen(
                                     showMenu = false
                                 }
                             )
+                            // ── Affichage (mode liste uniquement) ──────────
+                            if (!showFocusMode) {
+                                HorizontalDivider()
+                                Box(
+                                    modifier = Modifier.padding(
+                                        start = 16.dp,
+                                        top = 10.dp,
+                                        bottom = 2.dp
+                                    )
+                                ) {
+                                    Text(
+                                        text = "Affichage",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                                DropdownMenuItem(
+                                    text = { Text(if (forcedExpandState != false) "Réduire les cartes" else "Agrandir les cartes") },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = if (forcedExpandState != false) Icons.Default.ArrowUpward else Icons.Default.ArrowDownward,
+                                            contentDescription = null
+                                        )
+                                    },
+                                    onClick = {
+                                        forcedExpandState = forcedExpandState == false
+                                        showMenu = false
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text(if (forcedSectionsExpandState != false) "Réduire les sections" else "Agrandir les sections") },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = if (forcedSectionsExpandState != false) Icons.Default.ArrowUpward else Icons.Default.ArrowDownward,
+                                            contentDescription = null
+                                        )
+                                    },
+                                    onClick = {
+                                        forcedSectionsExpandState =
+                                            forcedSectionsExpandState == false
+                                        showMenu = false
+                                    }
+                                )
+                            }
                         }
                     }
                 },
@@ -606,6 +653,7 @@ fun StopDetailsScreen(
                 StopDetailsListContent(
                     state = state,
                     forcedExpandState = forcedExpandState,
+                    forcedSectionsExpandState = forcedSectionsExpandState,
                     nearbyStops = nearbyStops,
                     isLoadingNearbyStops = isLoadingNearbyStops,
                     onRetry = { viewModel.init(stopName, stopId) },

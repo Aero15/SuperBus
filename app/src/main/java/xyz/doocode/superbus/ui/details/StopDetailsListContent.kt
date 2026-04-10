@@ -40,6 +40,7 @@ import xyz.doocode.superbus.ui.details.components.ArrivalCard
 fun StopDetailsListContent(
     state: StopDetailsUiState,
     forcedExpandState: Boolean?,
+    forcedSectionsExpandState: Boolean? = null,
     nearbyStops: List<Arret> = emptyList(),
     isLoadingNearbyStops: Boolean = false,
     onRetry: () -> Unit,
@@ -48,6 +49,13 @@ fun StopDetailsListContent(
 ) {
     var selectedStop by remember { mutableStateOf<Arret?>(null) }
     val expandedSections = remember { mutableStateMapOf(0 to true, 1 to true) }
+
+    LaunchedEffect(forcedSectionsExpandState) {
+        if (forcedSectionsExpandState != null) {
+            expandedSections[0] = forcedSectionsExpandState
+            expandedSections[1] = forcedSectionsExpandState
+        }
+    }
 
     when (state) {
         is StopDetailsUiState.Loading -> {
