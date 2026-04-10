@@ -15,15 +15,14 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import xyz.doocode.superbus.core.dto.jcdecaux.Station
-import xyz.doocode.superbus.ui.theme.AvailableStandsYellow
-import xyz.doocode.superbus.ui.theme.ElectricBikeGreen
-import xyz.doocode.superbus.ui.theme.MechanicalBikeBlue
+import xyz.doocode.superbus.ui.theme.AvailableStandsColor
+import xyz.doocode.superbus.ui.theme.ElectricBikeColor
+import xyz.doocode.superbus.ui.theme.MechanicalBikeColor
 
 @Composable
 fun VelociteRecap(station: Station) {
@@ -38,7 +37,7 @@ fun VelociteRecap(station: Station) {
             icon = Icons.Filled.PedalBike,
             label = "Vélos\nmécanique",
             value = station.totalStands.availabilities.mechanicalBikes.toString(),
-            backgroundColor = MechanicalBikeBlue,
+            backgroundColor = MechanicalBikeColor,
             modifier = Modifier.weight(1f)
         )
 
@@ -47,7 +46,7 @@ fun VelociteRecap(station: Station) {
             icon = Icons.Filled.ElectricBike,
             label = "Vélos\nélectrique",
             value = station.totalStands.availabilities.electricalBikes.toString(),
-            backgroundColor = ElectricBikeGreen,
+            backgroundColor = ElectricBikeColor,
             modifier = Modifier.weight(1f)
         )
 
@@ -56,7 +55,7 @@ fun VelociteRecap(station: Station) {
             icon = Icons.Filled.LocalParking,
             label = "Places\ndispo",
             value = station.totalStands.availabilities.stands.toString(),
-            backgroundColor = AvailableStandsYellow,
+            backgroundColor = AvailableStandsColor,
             modifier = Modifier.weight(1f)
         )
     }
@@ -96,7 +95,6 @@ private fun VelociteRecapTile(
     Card(
         modifier = modifier.height(115.dp), // Hauteur augmentée pour le style carte
         shape = RoundedCornerShape(16.dp), // Coins très arrondis
-        elevation = CardDefaults.cardElevation(defaultElevation = if (isZero) 0.dp else 6.dp),
         colors = CardDefaults.cardColors(containerColor = Color.Transparent)
     ) {
         Box(
@@ -126,14 +124,7 @@ private fun VelociteRecapTile(
                 // Valeur (Chiffre) - Mise en avant majeure
                 Text(
                     text = value, style = MaterialTheme.typography.displaySmall.copy(
-                        fontWeight = FontWeight.ExtraBold,
-                        // Ombre portée légère sur le texte pour lisibilité si fond
-                        // clair (rare ici)
-                        shadow = Shadow(
-                            color = Color.Black.copy(alpha = 0.1f),
-                            offset = Offset(2f, 2f),
-                            blurRadius = 4f
-                        )
+                        fontWeight = FontWeight.ExtraBold
                     ), color = displayContentColor
                 )
 

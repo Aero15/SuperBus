@@ -13,9 +13,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import xyz.doocode.superbus.core.dto.jcdecaux.Station
-import xyz.doocode.superbus.ui.theme.AvailableStandsYellow
-import xyz.doocode.superbus.ui.theme.ElectricBikeGreen
-import xyz.doocode.superbus.ui.theme.MechanicalBikeBlue
+import xyz.doocode.superbus.ui.theme.AvailableStandsColor
+import xyz.doocode.superbus.ui.theme.ElectricBikeColor
+import xyz.doocode.superbus.ui.theme.MechanicalBikeColor
+import xyz.doocode.superbus.ui.theme.UnavailableStandsColor
 
 @Composable
 fun VelociteCapacityChartCard(station: Station) {
@@ -85,10 +86,10 @@ fun VelociteCapacityChartCard(station: Station) {
                 val itemsPerRow = bestItemsPerRow
 
                 val totalSlots = mutableListOf<Color>()
-                repeat(mechBikes) { totalSlots.add(MechanicalBikeBlue) }
-                repeat(elecBikes) { totalSlots.add(ElectricBikeGreen) }
-                repeat(availableStands) { totalSlots.add(AvailableStandsYellow) }
-                repeat(unavailableStands) { totalSlots.add(Color(0xFFE53935)) }
+                repeat(mechBikes) { totalSlots.add(MechanicalBikeColor) }
+                repeat(elecBikes) { totalSlots.add(ElectricBikeColor) }
+                repeat(availableStands) { totalSlots.add(AvailableStandsColor) }
+                repeat(unavailableStands) { totalSlots.add(UnavailableStandsColor) }
 
                 val chunks = totalSlots.chunked(itemsPerRow)
 
@@ -130,18 +131,18 @@ fun VelociteCapacityChartCard(station: Station) {
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     LegendItem(
-                        color = MechanicalBikeBlue, label = "Vélos mécaniques", value = mechBikes
+                        color = MechanicalBikeColor, label = "Vélos mécaniques", value = mechBikes
                     )
                     LegendItem(
-                        color = ElectricBikeGreen, label = "Vélos électriques", value = elecBikes
+                        color = ElectricBikeColor, label = "Vélos électriques", value = elecBikes
                     )
                     LegendItem(
-                        color = AvailableStandsYellow,
+                        color = AvailableStandsColor,
                         label = "Places disponibles",
                         value = availableStands
                     )
                     LegendItem(
-                        color = Color(0xFFE53935),
+                        color = UnavailableStandsColor,
                         label = "Hors service / Non dispo.",
                         value = unavailableStands
                     )

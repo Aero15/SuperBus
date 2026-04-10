@@ -18,8 +18,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import xyz.doocode.superbus.core.dto.jcdecaux.Station
-import xyz.doocode.superbus.ui.theme.AvailableStandsYellow
-import xyz.doocode.superbus.ui.theme.ElectricBikeGreen
+import xyz.doocode.superbus.ui.theme.AvailableStandsColor
+import xyz.doocode.superbus.ui.theme.ElectricBikeColor
 
 @Composable
 fun VelociteStatusCard(station: Station) {
@@ -45,7 +45,7 @@ fun VelociteStatusCard(station: Station) {
                 VelociteStatusItem(
                     icon = if (station.status == "OPEN") Icons.Default.CheckCircle
                     else Icons.Default.Cancel,
-                    color = if (station.status == "OPEN") ElectricBikeGreen else Color.Red,
+                    color = if (station.status == "OPEN") ElectricBikeColor else Color.Red,
                     label = if (station.status == "OPEN") "Ouverte" else "Fermée"
                 )
 
@@ -66,7 +66,7 @@ fun VelociteStatusCard(station: Station) {
 
                 VelociteStatusItem(
                     icon = Icons.Default.Star,
-                    color = if (station.bonus) AvailableStandsYellow else Color.Gray,
+                    color = if (station.bonus) AvailableStandsColor else Color.Gray,
                     label = "Bonus",
                     strikeThrough = !station.bonus
                 )
@@ -91,8 +91,7 @@ fun VelociteStatusItem(
             text = label,
             style = MaterialTheme.typography.labelSmall,
             color = color,
-            textDecoration = if (strikeThrough) TextDecoration.LineThrough
-            else null
+            textDecoration = if (strikeThrough) TextDecoration.LineThrough else null
         )
     }
 }
