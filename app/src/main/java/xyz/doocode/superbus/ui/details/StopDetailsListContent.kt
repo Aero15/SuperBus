@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DirectionsBike
 import androidx.compose.material.icons.filled.DirectionsBus
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
@@ -34,6 +35,9 @@ import xyz.doocode.superbus.ui.components.ErrorView
 import xyz.doocode.superbus.ui.components.StopListItem
 import xyz.doocode.superbus.ui.components.StopVariantsBottomSheet
 import xyz.doocode.superbus.ui.details.components.ArrivalCard
+import xyz.doocode.superbus.core.dto.jcdecaux.Station
+import xyz.doocode.superbus.ui.details.velocite.components.VelociteCapacityGrid
+import xyz.doocode.superbus.ui.details.velocite.components.VelociteRecap
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,6 +45,8 @@ fun StopDetailsListContent(
     state: StopDetailsUiState,
     forcedExpandState: Boolean?,
     forcedSectionsExpandState: Boolean? = null,
+    velociteStation: Station? = null,
+    onVelociteClick: (() -> Unit)? = null,
     nearbyStops: List<Arret> = emptyList(),
     isLoadingNearbyStops: Boolean = false,
     onRetry: () -> Unit,
@@ -48,13 +54,15 @@ fun StopDetailsListContent(
     onNearbyStopClick: (stop: Arret, fromId: Boolean) -> Unit = { _, _ -> }
 ) {
     var selectedStop by remember { mutableStateOf<Arret?>(null) }
-    val expandedSections = remember { mutableStateMapOf(0 to true, 1 to true, 2 to true) }
+    val expandedSections =
+        remember { mutableStateMapOf(0 to true, 1 to true, 2 to true, 3 to true) }
 
     LaunchedEffect(forcedSectionsExpandState) {
         if (forcedSectionsExpandState != null) {
             expandedSections[0] = forcedSectionsExpandState
             expandedSections[1] = forcedSectionsExpandState
             expandedSections[2] = forcedSectionsExpandState
+            expandedSections[3] = forcedSectionsExpandState
         }
     }
 
@@ -208,6 +216,42 @@ fun StopDetailsListContent(
                                 }
                             }
                         }
+
+                        // Section Vélocité
+                        if (velociteStation != null) {
+                            val isVelociteExpanded = expandedSections[3] != false
+                            item(key = "velocite_header") {
+                                TransportSectionHeader(
+                                    mode = 3,
+                                    subtitle = "${velociteStation.totalStands.capacity} bornes",
+                                    isExpanded = isVelociteExpanded,
+                                    onToggle = { expandedSections[3] = !isVelociteExpanded }
+                                )
+                            }
+                            item(key = "velocite_content") {
+                                AnimatedVisibility(
+                                    visible = isVelociteExpanded,
+                                    enter = expandVertically(),
+                                    exit = shrinkVertically()
+                                ) {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .then(if (onVelociteClick != null) Modifier.clickable { onVelociteClick() } else Modifier),
+                                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                                    ) {
+                                        VelociteRecap(
+                                            station = velociteStation,
+                                            contentPadding = 0.dp
+                                        )
+                                        VelociteCapacityGrid(
+                                            station = velociteStation,
+                                            modifier = Modifier.fillMaxWidth()
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     }
 
                     else -> {}
@@ -234,15 +278,22 @@ fun StopDetailsListContent(
 }
 
 @Composable
-private fun TransportSectionHeader(mode: Int, isExpanded: Boolean, onToggle: () -> Unit) {
+private fun TransportSectionHeader(
+    mode: Int,
+    subtitle: String? = null,
+    isExpanded: Boolean,
+    onToggle: () -> Unit
+) {
     val label = when (mode) {
         0 -> "Bus"
         1 -> "Tram"
         2 -> "Lianes"
+        3 -> "Vélocité"
         else -> "Autre"
     }
     val icon = when (mode) {
         1 -> Icons.Filled.Tram
+        3 -> Icons.Filled.DirectionsBike
         else -> Icons.Filled.DirectionsBus
     }
 
@@ -259,11 +310,20 @@ private fun TransportSectionHeader(mode: Int, isExpanded: Boolean, onToggle: () 
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Icon(imageVector = icon, contentDescription = null)
-            Text(
-                text = label,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
+            Column {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                if (subtitle != null) {
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
         }
         Icon(
             imageVector = if (isExpanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,

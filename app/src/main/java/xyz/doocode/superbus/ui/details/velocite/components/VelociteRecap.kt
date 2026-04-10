@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import xyz.doocode.superbus.core.dto.jcdecaux.Station
@@ -25,11 +26,11 @@ import xyz.doocode.superbus.ui.theme.ElectricBikeColor
 import xyz.doocode.superbus.ui.theme.MechanicalBikeColor
 
 @Composable
-fun VelociteRecap(station: Station, expanded: Boolean = false) {
+fun VelociteRecap(station: Station, expanded: Boolean = false, contentPadding: Dp = 16.dp) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = contentPadding),
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         // Mechanical bikes tile
@@ -87,7 +88,7 @@ private fun VelociteRecapTile(
     } else {
         Brush.linearGradient(
             colors = listOf(
-                baseColor, baseColor.copy(alpha = 0.75f)
+                baseColor.copy(alpha = 0.25f), baseColor
             ),
             start = Offset(0f, 0f),
             end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)

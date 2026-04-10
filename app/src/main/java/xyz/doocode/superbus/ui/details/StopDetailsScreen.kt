@@ -47,6 +47,7 @@ import xyz.doocode.superbus.core.util.setKeepScreenOn
 import xyz.doocode.superbus.core.dto.ginko.Arret
 import xyz.doocode.superbus.ui.details.components.StopDetailsUtils
 import xyz.doocode.superbus.ui.details.components.TtsSettingsDialog
+import xyz.doocode.superbus.ui.details.velocite.VelociteDetailsActivity
 import androidx.core.content.edit
 import kotlinx.coroutines.launch
 
@@ -89,6 +90,7 @@ fun StopDetailsScreen(
     val isLoadingNearbyStops by viewModel.isLoadingNearbyStops.collectAsState()
     val ttsSubscriptions by viewModel.ttsManager.activeSubscriptions.collectAsState()
     val currentlySpeakingKey by viewModel.ttsManager.currentlySpeakingKey.collectAsState()
+    val velociteStation by viewModel.velociteStation.collectAsState()
     val title = stopName ?: "Station inconnue"
 
     val isSingleItem = (uiState as? StopDetailsUiState.Success)?.groupedArrivals?.size == 1
@@ -654,6 +656,23 @@ fun StopDetailsScreen(
                     state = state,
                     forcedExpandState = forcedExpandState,
                     forcedSectionsExpandState = forcedSectionsExpandState,
+                    velociteStation = velociteStation,
+                    onVelociteClick = velociteStation?.let { station ->
+                        {
+                            val intent =
+                                Intent(context, VelociteDetailsActivity::class.java).apply {
+                                    putExtra(
+                                        VelociteDetailsActivity.EXTRA_STATION_ID,
+                                        station.number
+                                    )
+                                    putExtra(
+                                        VelociteDetailsActivity.EXTRA_STATION_NAME,
+                                        station.name
+                                    )
+                                }
+                            context.startActivity(intent)
+                        }
+                    },
                     nearbyStops = nearbyStops,
                     isLoadingNearbyStops = isLoadingNearbyStops,
                     onRetry = { viewModel.init(stopName, stopId) },

@@ -3,6 +3,7 @@ package xyz.doocode.superbus.ui.details
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,9 +13,11 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import xyz.doocode.superbus.core.api.ApiClient
 import xyz.doocode.superbus.core.data.FavoritesRepository
+import xyz.doocode.superbus.core.data.ReferenceDataRepository
 import xyz.doocode.superbus.core.dto.ginko.Arret
 import xyz.doocode.superbus.core.dto.ginko.Temps
 import xyz.doocode.superbus.core.dto.ginko.TempsLieu
+import xyz.doocode.superbus.core.dto.jcdecaux.Station
 import xyz.doocode.superbus.core.manager.FavoritesManager
 import xyz.doocode.superbus.core.tts.TtsCountdownManager
 import xyz.doocode.superbus.core.tts.TtsSettings
@@ -35,6 +38,7 @@ class StopDetailsViewModel(application: Application) : AndroidViewModel(applicat
 
     private val repository = FavoritesRepository.getInstance(application)
     private val favoritesManager = FavoritesManager(application)
+    private val referenceDataRepository = ReferenceDataRepository.getInstance(application)
 
     val ttsManager = TtsCountdownManager(application)
 
@@ -57,12 +61,16 @@ class StopDetailsViewModel(application: Application) : AndroidViewModel(applicat
     private val _isLoadingNearbyStops = MutableStateFlow(false)
     val isLoadingNearbyStops: StateFlow<Boolean> = _isLoadingNearbyStops.asStateFlow()
 
+    private val _velociteStation = MutableStateFlow<Station?>(null)
+    val velociteStation: StateFlow<Station?> = _velociteStation.asStateFlow()
+
     private var currentStopName: String? = null
     private var currentStopId: String? = null
     private var detailsFromId: Boolean = true
     private var pollingJob: Job? = null
     private var lastRefreshTime = 0L
     private var nearbyStopsLoaded = false
+    private var matchedVelociteStationId: Int? = null
 
     fun init(stopName: String?, stopId: String?, detailsFromId: Boolean = true) {
         val isNew = (currentStopName != stopName || currentStopId != stopId)
@@ -85,6 +93,8 @@ class StopDetailsViewModel(application: Application) : AndroidViewModel(applicat
         if (isNew) {
             _uiState.value = StopDetailsUiState.Loading
             nearbyStopsLoaded = false
+            matchedVelociteStationId = null
+            _velociteStation.value = null
             _nearbyStops.value = emptyList()
             loadData(forceRefresh = true)
             // Récupérer détails de la station (getDetailsArret) si l'id est présent
@@ -167,6 +177,9 @@ class StopDetailsViewModel(application: Application) : AndroidViewModel(applicat
                             _uiState.value = StopDetailsUiState.Success(res.objects, grouped)
                             ttsManager.onArrivalsUpdated(grouped)
                         }
+
+                        // Charge (ou rafraîchit) la station Vélocité correspondante
+                        loadVelociteStation(res.objects.nomExact)
                     }
                 } else {
                     if (forceRefresh) {
@@ -181,6 +194,33 @@ class StopDetailsViewModel(application: Application) : AndroidViewModel(applicat
             } finally {
                 _isRefreshing.value = false
             }
+        }
+    }
+
+    private suspend fun loadVelociteStation(nomExact: String) {
+        // Trouve l'ID de la station si pas encore fait
+        if (matchedVelociteStationId == null) {
+            try {
+                val stations = referenceDataRepository.getVelociteStations()
+                val matched = stations.firstOrNull { station ->
+                    val cleaned = station.name
+                        .replaceFirst(Regex("^\\d+\\s*-\\s*"), "")
+                        .replace(" (CB)", "")
+                        .trim()
+                    cleaned.equals(nomExact.trim(), ignoreCase = true)
+                }
+                matchedVelociteStationId = matched?.number
+            } catch (_: Exception) {
+                return
+            }
+        }
+        val id = matchedVelociteStationId ?: return
+        try {
+            _velociteStation.value = ApiClient.jcDecauxService.getStation(id)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            // Garde la dernière valeur connue
         }
     }
 

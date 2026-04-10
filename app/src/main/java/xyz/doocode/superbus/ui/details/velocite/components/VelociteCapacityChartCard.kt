@@ -32,7 +32,7 @@ fun VelociteCapacityChartCard(station: Station) {
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
         )
     ) {
         Column(modifier = Modifier.padding(top = 16.dp, bottom = 16.dp)) {
@@ -69,59 +69,10 @@ fun VelociteCapacityChartCard(station: Station) {
                         .padding(bottom = 6.dp)
                 )
 
-                val minCols = if (capacity > 20) 10 else capacity
-                val maxCols = minOf(capacity, 20)
-                var bestItemsPerRow = minCols
-                var bestFillRatio = -1f
-
-                for (c in minCols..maxCols) {
-                    val lastRowItems = if (capacity % c == 0) c else capacity % c
-                    val fillRatio = lastRowItems.toFloat() / c.toFloat()
-                    if (fillRatio >= bestFillRatio) {
-                        bestFillRatio = fillRatio
-                        bestItemsPerRow = c
-                    }
-                }
-
-                val itemsPerRow = bestItemsPerRow
-
-                val totalSlots = mutableListOf<Color>()
-                repeat(mechBikes) { totalSlots.add(MechanicalBikeColor) }
-                repeat(elecBikes) { totalSlots.add(ElectricBikeColor) }
-                repeat(availableStands) { totalSlots.add(AvailableStandsColor) }
-                repeat(unavailableStands) { totalSlots.add(UnavailableStandsColor) }
-
-                val chunks = totalSlots.chunked(itemsPerRow)
-
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(2.dp)
-                ) {
-                    chunks.forEach { chunk ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(20.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(2.dp)
-                        ) {
-                            chunk.forEach { color ->
-                                Box(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .fillMaxHeight()
-                                        .clip(RoundedCornerShape(2.dp))
-                                        .background(color)
-                                )
-                            }
-
-                            val remaining = itemsPerRow - chunk.size
-                            repeat(remaining) { Spacer(modifier = Modifier.weight(1f)) }
-                        }
-                    }
-                }
+                VelociteCapacityGrid(
+                    station = station,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
 
                 Spacer(modifier = Modifier.height(12.dp))
 
@@ -153,6 +104,68 @@ fun VelociteCapacityChartCard(station: Station) {
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
+            }
+        }
+    }
+}
+
+@Composable
+fun VelociteCapacityGrid(station: Station, modifier: Modifier = Modifier) {
+    val mechBikes = station.totalStands.availabilities.mechanicalBikes
+    val elecBikes = station.totalStands.availabilities.electricalBikes
+    val availableStands = station.totalStands.availabilities.stands
+    val capacity = station.totalStands.capacity
+    val unavailableStands = maxOf(0, capacity - (mechBikes + elecBikes + availableStands))
+
+    if (capacity <= 0) return
+
+    val minCols = if (capacity > 20) 10 else capacity
+    val maxCols = minOf(capacity, 20)
+    var bestItemsPerRow = minCols
+    var bestFillRatio = -1f
+
+    for (c in minCols..maxCols) {
+        val lastRowItems = if (capacity % c == 0) c else capacity % c
+        val fillRatio = lastRowItems.toFloat() / c.toFloat()
+        if (fillRatio >= bestFillRatio) {
+            bestFillRatio = fillRatio
+            bestItemsPerRow = c
+        }
+    }
+
+    val itemsPerRow = bestItemsPerRow
+
+    val totalSlots = mutableListOf<Color>()
+    repeat(mechBikes) { totalSlots.add(MechanicalBikeColor) }
+    repeat(elecBikes) { totalSlots.add(ElectricBikeColor) }
+    repeat(availableStands) { totalSlots.add(AvailableStandsColor) }
+    repeat(unavailableStands) { totalSlots.add(UnavailableStandsColor) }
+
+    val chunks = totalSlots.chunked(itemsPerRow)
+
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(2.dp)
+    ) {
+        chunks.forEach { chunk ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(20.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                chunk.forEach { color ->
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .clip(RoundedCornerShape(2.dp))
+                            .background(color)
+                    )
+                }
+                val remaining = itemsPerRow - chunk.size
+                repeat(remaining) { Spacer(modifier = Modifier.weight(1f)) }
             }
         }
     }
