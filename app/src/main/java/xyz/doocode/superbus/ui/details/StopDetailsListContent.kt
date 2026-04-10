@@ -48,12 +48,13 @@ fun StopDetailsListContent(
     onNearbyStopClick: (stop: Arret, fromId: Boolean) -> Unit = { _, _ -> }
 ) {
     var selectedStop by remember { mutableStateOf<Arret?>(null) }
-    val expandedSections = remember { mutableStateMapOf(0 to true, 1 to true) }
+    val expandedSections = remember { mutableStateMapOf(0 to true, 1 to true, 2 to true) }
 
     LaunchedEffect(forcedSectionsExpandState) {
         if (forcedSectionsExpandState != null) {
             expandedSections[0] = forcedSectionsExpandState
             expandedSections[1] = forcedSectionsExpandState
+            expandedSections[2] = forcedSectionsExpandState
         }
     }
 
@@ -132,31 +133,49 @@ fun StopDetailsListContent(
 
                     is StopDetailsUiState.Success -> {
                         val list = state.groupedArrivals.toList()
-                        val groupedByMode =
-                            list.groupBy { (_, arrivals) -> arrivals.first().modeTransport }
-                        val hasMixedModes = groupedByMode.size > 1
-                        // Tram (1) en premier, Bus (0) ensuite
-                        val sortedModes = groupedByMode.keys.sortedDescending()
+                        val lianeRegex = Regex("^L\\d+$")
 
-                        sortedModes.forEach { mode ->
-                            val modeEntries = groupedByMode[mode] ?: emptyList()
-                            val isExpanded = expandedSections[mode] != false
+                        val tramEntries =
+                            list.filter { (_, arrivals) -> arrivals.first().modeTransport == 1 }
+                        val busEntries =
+                            list.filter { (_, arrivals) -> arrivals.first().modeTransport == 0 }
+                        val lianeEntries =
+                            busEntries.filter { (_, arrivals) ->
+                                arrivals.first().numLignePublic.matches(lianeRegex)
+                            }
+                        val regularBusEntries =
+                            busEntries.filter { (_, arrivals) ->
+                                !arrivals.first().numLignePublic.matches(lianeRegex)
+                            }
 
-                            if (hasMixedModes) {
-                                item(key = "header_$mode") {
+                        // Ordre : Tram (1) → Lianes (2) → Bus (0)
+                        // TODO: Periurbain, Scolaire, etc. ? (actuellement regroupés avec les bus classiques)
+                        val sections = listOf(
+                            Triple(1, tramEntries, "tram"),
+                            Triple(2, lianeEntries, "lianes"),
+                            Triple(0, regularBusEntries, "bus")
+                        ).filter { (_, entries, _) -> entries.isNotEmpty() }
+
+                        val hasMixedSections = sections.size > 1
+
+                        sections.forEach { (sectionKey, sectionEntries, _) ->
+                            val isExpanded = expandedSections[sectionKey] != false
+
+                            if (hasMixedSections) {
+                                item(key = "header_$sectionKey") {
                                     TransportSectionHeader(
-                                        mode = mode,
+                                        mode = sectionKey,
                                         isExpanded = isExpanded,
                                         onToggle = {
-                                            expandedSections[mode] = !isExpanded
+                                            expandedSections[sectionKey] = !isExpanded
                                         }
                                     )
                                 }
                             }
 
-                            item(key = "section_$mode") {
+                            item(key = "section_$sectionKey") {
                                 AnimatedVisibility(
-                                    visible = !hasMixedModes || isExpanded,
+                                    visible = !hasMixedSections || isExpanded,
                                     enter = expandVertically(
                                         animationSpec = tween(
                                             durationMillis = 300,
@@ -171,7 +190,7 @@ fun StopDetailsListContent(
                                     )
                                 ) {
                                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                                        modeEntries.forEach { (key, arrivals) ->
+                                        sectionEntries.forEach { (key, arrivals) ->
                                             val parts = key.split("|")
                                             ArrivalCard(
                                                 numLigne = parts.getOrNull(0) ?: "?",
@@ -219,6 +238,7 @@ private fun TransportSectionHeader(mode: Int, isExpanded: Boolean, onToggle: () 
     val label = when (mode) {
         0 -> "Bus"
         1 -> "Tram"
+        2 -> "Lianes"
         else -> "Autre"
     }
     val icon = when (mode) {
