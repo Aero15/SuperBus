@@ -137,7 +137,7 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
             }
 
             try {
-                _allStations.value = jcDecauxService.getStations().sortedBy {
+                _allStations.value = referenceDataRepository.getVelociteStations().sortedBy {
                     formatVelociteStationName(it.name)
                 }
             } catch (e: Exception) {
@@ -157,6 +157,16 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
             val actualDetailsFromId =
                 detailsFromId ?: !(GROUP_DUPLICATES && stop.duplicates.size > 1)
             favoritesManager.toggleFavorite(stop.id, stop.nom, actualDetailsFromId)
+        }
+    }
+
+    fun refreshStationsCache() {
+        viewModelScope.launch {
+            try {
+                referenceDataRepository.getVelociteStations(forceRefresh = true)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 }

@@ -38,6 +38,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.runtime.DisposableEffect
 import xyz.doocode.superbus.core.data.FavoritesRepository
 import xyz.doocode.superbus.core.dto.ginko.Arret
 import xyz.doocode.superbus.ui.components.*
@@ -63,6 +64,12 @@ fun SearchScreen(
     val groupDuplicates = viewModel.GROUP_DUPLICATES
 
     val focusRequester = remember { FocusRequester() }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            viewModel.refreshStationsCache()
+        }
+    }
 
     LaunchedEffect(focusOnStart) {
         if (focusOnStart) {

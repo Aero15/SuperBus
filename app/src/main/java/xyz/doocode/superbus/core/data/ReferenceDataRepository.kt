@@ -7,6 +7,7 @@ import com.google.gson.reflect.TypeToken
 import xyz.doocode.superbus.core.api.ApiClient
 import xyz.doocode.superbus.core.dto.ginko.Arret
 import xyz.doocode.superbus.core.dto.ginko.Ligne
+import xyz.doocode.superbus.core.dto.jcdecaux.Station
 
 class ReferenceDataRepository(context: Context) {
 
@@ -23,6 +24,9 @@ class ReferenceDataRepository(context: Context) {
 
         private const val KEY_LIGNES_DATA = "cache_lignes_data"
         private const val KEY_LIGNES_TIMESTAMP = "cache_lignes_timestamp"
+
+        private const val KEY_VELOCITE_DATA = "cache_velocite_data"
+        private const val KEY_VELOCITE_TIMESTAMP = "cache_velocite_timestamp"
 
         @Volatile // Ensure that changes to this variable are visible to all threads.
         private var instance: ReferenceDataRepository? = null
@@ -74,6 +78,17 @@ class ReferenceDataRepository(context: Context) {
             forceRefresh = forceRefresh
         ) {
             ApiClient.ginkoService.getLignes().objects
+        }
+    }
+
+    suspend fun getVelociteStations(forceRefresh: Boolean = false): List<Station> {
+        return getData(
+            cacheKeyData = KEY_VELOCITE_DATA,
+            cacheKeyTimestamp = KEY_VELOCITE_TIMESTAMP,
+            typeToken = object : TypeToken<List<Station>>() {}.type,
+            forceRefresh = forceRefresh
+        ) {
+            ApiClient.jcDecauxService.getStations()
         }
     }
 
