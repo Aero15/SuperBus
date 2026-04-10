@@ -153,7 +153,7 @@ fun StopDetailsListContent(
 }
 
 @Composable
-private fun StopDetailsLoadingView() {
+fun StopDetailsLoadingView() {
     val infiniteTransition = rememberInfiniteTransition(label = "loadingTransition")
     val subtitleAlpha by infiniteTransition.animateFloat(
         initialValue = 0.4f,

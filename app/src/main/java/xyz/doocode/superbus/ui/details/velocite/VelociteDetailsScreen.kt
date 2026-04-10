@@ -17,7 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import xyz.doocode.superbus.core.util.formatVelociteStationName
 import xyz.doocode.superbus.ui.components.ErrorView
-import xyz.doocode.superbus.ui.components.LoadingView
+import xyz.doocode.superbus.ui.details.StopDetailsLoadingView
 import xyz.doocode.superbus.ui.details.velocite.components.VelociteAddressCard
 import xyz.doocode.superbus.ui.details.velocite.components.VelociteCapacityChartCard
 import xyz.doocode.superbus.ui.details.velocite.components.VelociteRecap
@@ -65,7 +65,7 @@ fun VelociteDetailsScreen(
         ) {
             when (val state = uiState) {
                 is VelociteDetailsUiState.Loading -> {
-                    LoadingView()
+                    StopDetailsLoadingView()
                 }
 
                 is VelociteDetailsUiState.Error -> {

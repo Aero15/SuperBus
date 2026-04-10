@@ -3,6 +3,7 @@ package xyz.doocode.superbus.ui.details.velocite
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -40,6 +41,7 @@ class VelociteDetailsViewModel : ViewModel() {
                         val station = ApiClient.jcDecauxService.getStation(id)
                         _uiState.value = VelociteDetailsUiState.Success(station)
                     } catch (e: Exception) {
+                        if (e is CancellationException) throw e
                         if (_uiState.value is VelociteDetailsUiState.Loading) {
                             _uiState.value =
                                 VelociteDetailsUiState.Error(e.message ?: "Unknown error")
@@ -64,6 +66,7 @@ class VelociteDetailsViewModel : ViewModel() {
                     val station = ApiClient.jcDecauxService.getStation(it)
                     _uiState.value = VelociteDetailsUiState.Success(station)
                 } catch (e: Exception) {
+                    if (e is CancellationException) throw e
                     _uiState.value = VelociteDetailsUiState.Error(e.message ?: "Unknown error")
                 }
             }
