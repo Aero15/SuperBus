@@ -25,7 +25,7 @@ import xyz.doocode.superbus.ui.theme.ElectricBikeColor
 import xyz.doocode.superbus.ui.theme.MechanicalBikeColor
 
 @Composable
-fun VelociteRecap(station: Station) {
+fun VelociteRecap(station: Station, expanded: Boolean = false) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -35,18 +35,20 @@ fun VelociteRecap(station: Station) {
         // Mechanical bikes tile
         VelociteRecapTile(
             icon = Icons.Filled.PedalBike,
-            label = "Vélos\nmécanique",
+            label = "Vélos\nmécaniques",
             value = station.totalStands.availabilities.mechanicalBikes.toString(),
             backgroundColor = MechanicalBikeColor,
+            expanded = expanded,
             modifier = Modifier.weight(1f)
         )
 
         // Electric bikes tile
         VelociteRecapTile(
             icon = Icons.Filled.ElectricBike,
-            label = "Vélos\nélectrique",
+            label = "Vélos\nélectriques",
             value = station.totalStands.availabilities.electricalBikes.toString(),
             backgroundColor = ElectricBikeColor,
+            expanded = expanded,
             modifier = Modifier.weight(1f)
         )
 
@@ -56,6 +58,7 @@ fun VelociteRecap(station: Station) {
             label = "Places\ndispo",
             value = station.totalStands.availabilities.stands.toString(),
             backgroundColor = AvailableStandsColor,
+            expanded = expanded,
             modifier = Modifier.weight(1f)
         )
     }
@@ -67,6 +70,7 @@ private fun VelociteRecapTile(
     label: String,
     value: String,
     backgroundColor: Color,
+    expanded: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val isZero = value.toIntOrNull() == 0
@@ -83,18 +87,18 @@ private fun VelociteRecapTile(
     } else {
         Brush.linearGradient(
             colors = listOf(
-                baseColor, baseColor.copy(
-                    alpha = 0.75f
-                ) // Légère variation pour l'effet de lumière
+                baseColor, baseColor.copy(alpha = 0.75f)
             ),
             start = Offset(0f, 0f),
             end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
         )
     }
 
+    val tileHeight = if (expanded) 155.dp else 115.dp
+
     Card(
-        modifier = modifier.height(115.dp), // Hauteur augmentée pour le style carte
-        shape = RoundedCornerShape(16.dp), // Coins très arrondis
+        modifier = modifier.height(tileHeight),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.Transparent)
     ) {
         Box(
@@ -110,7 +114,7 @@ private fun VelociteRecapTile(
                 modifier = Modifier
                     .size(90.dp)
                     .align(Alignment.TopEnd)
-                    .offset(x = 24.dp, y = -24.dp) // Débordement intentionnel
+                    .offset(x = 24.dp, y = -24.dp)
                     .rotate(-15f)
             )
 
@@ -130,11 +134,20 @@ private fun VelociteRecapTile(
 
                 // Libellé
                 Text(
-                    text = label.uppercase(), // Majuscules pour un look plus technique/propre
+                    text = label.uppercase(),
                     style = MaterialTheme.typography.labelSmall.copy(
                         fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp
                     ), color = displayContentColor.copy(alpha = 0.9f), lineHeight = 12.sp
                 )
+
+                if (expanded) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = displayContentColor,
+                        modifier = Modifier.size(42.dp)
+                    )
+                }
             }
         }
     }

@@ -80,7 +80,7 @@ fun VelociteDetailsScreen(
                             .padding(bottom = 16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        VelociteRecap(station = state.station)
+                        VelociteRecap(station = state.station, expanded = true)
                         VelociteCapacityChartCard(station = state.station)
                         VelociteStatusCard(station = state.station)
                         VelociteAddressCard(station = state.station)
