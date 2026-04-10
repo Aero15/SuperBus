@@ -161,80 +161,103 @@ fun CapacityChartCard(station: Station) {
                 containerColor = MaterialTheme.colorScheme.surfaceVariant
             )
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = "Répartition détaillée",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text =
-                    "Visualisez la capacité de la station, ainsi que les bornes hors service ou mal enclenchées.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-            )
+        Column(modifier = Modifier.padding(top = 16.dp, bottom = 16.dp)) {
+            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Répartition détaillée",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text =
+                        "Visualisez la capacité de la station, ainsi que les bornes hors service ou mal enclenchées.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                )
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
             if (capacity > 0) {
-                val sum = mechBikes + elecBikes + availableStands + unavailableStands
-                val wMech = mechBikes.toFloat()
-                val wElec = elecBikes.toFloat()
-                val wAvail = availableStands.toFloat()
-                val wUnavail = unavailableStands.toFloat()
+                Text(
+                    text = "$capacity bornes vélo",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .padding(bottom = 6.dp)
+                )
 
-                // Bar chart
-                Row(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .height(24.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(Color.LightGray),
-                    verticalAlignment = Alignment.CenterVertically
+                val minCols = if (capacity > 20) 10 else capacity
+                val maxCols = minOf(capacity, 20)
+                var bestItemsPerRow = minCols
+                var bestFillRatio = -1f
+
+                for (c in minCols..maxCols) {
+                    val lastRowItems = if (capacity % c == 0) c else capacity % c
+                    val fillRatio = lastRowItems.toFloat() / c.toFloat()
+                    if (fillRatio >= bestFillRatio) {
+                        bestFillRatio = fillRatio
+                        bestItemsPerRow = c
+                    }
+                }
+
+                val itemsPerRow = bestItemsPerRow
+
+                val totalSlots = mutableListOf<Color>()
+                repeat(mechBikes) { totalSlots.add(MechanicalBikeBlue) }
+                repeat(elecBikes) { totalSlots.add(ElectricBikeGreen) }
+                repeat(availableStands) { totalSlots.add(AvailableStandsYellow) }
+                repeat(unavailableStands) { totalSlots.add(Color(0xFFE53935)) }
+
+                val chunks = totalSlots.chunked(itemsPerRow)
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
-                    if (wMech > 0) {
-                        Box(
-                            modifier =
-                                Modifier
-                                    .weight(wMech)
-                                    .fillMaxHeight()
-                                    .background(MechanicalBikeBlue)
-                        )
-                    }
-                    if (wElec > 0) {
-                        Box(
-                            modifier =
-                                Modifier
-                                    .weight(wElec)
-                                    .fillMaxHeight()
-                                    .background(ElectricBikeGreen)
-                        )
-                    }
-                    if (wAvail > 0) {
-                        Box(
-                            modifier =
-                                Modifier
-                                    .weight(wAvail)
-                                    .fillMaxHeight()
-                                    .background(AvailableStandsYellow)
-                        )
-                    }
-                    if (wUnavail > 0) {
-                        Box(
-                            modifier =
-                                Modifier
-                                    .weight(wUnavail)
-                                    .fillMaxHeight()
-                                    .background(Color(0xFFE53935))
-                        )
+                    chunks.forEach { chunk ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(20.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(2.dp)
+                        ) {
+                            chunk.forEach { color ->
+                                Box(
+                                    modifier =
+                                        Modifier
+                                            .weight(1f)
+                                            .fillMaxHeight()
+                                            .clip(RoundedCornerShape(2.dp))
+                                            .background(color)
+                                )
+                            }
+
+                            val remaining = itemsPerRow - chunk.size
+                            repeat(remaining) { Spacer(modifier = Modifier.weight(1f)) }
+                        }
                     }
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
 
                 // Legend
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Column(
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
                     LegendItem(
                         color = MechanicalBikeBlue,
                         label = "Vélos mécaniques",
@@ -257,7 +280,11 @@ fun CapacityChartCard(station: Station) {
                     )
                 }
             } else {
-                Text(text = "Capacité inconnue.", style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    text = "Capacité inconnue.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
             }
         }
     }
@@ -265,21 +292,33 @@ fun CapacityChartCard(station: Station) {
 
 @Composable
 fun LegendItem(color: Color, label: String, value: Int) {
+    val isZero = value == 0
+    val displayColor = if (isZero) Color.Gray.copy(alpha = 0.5f) else color
+    val textColor =
+        if (isZero) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+        else MaterialTheme.colorScheme.onSurface
+    val textDecoration =
+        if (isZero) androidx.compose.ui.text.style.TextDecoration.LineThrough else null
+
     Row(verticalAlignment = Alignment.CenterVertically) {
         Box(
             modifier = Modifier
                 .size(12.dp)
-                .background(color, RoundedCornerShape(2.dp))
+                .background(displayColor, RoundedCornerShape(2.dp))
         )
         Spacer(modifier = Modifier.width(8.dp))
         Text(
             text = label,
             style = MaterialTheme.typography.bodyMedium,
+            color = textColor,
+            textDecoration = textDecoration,
             modifier = Modifier.weight(1f)
         )
         Text(
             text = value.toString(),
             style = MaterialTheme.typography.bodyMedium,
+            color = textColor,
+            textDecoration = textDecoration,
             fontWeight = FontWeight.Bold
         )
     }
