@@ -264,8 +264,41 @@ fun SearchScreen(
                                                 station = result.station,
                                                 searchQuery = searchQuery,
                                                 onClick = {
-                                                    // TODO: Implement display of Velocite
-                                                    // station
+                                                    val intent =
+                                                        Intent(
+                                                            context,
+                                                            xyz.doocode.superbus
+                                                                .ui
+                                                                .details
+                                                                .velocite
+                                                                .VelociteDetailsActivity::class
+                                                                .java
+                                                        )
+                                                            .apply {
+                                                                putExtra(
+                                                                    xyz.doocode
+                                                                        .superbus
+                                                                        .ui
+                                                                        .details
+                                                                        .velocite
+                                                                        .VelociteDetailsActivity
+                                                                        .EXTRA_STATION_ID,
+                                                                    result.station
+                                                                        .number
+                                                                )
+                                                                putExtra(
+                                                                    xyz.doocode
+                                                                        .superbus
+                                                                        .ui
+                                                                        .details
+                                                                        .velocite
+                                                                        .VelociteDetailsActivity
+                                                                        .EXTRA_STATION_NAME,
+                                                                    result.station
+                                                                        .name
+                                                                )
+                                                            }
+                                                    context.startActivity(intent)
                                                 }
                                             )
                                         }
@@ -314,7 +347,34 @@ fun SearchScreen(
                                         station = station,
                                         searchQuery = searchQuery,
                                         onClick = {
-                                            // TODO: Implement display of Velocite station
+                                            val intent =
+                                                Intent(
+                                                    context,
+                                                    xyz.doocode.superbus.ui
+                                                        .details
+                                                        .velocite
+                                                        .VelociteDetailsActivity::class
+                                                        .java
+                                                )
+                                                    .apply {
+                                                        putExtra(
+                                                            xyz.doocode.superbus.ui
+                                                                .details
+                                                                .velocite
+                                                                .VelociteDetailsActivity
+                                                                .EXTRA_STATION_ID,
+                                                            station.number
+                                                        )
+                                                        putExtra(
+                                                            xyz.doocode.superbus.ui
+                                                                .details
+                                                                .velocite
+                                                                .VelociteDetailsActivity
+                                                                .EXTRA_STATION_NAME,
+                                                            station.name
+                                                        )
+                                                    }
+                                            context.startActivity(intent)
                                         }
                                     )
                                 }

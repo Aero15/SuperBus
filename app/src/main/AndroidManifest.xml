@@ -43,6 +43,11 @@
             android:name=".ui.linedetails.LineDetailsActivity"
             android:exported="false"
             android:theme="@style/Theme.SuperBus" />
+
+        <activity
+            android:name=".ui.details.velocite.VelociteDetailsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.SuperBus" />
     </application>
 
 </manifest>
