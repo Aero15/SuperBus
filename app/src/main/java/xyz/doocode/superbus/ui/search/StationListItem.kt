@@ -1,6 +1,5 @@
 package xyz.doocode.superbus.ui.components
 
-import android.content.res.Configuration
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -16,27 +15,19 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import xyz.doocode.superbus.core.dto.jcdecaux.Station
-import xyz.doocode.superbus.core.dto.jcdecaux.Position
-import xyz.doocode.superbus.core.dto.jcdecaux.Stands
-import xyz.doocode.superbus.core.dto.jcdecaux.Availabilities
 import xyz.doocode.superbus.core.util.removeAccents
-import xyz.doocode.superbus.ui.theme.SuperBusTheme
 
 @Composable
-fun StationListItem(
-    station: Station,
-    searchQuery: String = "",
-    onClick: () -> Unit = {}
-) {
+fun StationListItem(station: Station, searchQuery: String = "", onClick: () -> Unit = {}) {
     Column {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { onClick() }
-                .padding(vertical = 12.dp, horizontal = 16.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .clickable { onClick() }
+                    .padding(vertical = 12.dp, horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
@@ -50,13 +41,8 @@ fun StationListItem(
                 val primaryColor = MaterialTheme.colorScheme.primary
 
                 // Format the name: remove "8 - " and " (CB)", then capitalize
-                val rawName = station.name
-                val regex = Regex("^\\d+\\s*-\\s*")
-                val cleanName = rawName.replaceFirst(regex, "")
-                    .replace(" (CB)", "")
-                    .lowercase()
-                    .split(" ")
-                    .joinToString(" ") { it.replaceFirstChar { char -> char.uppercase() } }
+                val cleanName =
+                    formatVelociteStationName(station.name)
 
                 fun highlight(text: String): AnnotatedString = buildAnnotatedString {
                     val query = searchQuery.trim()
@@ -74,13 +60,12 @@ fun StationListItem(
 
                             append(text.take(safeStartIndex))
                             withStyle(
-                                style = SpanStyle(
-                                    fontWeight = FontWeight.Black,
-                                    color = primaryColor
-                                )
-                            ) {
-                                append(text.substring(safeStartIndex, safeEndIndex))
-                            }
+                                style =
+                                    SpanStyle(
+                                        fontWeight = FontWeight.Black,
+                                        color = primaryColor
+                                    )
+                            ) { append(text.substring(safeStartIndex, safeEndIndex)) }
                             append(text.substring(safeEndIndex))
                         } else {
                             append(text)
@@ -88,10 +73,7 @@ fun StationListItem(
                     }
                 }
 
-                Text(
-                    text = highlight(cleanName),
-                    style = MaterialTheme.typography.bodyLarge
-                )
+                Text(text = highlight(cleanName), style = MaterialTheme.typography.bodyLarge)
             }
 
             Text(

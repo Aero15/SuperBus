@@ -14,6 +14,7 @@ import xyz.doocode.superbus.core.data.ReferenceDataRepository
 import xyz.doocode.superbus.core.dto.ginko.Arret
 import xyz.doocode.superbus.core.dto.jcdecaux.Station
 import xyz.doocode.superbus.core.manager.FavoritesManager
+import xyz.doocode.superbus.core.util.formatVelociteStationName
 import xyz.doocode.superbus.core.util.removeAccents
 
 sealed interface SearchResult {
@@ -24,9 +25,7 @@ sealed interface SearchResult {
 sealed interface SearchUiState {
     data object Loading : SearchUiState
     data class Success(
-        val stops: List<Arret>,
-        val stations: List<Station>,
-        val merged: List<SearchResult>
+        val stops: List<Arret>, val stations: List<Station>, val merged: List<SearchResult>
     ) : SearchUiState
 
     data class Error(val message: String) : SearchUiState
@@ -50,98 +49,72 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
 
     val searchQuery = MutableStateFlow("")
 
-    val uiState: StateFlow<SearchUiState> =
-        combine(_allStops, _allStations, _isLoading, _error, searchQuery) { stops,
-                                                                            stations,
-                                                                            isLoading,
-                                                                            error,
-                                                                            query ->
-            if (isLoading) {
-                SearchUiState.Loading
-            } else if (error != null) {
-                SearchUiState.Error(error)
-            } else if (stops.isEmpty() && stations.isEmpty()) {
-                SearchUiState.Empty
+    val uiState: StateFlow<SearchUiState> = combine(
+        _allStops,
+        _allStations,
+        _isLoading,
+        _error,
+        searchQuery
+    ) { stops, stations, isLoading, error, query ->
+        if (isLoading) {
+            SearchUiState.Loading
+        } else if (error != null) {
+            SearchUiState.Error(error)
+        } else if (stops.isEmpty() && stations.isEmpty()) {
+            SearchUiState.Empty
+        } else {
+            val filteredStops = if (query.isBlank()) {
+                stops
             } else {
-                val filteredStops =
-                    if (query.isBlank()) {
-                        stops
-                    } else {
-                        val normalizedQuery = query.trim().removeAccents()
-                        stops.filter { stop ->
-                            stop.nom
-                                .removeAccents()
-                                .contains(normalizedQuery, ignoreCase = true) ||
-                                    stop.duplicates.any {
-                                        it.id.contains(
-                                            normalizedQuery,
-                                            ignoreCase = true
-                                        )
-                                    } ||
-                                    (stop.duplicates.isEmpty() &&
-                                            stop.id.contains(
-                                                normalizedQuery,
-                                                ignoreCase = true
-                                            ))
-                        }
-                    }
-                val filteredStations =
-                    if (query.isBlank()) {
-                        stations
-                    } else {
-                        val normalizedQuery = query.trim().removeAccents()
-                        stations.filter { station ->
-                            formatStationName(station.name)
-                                .removeAccents()
-                                .contains(normalizedQuery, ignoreCase = true) ||
-                                    station.number
-                                        .toString()
-                                        .contains(
-                                            normalizedQuery,
-                                            ignoreCase = true
-                                        )
-                        }
-                    }
-                val mergedResults: List<SearchResult> =
-                    (filteredStops.map { stop ->
-                        SearchResult.Stop(stop, stop.nom)
-                    } +
-                            filteredStations.map { station ->
-                                SearchResult.VeloStation(
-                                    station,
-                                    formatStationName(station.name)
-                                )
-                            })
-                        .sortedBy { result ->
-                            when (result) {
-                                is SearchResult.Stop ->
-                                    result.displayName
-
-                                is SearchResult.VeloStation ->
-                                    result.displayName
-                            }
-                                .removeAccents()
-                                .uppercase()
-                        }
-                SearchUiState.Success(filteredStops, filteredStations, mergedResults)
+                val normalizedQuery = query.trim().removeAccents()
+                stops.filter { stop ->
+                    stop.nom.removeAccents()
+                        .contains(normalizedQuery, ignoreCase = true) || stop.duplicates.any {
+                        it.id.contains(
+                            normalizedQuery, ignoreCase = true
+                        )
+                    } || (stop.duplicates.isEmpty() && stop.id.contains(
+                        normalizedQuery, ignoreCase = true
+                    ))
+                }
             }
+            val filteredStations = if (query.isBlank()) {
+                stations
+            } else {
+                val normalizedQuery = query.trim().removeAccents()
+                stations.filter { station ->
+                    formatVelociteStationName(station.name).removeAccents()
+                        .contains(normalizedQuery, ignoreCase = true) || station.number.toString()
+                        .contains(
+                            normalizedQuery, ignoreCase = true
+                        )
+                }
+            }
+            val mergedResults: List<SearchResult> = (filteredStops.map { stop ->
+                SearchResult.Stop(stop, stop.nom)
+            } + filteredStations.map { station ->
+                SearchResult.VeloStation(
+                    station, formatVelociteStationName(
+                        station.name
+                    )
+                )
+            }).sortedBy { result ->
+                when (result) {
+                    is SearchResult.Stop -> result.displayName
+
+                    is SearchResult.VeloStation -> result.displayName
+                }.removeAccents().uppercase()
+            }
+            SearchUiState.Success(filteredStops, filteredStations, mergedResults)
         }
-            .stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5000),
-                initialValue = SearchUiState.Loading
-            )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = SearchUiState.Loading
+    )
 
     init {
         loadData()
-    }
-
-    private fun formatStationName(rawName: String): String {
-        return rawName.replaceFirst(Regex("^\\d+\\s*-\\s*"), "")
-            .replace(" (CB)", "")
-            .lowercase()
-            .split(" ")
-            .joinToString(" ") { it.replaceFirstChar { char -> char.uppercase() } }
     }
 
     fun loadData() {
@@ -151,12 +124,11 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
             try {
                 val rawStops = referenceDataRepository.getArrets()
                 val groupedStopsMap = rawStops.groupBy { it.nom }
-                val processedStops =
-                    groupedStopsMap.map { (_, stops) ->
-                        val sortedStops = stops.sortedBy { it.id }
-                        val mainStop = sortedStops.first()
-                        mainStop.copy(duplicates = sortedStops)
-                    }
+                val processedStops = groupedStopsMap.map { (_, stops) ->
+                    val sortedStops = stops.sortedBy { it.id }
+                    val mainStop = sortedStops.first()
+                    mainStop.copy(duplicates = sortedStops)
+                }
                 val sortedList = processedStops.sortedBy { it.nom }
                 _allStops.value = sortedList
             } catch (e: Exception) {
@@ -165,8 +137,9 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
             }
 
             try {
-                _allStations.value =
-                    jcDecauxService.getStations().sortedBy { formatStationName(it.name) }
+                _allStations.value = jcDecauxService.getStations().sortedBy {
+                    formatVelociteStationName(it.name)
+                }
                 println("@@@ Fetched ${_allStations.value.size} stations from JCDecaux API")
             } catch (e: Exception) {
                 e.printStackTrace()

@@ -11,6 +11,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import xyz.doocode.superbus.core.util.formatVelociteStationName
 import xyz.doocode.superbus.ui.components.ErrorView
 import xyz.doocode.superbus.ui.components.LoadingView
 import xyz.doocode.superbus.ui.details.velocite.components.VelociteAddressCard
@@ -21,38 +22,28 @@ import xyz.doocode.superbus.ui.details.velocite.components.VelociteStatusCard
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VelociteDetailsScreen(
-    stationName: String,
-    viewModel: VelociteDetailsViewModel,
-    onBack: () -> Unit
+    stationName: String, viewModel: VelociteDetailsViewModel, onBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    val formattedName =
-        stationName
-            .replace(Regex("^\\d+\\s*-\\s*"), "")
-            .replace(" (CB)", "")
-            .lowercase()
-            .split(" ")
-            .joinToString(" ") { it.replaceFirstChar { char -> char.uppercase() } }
+    val formattedName = formatVelociteStationName(stationName)
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(text = formattedName) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Retour"
-                        )
-                    }
+            TopAppBar(title = { Text(text = formattedName) }, navigationIcon = {
+                IconButton(onClick = onBack) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Retour"
+                    )
                 }
-            )
-        }
-    ) { paddingValues ->
-        Box(modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues)) {
+            })
+        }) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
             when (val state = uiState) {
                 is VelociteDetailsUiState.Loading -> {
                     LoadingView()
@@ -64,11 +55,10 @@ fun VelociteDetailsScreen(
 
                 is VelociteDetailsUiState.Success -> {
                     Column(
-                        modifier =
-                            Modifier
-                                .fillMaxSize()
-                                .verticalScroll(rememberScrollState())
-                                .padding(bottom = 16.dp),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
+                            .padding(bottom = 16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         VelociteRecap(station = state.station)
