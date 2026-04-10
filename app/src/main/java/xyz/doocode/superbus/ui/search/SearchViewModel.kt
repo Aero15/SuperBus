@@ -140,7 +140,6 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
                 _allStations.value = jcDecauxService.getStations().sortedBy {
                     formatVelociteStationName(it.name)
                 }
-                println("@@@ Fetched ${_allStations.value.size} stations from JCDecaux API")
             } catch (e: Exception) {
                 e.printStackTrace()
             }

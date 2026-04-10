@@ -2,6 +2,7 @@ package xyz.doocode.superbus.ui.details.velocite
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,6 +22,7 @@ class VelociteDetailsViewModel : ViewModel() {
     val uiState: StateFlow<VelociteDetailsUiState> = _uiState.asStateFlow()
 
     private var stationId: Int? = null
+    private var pollingJob: Job? = null
 
     fun setStationId(id: Int) {
         if (stationId == null) {
@@ -29,8 +31,9 @@ class VelociteDetailsViewModel : ViewModel() {
         }
     }
 
-    private fun startPolling() {
-        viewModelScope.launch {
+    fun startPolling() {
+        pollingJob?.cancel()
+        pollingJob = viewModelScope.launch {
             while (true) {
                 stationId?.let { id ->
                     try {
@@ -46,6 +49,11 @@ class VelociteDetailsViewModel : ViewModel() {
                 delay(15_000L) // Refresh every 15 seconds
             }
         }
+    }
+
+    fun stopPolling() {
+        pollingJob?.cancel()
+        pollingJob = null
     }
 
     fun reload() {
