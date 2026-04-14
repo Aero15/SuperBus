@@ -9,6 +9,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
@@ -20,7 +21,6 @@ import xyz.doocode.superbus.ui.theme.UnavailableStandsColor
 
 @Composable
 fun VelociteCapacityChartCard(station: Station) {
-    val totalBikes = station.totalStands.availabilities.bikes
     val availableStands = station.totalStands.availabilities.stands
     val mechBikes = station.totalStands.availabilities.mechanicalBikes
     val elecBikes = station.totalStands.availabilities.electricalBikes
@@ -119,27 +119,60 @@ fun VelociteCapacityGrid(station: Station, modifier: Modifier = Modifier) {
 
     if (capacity <= 0) return
 
-    val minCols = if (capacity > 20) 10 else capacity
-    val maxCols = minOf(capacity, 20)
-    var bestItemsPerRow = minCols
+    val maxItemsPerRow = minOf(capacity, 10)
+    var bestItemsPerRow = maxItemsPerRow
     var bestFillRatio = -1f
+    var bestRowCount = Int.MAX_VALUE
 
-    for (c in minCols..maxCols) {
+    for (c in 1..maxItemsPerRow) {
         val lastRowItems = if (capacity % c == 0) c else capacity % c
         val fillRatio = lastRowItems.toFloat() / c.toFloat()
-        if (fillRatio >= bestFillRatio) {
+        val rowCount = (capacity + c - 1) / c
+        val shouldSelect = fillRatio > bestFillRatio ||
+                (fillRatio == bestFillRatio && rowCount < bestRowCount)
+
+        if (shouldSelect) {
             bestFillRatio = fillRatio
             bestItemsPerRow = c
+            bestRowCount = rowCount
         }
     }
 
     val itemsPerRow = bestItemsPerRow
 
-    val totalSlots = mutableListOf<Color>()
-    repeat(mechBikes) { totalSlots.add(MechanicalBikeColor) }
-    repeat(elecBikes) { totalSlots.add(ElectricBikeColor) }
-    repeat(availableStands) { totalSlots.add(AvailableStandsColor) }
-    repeat(unavailableStands) { totalSlots.add(UnavailableStandsColor) }
+    val totalSlots = mutableListOf<CapacitySlot>()
+    repeat(mechBikes) {
+        totalSlots.add(
+            CapacitySlot(
+                color = MechanicalBikeColor,
+                counter = it + 1
+            )
+        )
+    }
+    repeat(elecBikes) {
+        totalSlots.add(
+            CapacitySlot(
+                color = ElectricBikeColor,
+                counter = it + 1
+            )
+        )
+    }
+    repeat(availableStands) {
+        totalSlots.add(
+            CapacitySlot(
+                color = AvailableStandsColor,
+                counter = it + 1
+            )
+        )
+    }
+    repeat(unavailableStands) {
+        totalSlots.add(
+            CapacitySlot(
+                color = UnavailableStandsColor,
+                counter = it + 1
+            )
+        )
+    }
 
     val chunks = totalSlots.chunked(itemsPerRow)
 
@@ -151,18 +184,29 @@ fun VelociteCapacityGrid(station: Station, modifier: Modifier = Modifier) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(20.dp),
+                    .height(34.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(2.dp)
             ) {
-                chunk.forEach { color ->
+                chunk.forEach { slot ->
+                    val counterTextColor =
+                        if (slot.color.luminance() < 0.5f) Color.White else Color.Black
+
                     Box(
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxHeight()
-                            .clip(RoundedCornerShape(2.dp))
-                            .background(color)
-                    )
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(slot.color),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = slot.counter.toString(),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = counterTextColor,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
                 }
                 val remaining = itemsPerRow - chunk.size
                 repeat(remaining) { Spacer(modifier = Modifier.weight(1f)) }
@@ -170,6 +214,11 @@ fun VelociteCapacityGrid(station: Station, modifier: Modifier = Modifier) {
         }
     }
 }
+
+private data class CapacitySlot(
+    val color: Color,
+    val counter: Int
+)
 
 @Composable
 fun LegendItem(color: Color, label: String, value: Int) {
