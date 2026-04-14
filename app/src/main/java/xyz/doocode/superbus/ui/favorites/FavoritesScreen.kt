@@ -14,7 +14,6 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.material.icons.filled.SwapHoriz
@@ -70,7 +69,6 @@ fun FavoritesScreen(
 
     BackHandler(enabled = isEditing) { viewModel.cancelEditing() }
 
-    var showMenu by remember { mutableStateOf(false) }
     var showSearchBar by remember { mutableStateOf(false) }
     var showRenameDialog by remember { mutableStateOf<FavoriteStation?>(null) }
     var newNameForRename by remember { mutableStateOf("") }
@@ -151,34 +149,17 @@ fun FavoritesScreen(
                         title = { Text("Favoris", fontWeight = FontWeight.Bold) },
                         windowInsets = WindowInsets(0),
                         actions = {
-                            Box {
-                                IconButton(onClick = { showMenu = true }) {
-                                    Icon(
-                                        Icons.Default.MoreVert,
-                                        contentDescription = "Plus d'options"
-                                    )
-                                }
-                                DropdownMenu(
-                                    expanded = showMenu,
-                                    onDismissRequest = { showMenu = false }
-                                ) {
-                                    DropdownMenuItem(
-                                        text = { Text("Rechercher") },
-                                        leadingIcon = { Icon(Icons.Default.Search, null) },
-                                        onClick = {
-                                            showMenu = false
-                                            showSearchBar = !showSearchBar
-                                        }
-                                    )
-                                    DropdownMenuItem(
-                                        text = { Text("Réorganiser") },
-                                        leadingIcon = { Icon(Icons.Default.Edit, null) },
-                                        onClick = {
-                                            showMenu = false
-                                            viewModel.startEditing()
-                                        }
-                                    )
-                                }
+                            IconButton(onClick = { viewModel.startEditing() }) {
+                                Icon(
+                                    imageVector = Icons.Default.Edit,
+                                    contentDescription = "Réorganiser"
+                                )
+                            }
+                            IconButton(onClick = { showSearchBar = !showSearchBar }) {
+                                Icon(
+                                    imageVector = Icons.Default.Search,
+                                    contentDescription = "Rechercher"
+                                )
                             }
                         }
                     )
