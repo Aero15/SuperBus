@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import xyz.doocode.superbus.core.dto.jcdecaux.Station
 import xyz.doocode.superbus.ui.theme.AvailableStandsColor
 import xyz.doocode.superbus.ui.theme.ElectricBikeColor
@@ -48,26 +49,34 @@ fun VelociteCapacityChartCard(station: Station) {
                         fontWeight = FontWeight.Bold
                     )
                 }
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "Visualisez la capacité de la station, ainsi que les bornes hors service ou mal enclenchées.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
             if (capacity > 0) {
-                Text(
-                    text = "$capacity bornes vélo",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary,
+                Column(
                     modifier = Modifier
-                        .padding(horizontal = 16.dp)
-                        .padding(bottom = 6.dp)
-                )
+                        .padding(16.dp)
+                        .fillMaxSize(),
+                    verticalArrangement = Arrangement.SpaceBetween,
+                    horizontalAlignment = Alignment.Start
+                ) {
+                    Text(
+                        text = capacity.toString(),
+                        style = MaterialTheme.typography.displaySmall.copy(
+                            fontWeight = FontWeight.ExtraBold
+                        ),
+                        color = MaterialTheme.colorScheme.primary
+                    )
+
+                    Text(
+                        text = "bornes vélo".uppercase(),
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.5.sp
+                        ),
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.9f),
+                        lineHeight = 12.sp
+                    )
+                }
 
                 VelociteCapacityGrid(
                     station = station,
