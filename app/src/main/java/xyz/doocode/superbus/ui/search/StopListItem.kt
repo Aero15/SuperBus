@@ -51,7 +51,8 @@ fun StopListItem(
     onToggleFavorite: () -> Unit = {},
     onClick: () -> Unit = {},
     onVariantsClick: () -> Unit = {},
-    onDuplicateClick: (Arret) -> Unit = {}
+    onDuplicateClick: (Arret) -> Unit = {},
+    hasLinkedVelociteStation: Boolean = false
 ) {
     var showContextMenu by remember { mutableStateOf(false) }
 
@@ -161,18 +162,26 @@ fun StopListItem(
                 }*/
             }
 
-            // Indicator for grouped duplicates
-            if (groupDuplicates && stop.duplicates.size > 1) {
-                Surface(
-                    shape = MaterialTheme.shapes.small,
-                    color = MaterialTheme.colorScheme.tertiaryContainer,
-                    modifier = Modifier.clickable { onVariantsClick() }
+            val showVariantsIndicator = groupDuplicates &&
+                (stop.duplicates.size > 1 || hasLinkedVelociteStation)
+            val variantsCount = stop.duplicates.size + if (hasLinkedVelociteStation) 1 else 0
+
+            if (showVariantsIndicator) {
+                Row(
+                    modifier = Modifier.clickable { onVariantsClick() },
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
+                    Icon(
+                        imageVector = Icons.Outlined.FolderOpen,
+                        contentDescription = "Ouvrir les variantes",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(22.dp)
+                    )
                     Text(
-                        text = "${stop.duplicates.size} quais",
-                        style = MaterialTheme.typography.labelSmall,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp),
-                        color = MaterialTheme.colorScheme.onTertiaryContainer
+                        text = "${variantsCount} quais",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
             } else {

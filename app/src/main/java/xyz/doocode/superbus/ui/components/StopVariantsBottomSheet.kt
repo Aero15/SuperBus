@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.DirectionsBus
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Tram
+import androidx.compose.material.icons.automirrored.filled.DirectionsBike
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -21,6 +22,8 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import xyz.doocode.superbus.core.dto.ginko.Arret
+import xyz.doocode.superbus.core.dto.jcdecaux.Station
+import xyz.doocode.superbus.core.util.formatVelociteStationName
 
 /**
  * Bottom sheet partagé affichant les variantes (quais) d'une station groupée.
@@ -42,7 +45,9 @@ fun StopVariantsBottomSheet(
     isDuplicateFavorite: (Arret) -> Boolean = { false },
     onToggleGroupedFavorite: (() -> Unit)? = null,
     onToggleDuplicateFavorite: ((Arret) -> Unit)? = null,
-    onFillQuery: ((String) -> Unit)? = null
+    onFillQuery: ((String) -> Unit)? = null,
+    velociteStation: Station? = null,
+    onVelociteClick: (() -> Unit)? = null
 ) {
     val sheetState = rememberModalBottomSheetState()
     val hasActions = onFillQuery != null
@@ -252,6 +257,30 @@ fun StopVariantsBottomSheet(
                         }
                     }
                     HorizontalDivider(thickness = 0.5.dp)
+                }
+
+                // 3. Station Vélocité liée (si présente)
+                if (velociteStation != null && onVelociteClick != null) {
+                    item {
+                        ListItem(
+                            leadingContent = {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.DirectionsBike,
+                                    contentDescription = null,
+                                    tint = Color(0xFF00AAC2)
+                                )
+                            },
+                            headlineContent = {
+                                Text(
+                                    text = formatVelociteStationName(velociteStation.name),
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
+                            },
+                            supportingContent = { Text("Station Vélocité · ${velociteStation.totalStands.capacity} bornes") },
+                            modifier = Modifier.clickable { onVelociteClick() }
+                        )
+                        HorizontalDivider(thickness = 0.5.dp)
+                    }
                 }
             }
         }

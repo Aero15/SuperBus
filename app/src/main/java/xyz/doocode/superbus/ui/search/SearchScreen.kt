@@ -49,6 +49,7 @@ import xyz.doocode.superbus.ui.components.LoadingView
 import xyz.doocode.superbus.ui.components.SearchBar
 import xyz.doocode.superbus.ui.components.StopListItem
 import xyz.doocode.superbus.ui.details.StopDetailsActivity
+import xyz.doocode.superbus.ui.details.velocite.VelociteDetailsActivity
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -90,6 +91,11 @@ fun SearchScreen(
 
     // Bottom Sheet State
     var selectedStop by remember { mutableStateOf<Arret?>(null) }
+    var selectedLinkedStation by remember {
+        mutableStateOf<xyz.doocode.superbus.core.dto.jcdecaux.Station?>(
+            null
+        )
+    }
     var showBottomSheet by remember { mutableStateOf(false) }
 
     // Filter state: null = all, true = vélocité only, false = bus/tram only
@@ -229,8 +235,7 @@ fun SearchScreen(
                                                     it.id == stop.id &&
                                                             ((stop.duplicates.size > 1 &&
                                                                     !it.detailsFromId) ||
-                                                                    (stop.duplicates.size ==
-                                                                            1 &&
+                                                                    (stop.duplicates.size == 1 &&
                                                                             it.detailsFromId))
                                                 }
                                             StopListItem(
@@ -238,9 +243,8 @@ fun SearchScreen(
                                                 searchQuery = searchQuery,
                                                 isFavorite = favorite != null,
                                                 favoriteLines = favorite?.lines ?: emptyList(),
-                                                groupDuplicates =
-                                                    groupDuplicates &&
-                                                            stop.duplicates.size > 1,
+                                                groupDuplicates = groupDuplicates,
+                                                hasLinkedVelociteStation = result.linkedStation != null,
                                                 onFillQuery = { name ->
                                                     viewModel.onSearchQueryChanged(name)
                                                 },
@@ -248,9 +252,7 @@ fun SearchScreen(
                                                     viewModel.toggleFavorite(stop)
                                                 },
                                                 onClick = {
-                                                    if (groupDuplicates &&
-                                                        stop.duplicates.size > 1
-                                                    ) {
+                                                    if (groupDuplicates && stop.duplicates.size > 1) {
                                                         openStopDetails(stop, false)
                                                     } else {
                                                         openStopDetails(stop, groupDuplicates)
@@ -258,6 +260,7 @@ fun SearchScreen(
                                                 },
                                                 onVariantsClick = {
                                                     selectedStop = stop
+                                                    selectedLinkedStation = result.linkedStation
                                                     showBottomSheet = true
                                                 },
                                                 onDuplicateClick = { duplicate ->
@@ -271,40 +274,19 @@ fun SearchScreen(
                                                 station = result.station,
                                                 searchQuery = searchQuery,
                                                 onClick = {
-                                                    val intent =
-                                                        Intent(
-                                                            context,
-                                                            xyz.doocode.superbus
-                                                                .ui
-                                                                .details
-                                                                .velocite
-                                                                .VelociteDetailsActivity::class
-                                                                .java
+                                                    val intent = Intent(
+                                                        context,
+                                                        VelociteDetailsActivity::class.java
+                                                    ).apply {
+                                                        putExtra(
+                                                            VelociteDetailsActivity.EXTRA_STATION_ID,
+                                                            result.station.number
                                                         )
-                                                            .apply {
-                                                                putExtra(
-                                                                    xyz.doocode
-                                                                        .superbus
-                                                                        .ui
-                                                                        .details
-                                                                        .velocite
-                                                                        .VelociteDetailsActivity
-                                                                        .EXTRA_STATION_ID,
-                                                                    result.station
-                                                                        .number
-                                                                )
-                                                                putExtra(
-                                                                    xyz.doocode
-                                                                        .superbus
-                                                                        .ui
-                                                                        .details
-                                                                        .velocite
-                                                                        .VelociteDetailsActivity
-                                                                        .EXTRA_STATION_NAME,
-                                                                    result.station
-                                                                        .name
-                                                                )
-                                                            }
+                                                        putExtra(
+                                                            VelociteDetailsActivity.EXTRA_STATION_NAME,
+                                                            result.station.name
+                                                        )
+                                                    }
                                                     context.startActivity(intent)
                                                 }
                                             )
@@ -327,8 +309,11 @@ fun SearchScreen(
                                         searchQuery = searchQuery,
                                         isFavorite = favorite != null,
                                         favoriteLines = favorite?.lines ?: emptyList(),
-                                        groupDuplicates =
-                                            groupDuplicates && stop.duplicates.size > 1,
+                                        groupDuplicates = groupDuplicates,
+                                        hasLinkedVelociteStation =
+                                            showVeloOnly != false && state.linkedStationByStopId.containsKey(
+                                                stop.id
+                                            ),
                                         onFillQuery = { name ->
                                             viewModel.onSearchQueryChanged(name)
                                         },
@@ -342,6 +327,9 @@ fun SearchScreen(
                                         },
                                         onVariantsClick = {
                                             selectedStop = stop
+                                            selectedLinkedStation =
+                                                if (showVeloOnly == false) null
+                                                else state.linkedStationByStopId[stop.id]
                                             showBottomSheet = true
                                         },
                                         onDuplicateClick = { duplicate ->
@@ -354,33 +342,19 @@ fun SearchScreen(
                                         station = station,
                                         searchQuery = searchQuery,
                                         onClick = {
-                                            val intent =
-                                                Intent(
-                                                    context,
-                                                    xyz.doocode.superbus.ui
-                                                        .details
-                                                        .velocite
-                                                        .VelociteDetailsActivity::class
-                                                        .java
+                                            val intent = Intent(
+                                                context,
+                                                VelociteDetailsActivity::class.java
+                                            ).apply {
+                                                putExtra(
+                                                    VelociteDetailsActivity.EXTRA_STATION_ID,
+                                                    station.number
                                                 )
-                                                    .apply {
-                                                        putExtra(
-                                                            xyz.doocode.superbus.ui
-                                                                .details
-                                                                .velocite
-                                                                .VelociteDetailsActivity
-                                                                .EXTRA_STATION_ID,
-                                                            station.number
-                                                        )
-                                                        putExtra(
-                                                            xyz.doocode.superbus.ui
-                                                                .details
-                                                                .velocite
-                                                                .VelociteDetailsActivity
-                                                                .EXTRA_STATION_NAME,
-                                                            station.name
-                                                        )
-                                                    }
+                                                putExtra(
+                                                    VelociteDetailsActivity.EXTRA_STATION_NAME,
+                                                    station.name
+                                                )
+                                            }
                                             context.startActivity(intent)
                                         }
                                     )
@@ -392,7 +366,10 @@ fun SearchScreen(
                     if (showBottomSheet && selectedStop != null) {
                         StopVariantsBottomSheet(
                             stop = selectedStop!!,
-                            onDismissRequest = { showBottomSheet = false },
+                            onDismissRequest = {
+                                showBottomSheet = false
+                                selectedLinkedStation = null
+                            },
                             onGroupedClick = {
                                 showBottomSheet = false
                                 openStopDetails(selectedStop!!, false)
@@ -417,7 +394,31 @@ fun SearchScreen(
                             onFillQuery = { query ->
                                 viewModel.onSearchQueryChanged(query)
                                 showBottomSheet = false
-                            }
+                            },
+                            velociteStation =
+                                if (showVeloOnly == false) null else selectedLinkedStation,
+                            onVelociteClick =
+                                if (showVeloOnly == false) null
+                                else selectedLinkedStation?.let { station ->
+                                    {
+                                        showBottomSheet = false
+                                        val intent =
+                                            Intent(
+                                                context,
+                                                VelociteDetailsActivity::class.java
+                                            ).apply {
+                                                putExtra(
+                                                    VelociteDetailsActivity.EXTRA_STATION_ID,
+                                                    station.number
+                                                )
+                                                putExtra(
+                                                    VelociteDetailsActivity.EXTRA_STATION_NAME,
+                                                    station.name
+                                                )
+                                            }
+                                        context.startActivity(intent)
+                                    }
+                                }
                         )
                     }
                 }

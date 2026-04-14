@@ -18,14 +18,17 @@ import xyz.doocode.superbus.core.util.formatVelociteStationName
 import xyz.doocode.superbus.core.util.removeAccents
 
 sealed interface SearchResult {
-    data class Stop(val arret: Arret, val displayName: String) : SearchResult
+    data class Stop(val arret: Arret, val displayName: String, val linkedStation: Station? = null) : SearchResult
     data class VeloStation(val station: Station, val displayName: String) : SearchResult
 }
 
 sealed interface SearchUiState {
     data object Loading : SearchUiState
     data class Success(
-        val stops: List<Arret>, val stations: List<Station>, val merged: List<SearchResult>
+        val stops: List<Arret>,
+        val stations: List<Station>,
+        val merged: List<SearchResult>,
+        val linkedStationByStopId: Map<String, Station> = emptyMap()
     ) : SearchUiState
 
     data class Error(val message: String) : SearchUiState
@@ -90,22 +93,35 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
                         )
                 }
             }
-            val mergedResults: List<SearchResult> = (filteredStops.map { stop ->
-                SearchResult.Stop(stop, stop.nom)
-            } + filteredStations.map { station ->
-                SearchResult.VeloStation(
-                    station, formatVelociteStationName(
-                        station.name
-                    )
-                )
-            }).sortedBy { result ->
-                when (result) {
-                    is SearchResult.Stop -> result.displayName
-
-                    is SearchResult.VeloStation -> result.displayName
-                }.removeAccents().uppercase()
+            val linkedStationByStopId: Map<String, Station>
+            val mergedResults: List<SearchResult> = run {
+                // Build a lookup map: cleaned+normalized station name → station
+                val stationByCleanName = filteredStations.associateBy { station ->
+                    formatVelociteStationName(station.name).removeAccents().lowercase()
+                }
+                // Match each stop to a Vélocité station by name
+                val stopResults = filteredStops.map { stop ->
+                    val linked = stationByCleanName[stop.nom.removeAccents().lowercase()]
+                    SearchResult.Stop(stop, stop.nom, linked)
+                }
+                // Exclude stations that are already linked to a stop
+                val linkedNumbers = stopResults.mapNotNull { it.linkedStation?.number }.toSet()
+                val stationResults = filteredStations
+                    .filter { it.number !in linkedNumbers }
+                    .map { station ->
+                        SearchResult.VeloStation(station, formatVelociteStationName(station.name))
+                    }
+                linkedStationByStopId = stopResults
+                    .mapNotNull { r -> r.linkedStation?.let { r.arret.id to it } }
+                    .toMap()
+                (stopResults + stationResults).sortedBy { result ->
+                    when (result) {
+                        is SearchResult.Stop -> result.displayName
+                        is SearchResult.VeloStation -> result.displayName
+                    }.removeAccents().uppercase()
+                }
             }
-            SearchUiState.Success(filteredStops, filteredStations, mergedResults)
+            SearchUiState.Success(filteredStops, filteredStations, mergedResults, linkedStationByStopId)
         }
     }.stateIn(
         scope = viewModelScope,
