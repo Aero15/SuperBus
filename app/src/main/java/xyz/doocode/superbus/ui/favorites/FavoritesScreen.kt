@@ -36,7 +36,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -49,6 +51,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.rememberUpdatedState
+import kotlinx.coroutines.isActive
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -118,8 +121,7 @@ fun FavoritesScreen(
                 TopAppBar(
                     title = {
                         Text(
-                            if (selectedIds.isEmpty()) "Réorganiser"
-                            else "${selectedIds.size} sélectionné(s)"
+                            "Réorganiser"
                         )
                     },
                     windowInsets = WindowInsets(0),
@@ -285,6 +287,9 @@ fun FavoritesScreen(
                 Box(modifier = Modifier.fillMaxSize()) {
                     val gridState = rememberLazyGridState()
                     var gridHeightPx by remember { mutableStateOf(0) }
+                    val haptic = LocalHapticFeedback.current
+                    val currentFavorites by rememberUpdatedState(favorites)
+                    val currentIsEditing by rememberUpdatedState(isEditing)
                     val currentSelectedIds by rememberUpdatedState(selectedIds)
 
                     LaunchedEffect(draggedItem != null) {
@@ -313,56 +318,63 @@ fun FavoritesScreen(
                         modifier = Modifier
                             .fillMaxSize()
                             .onSizeChanged { gridHeightPx = it.height }
-                            .pointerInput(isEditing) {
-                                if (isEditing) {
-                                    detectDragGesturesAfterLongPress(
-                                        onDragStart = { offset ->
-                                            val item =
-                                                gridState.layoutInfo.visibleItemsInfo.firstOrNull {
-                                                    offset.x >= it.offset.x && offset.x <= it.offset.x + it.size.width &&
-                                                            offset.y >= it.offset.y && offset.y <= it.offset.y + it.size.height
+                            .pointerInput(Unit) {
+                                detectDragGesturesAfterLongPress(
+                                    onDragStart = { offset ->
+                                        val item =
+                                            gridState.layoutInfo.visibleItemsInfo.firstOrNull {
+                                                offset.x >= it.offset.x && offset.x <= it.offset.x + it.size.width &&
+                                                        offset.y >= it.offset.y && offset.y <= it.offset.y + it.size.height
+                                            }
+                                        if (item != null) {
+                                            val index = item.index
+                                            val list = currentFavorites
+                                            if (index in list.indices) {
+                                                val station = list[index]
+                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                if (!currentIsEditing) {
+                                                    viewModel.startEditingWithSelectionSync(
+                                                        station,
+                                                        list
+                                                    )
                                                 }
-                                            if (item != null) {
-                                                val index = item.index
-                                                if (index in favorites.indices) {
-                                                    viewModel.captureUndoBeforeDrag()
-                                                    draggedItem = favorites[index]
-                                                    draggedItemSize = item.size
-                                                    touchPosition = offset
+                                                viewModel.captureUndoBeforeDrag()
+                                                draggedItem = station
+                                                draggedItemSize = item.size
+                                                touchPosition = offset
+                                            }
+                                        }
+                                    },
+                                    onDrag = { change, dragAmount ->
+                                        change.consume()
+                                        touchPosition += dragAmount
+                                        val offset = touchPosition
+                                        val itemUnderFinger =
+                                            gridState.layoutInfo.visibleItemsInfo.firstOrNull {
+                                                offset.x >= it.offset.x && offset.x <= it.offset.x + it.size.width &&
+                                                        offset.y >= it.offset.y && offset.y <= it.offset.y + it.size.height
+                                            }
+                                        if (itemUnderFinger != null && draggedItem != null) {
+                                            val fromIndex =
+                                                currentFavorites.indexOfFirst { it.id == draggedItem!!.id && it.detailsFromId == draggedItem!!.detailsFromId }
+                                            val toIndex = itemUnderFinger.index
+                                            if (fromIndex != -1 && fromIndex != toIndex) {
+                                                val draggedKey =
+                                                    "${draggedItem?.id}_${draggedItem?.detailsFromId}"
+                                                if (draggedKey in currentSelectedIds && currentSelectedIds.size > 1) {
+                                                    viewModel.moveSelectedFavorites(
+                                                        draggedItem!!,
+                                                        toIndex
+                                                    )
+                                                } else {
+                                                    viewModel.moveFavorite(fromIndex, toIndex)
                                                 }
                                             }
-                                        },
-                                        onDrag = { change, dragAmount ->
-                                            change.consume()
-                                            touchPosition += dragAmount
-                                            val offset = touchPosition
-                                            val itemUnderFinger =
-                                                gridState.layoutInfo.visibleItemsInfo.firstOrNull {
-                                                    offset.x >= it.offset.x && offset.x <= it.offset.x + it.size.width &&
-                                                            offset.y >= it.offset.y && offset.y <= it.offset.y + it.size.height
-                                                }
-                                            if (itemUnderFinger != null && draggedItem != null) {
-                                                val fromIndex =
-                                                    favorites.indexOfFirst { it.id == draggedItem!!.id && it.detailsFromId == draggedItem!!.detailsFromId }
-                                                val toIndex = itemUnderFinger.index
-                                                if (fromIndex != -1 && fromIndex != toIndex) {
-                                                    val draggedKey =
-                                                        "${draggedItem?.id}_${draggedItem?.detailsFromId}"
-                                                    if (draggedKey in currentSelectedIds && currentSelectedIds.size > 1) {
-                                                        viewModel.moveSelectedFavorites(
-                                                            draggedItem!!,
-                                                            toIndex
-                                                        )
-                                                    } else {
-                                                        viewModel.moveFavorite(fromIndex, toIndex)
-                                                    }
-                                                }
-                                            }
-                                        },
-                                        onDragEnd = { draggedItem = null },
-                                        onDragCancel = { draggedItem = null }
-                                    )
-                                }
+                                        }
+                                    },
+                                    onDragEnd = { draggedItem = null },
+                                    onDragCancel = { draggedItem = null }
+                                )
                             }
                     ) {
                         items(favorites, key = { "${it.id}_${it.detailsFromId}" }) { station ->
@@ -389,18 +401,13 @@ fun FavoritesScreen(
                                             onStationClick(station)
                                         }
                                     },
-                                    onLongPress = {
-                                        if (!isEditing) {
-                                            viewModel.startEditingWithSelection(station)
-                                        }
-                                    },
+                                    onLongPress = {},
                                     onRename = {
                                         newNameForRename = station.name
                                         showRenameDialog = station
                                     },
                                     onRemove = {
                                         if (isEditing) {
-                                            viewModel.toggleSelection(station)
                                             viewModel.deleteSelected()
                                         } else {
                                             viewModel.removeFavorite(
