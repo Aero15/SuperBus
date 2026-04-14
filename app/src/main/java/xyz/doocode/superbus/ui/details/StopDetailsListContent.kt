@@ -32,12 +32,12 @@ import androidx.compose.ui.unit.dp
 import xyz.doocode.superbus.core.dto.ginko.Arret
 import xyz.doocode.superbus.ui.components.EmptyUpcomingPassagesView
 import xyz.doocode.superbus.ui.components.ErrorView
-import xyz.doocode.superbus.ui.components.StopListItem
 import xyz.doocode.superbus.ui.components.StopVariantsBottomSheet
 import xyz.doocode.superbus.ui.details.components.ArrivalCard
 import xyz.doocode.superbus.core.dto.jcdecaux.Station
 import xyz.doocode.superbus.ui.details.velocite.components.VelociteCapacityGrid
 import xyz.doocode.superbus.ui.details.velocite.components.VelociteRecap
+import xyz.doocode.superbus.ui.search.components.BusStopItem
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -124,7 +124,7 @@ fun StopDetailsListContent(
                                     HorizontalDivider()
                                     nearbyStops.forEach { stop ->
                                         val hasVariants = stop.duplicates.size > 1
-                                        StopListItem(
+                                        BusStopItem(
                                             stop = stop,
                                             groupDuplicates = hasVariants,
                                             onClick = {

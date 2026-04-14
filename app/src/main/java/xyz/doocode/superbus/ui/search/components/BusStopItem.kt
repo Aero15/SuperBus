@@ -1,31 +1,35 @@
-package xyz.doocode.superbus.ui.components
+package xyz.doocode.superbus.ui.search.components
 
 import android.content.res.Configuration
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.Place
-import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.DirectionsBus
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.ManageSearch
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Train
 import androidx.compose.material.icons.filled.Tram
 import androidx.compose.material.icons.outlined.FolderOpen
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.ui.input.pointer.pointerInput
-import xyz.doocode.superbus.ui.components.StopActionsContainer
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -37,11 +41,11 @@ import androidx.compose.ui.unit.dp
 import xyz.doocode.superbus.core.dto.ginko.Arret
 import xyz.doocode.superbus.core.dto.ginko.Ligne
 import xyz.doocode.superbus.core.util.removeAccents
-import xyz.doocode.superbus.ui.favorites.SmallLineBadge
+import xyz.doocode.superbus.ui.components.StopActionsContainer
 import xyz.doocode.superbus.ui.theme.SuperBusTheme
 
 @Composable
-fun StopListItem(
+fun BusStopItem(
     stop: Arret,
     searchQuery: String = "",
     isFavorite: Boolean = false,
@@ -96,7 +100,6 @@ fun StopListItem(
             Spacer(modifier = Modifier.width(16.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                // Highlight matching text and split line if needed
                 val primaryColor = MaterialTheme.colorScheme.primary
 
                 fun highlight(text: String): AnnotatedString = buildAnnotatedString {
@@ -148,29 +151,16 @@ fun StopListItem(
                         style = MaterialTheme.typography.bodyLarge
                     )
                 }
-
-                // TODO: Display data from cache
-                /*if (isFavorite && favoriteLines.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        favoriteLines.forEach { line ->
-                            SmallLineBadge(line = line)
-                        }
-                    }
-                }*/
             }
 
             val showVariantsIndicator = groupDuplicates &&
-                (stop.duplicates.size > 1 || hasLinkedVelociteStation)
+                    (stop.duplicates.size > 1 || hasLinkedVelociteStation)
             val variantsCount = stop.duplicates.size + if (hasLinkedVelociteStation) 1 else 0
 
             if (showVariantsIndicator) {
                 Row(
                     modifier = Modifier.clickable { onVariantsClick() },
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.FolderOpen,
@@ -178,6 +168,7 @@ fun StopListItem(
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(22.dp)
                     )
+                    Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = "${variantsCount} quais",
                         style = MaterialTheme.typography.bodyLarge,
@@ -185,7 +176,6 @@ fun StopListItem(
                     )
                 }
             } else {
-                // Afficher l'id de la station
                 Text(
                     text = "#${stop.id}",
                     fontFamily = FontFamily.Monospace,
@@ -207,7 +197,6 @@ fun StopListItem(
             )
         }
 
-        // Expanded list for non-grouped mode
         if (!groupDuplicates && stop.duplicates.isNotEmpty() && stop.duplicates.size > 1) {
             stop.duplicates.forEach { duplicate ->
                 Row(
@@ -248,9 +237,9 @@ fun StopListItem(
     showBackground = true
 )
 @Composable
-fun StopListItemPreview() {
+private fun BusStopItemPreview() {
     SuperBusTheme {
-        StopListItem(
+        BusStopItem(
             stop = Arret(
                 id = "1",
                 nom = "Gare Centrale",

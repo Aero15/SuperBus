@@ -1,57 +1,41 @@
 package xyz.doocode.superbus.ui.search
 
 import android.content.Intent
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.DirectionsBike
-import androidx.compose.material.icons.filled.DirectionsBus
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.compose.runtime.DisposableEffect
 import xyz.doocode.superbus.core.data.FavoritesRepository
 import xyz.doocode.superbus.core.dto.ginko.Arret
-import xyz.doocode.superbus.ui.components.*
 import xyz.doocode.superbus.ui.components.EmptyDataView
 import xyz.doocode.superbus.ui.components.EmptyResultsView
 import xyz.doocode.superbus.ui.components.ErrorView
 import xyz.doocode.superbus.ui.components.LoadingView
-import xyz.doocode.superbus.ui.components.SearchBar
-import xyz.doocode.superbus.ui.components.StopListItem
+import xyz.doocode.superbus.ui.components.StopVariantsBottomSheet
 import xyz.doocode.superbus.ui.details.StopDetailsActivity
 import xyz.doocode.superbus.ui.details.velocite.VelociteDetailsActivity
+import xyz.doocode.superbus.ui.search.components.BusStopItem
+import xyz.doocode.superbus.ui.search.components.SearchBar
+import xyz.doocode.superbus.ui.search.components.SearchFilterOption
+import xyz.doocode.superbus.ui.search.components.VelociteStationItem
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen(
     modifier: Modifier = Modifier,
@@ -109,87 +93,22 @@ fun SearchScreen(
         SearchBar(
             query = searchQuery,
             onQueryChange = viewModel::onSearchQueryChanged,
+            selectedFilter =
+                when (showVeloOnly) {
+                    null -> SearchFilterOption.NONE
+                    false -> SearchFilterOption.BUS_TRAMS
+                    true -> SearchFilterOption.VELOCITE
+                },
+            onFilterSelected = { option ->
+                showVeloOnly =
+                    when (option) {
+                        SearchFilterOption.NONE -> null
+                        SearchFilterOption.BUS_TRAMS -> false
+                        SearchFilterOption.VELOCITE -> true
+                    }
+            },
             modifier = Modifier.focusRequester(focusRequester)
         )
-
-        Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 6.dp)
-                    .selectableGroup(),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            val chipSize = 48.dp
-            val iconSize = 24.dp
-
-            // Tout (*)
-            FilterChip(
-                selected = showVeloOnly == null,
-                onClick = { showVeloOnly = null },
-                label = {
-                    Text(text = "✱", fontSize = 20.sp, modifier = Modifier.size(iconSize))
-                },
-                shape = CircleShape,
-                modifier = Modifier.size(chipSize),
-                colors =
-                    FilterChipDefaults.filterChipColors(
-                        selectedContainerColor =
-                            MaterialTheme.colorScheme.primaryContainer,
-                        selectedLabelColor =
-                            MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-            )
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            // Bus & Tram
-            FilterChip(
-                selected = showVeloOnly == false,
-                onClick = { showVeloOnly = false },
-                label = {
-                    Icon(
-                        Icons.Default.DirectionsBus,
-                        contentDescription = "Bus & Tram",
-                        modifier = Modifier.size(iconSize)
-                    )
-                },
-                shape = CircleShape,
-                modifier = Modifier.size(chipSize),
-                colors =
-                    FilterChipDefaults.filterChipColors(
-                        selectedContainerColor =
-                            MaterialTheme.colorScheme.primaryContainer,
-                        selectedLabelColor =
-                            MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-            )
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            // Vélocité
-            FilterChip(
-                selected = showVeloOnly == true,
-                onClick = { showVeloOnly = true },
-                label = {
-                    Icon(
-                        Icons.AutoMirrored.Filled.DirectionsBike,
-                        contentDescription = "Vélocité",
-                        modifier = Modifier.size(iconSize)
-                    )
-                },
-                shape = CircleShape,
-                modifier = Modifier.size(chipSize),
-                colors =
-                    FilterChipDefaults.filterChipColors(
-                        selectedContainerColor =
-                            MaterialTheme.colorScheme.primaryContainer,
-                        selectedLabelColor =
-                            MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-            )
-        }
 
         when (val state = uiState) {
             is SearchUiState.Loading -> {
@@ -238,7 +157,7 @@ fun SearchScreen(
                                                                     (stop.duplicates.size == 1 &&
                                                                             it.detailsFromId))
                                                 }
-                                            StopListItem(
+                                            BusStopItem(
                                                 stop = stop,
                                                 searchQuery = searchQuery,
                                                 isFavorite = favorite != null,
@@ -270,7 +189,7 @@ fun SearchScreen(
                                         }
 
                                         is SearchResult.VeloStation -> {
-                                            StationListItem(
+                                            VelociteStationItem(
                                                 station = result.station,
                                                 searchQuery = searchQuery,
                                                 onClick = {
@@ -304,7 +223,7 @@ fun SearchScreen(
                                                             (stop.duplicates.size == 1 &&
                                                                     it.detailsFromId))
                                         }
-                                    StopListItem(
+                                    BusStopItem(
                                         stop = stop,
                                         searchQuery = searchQuery,
                                         isFavorite = favorite != null,
@@ -338,7 +257,7 @@ fun SearchScreen(
                                     )
                                 }
                                 items(visibleStations) { station ->
-                                    StationListItem(
+                                    VelociteStationItem(
                                         station = station,
                                         searchQuery = searchQuery,
                                         onClick = {
