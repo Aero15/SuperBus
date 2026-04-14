@@ -55,7 +55,16 @@ fun StopDetailsListContent(
 ) {
     var selectedStop by remember { mutableStateOf<Arret?>(null) }
     val expandedSections =
-        remember { mutableStateMapOf(0 to true, 1 to true, 2 to true, 3 to true) }
+        remember {
+            mutableStateMapOf(
+                0 to true,
+                1 to true,
+                2 to true,
+                3 to true,
+                4 to true,
+                5 to true
+            )
+        }
 
     LaunchedEffect(forcedSectionsExpandState) {
         if (forcedSectionsExpandState != null) {
@@ -63,6 +72,8 @@ fun StopDetailsListContent(
             expandedSections[1] = forcedSectionsExpandState
             expandedSections[2] = forcedSectionsExpandState
             expandedSections[3] = forcedSectionsExpandState
+            expandedSections[4] = forcedSectionsExpandState
+            expandedSections[5] = forcedSectionsExpandState
         }
     }
 
@@ -142,26 +153,48 @@ fun StopDetailsListContent(
                     is StopDetailsUiState.Success -> {
                         val list = state.groupedArrivals.toList()
                         val lianeRegex = Regex("^L\\d+$")
+                        val scolaireRegex = Regex("^D([1-9]\\d{0,2})$")
 
                         val tramEntries =
                             list.filter { (_, arrivals) -> arrivals.first().modeTransport == 1 }
                         val busEntries =
                             list.filter { (_, arrivals) -> arrivals.first().modeTransport == 0 }
+
+                        fun isPeriurbain(idLigne: String): Boolean {
+                            val id = idLigne.toIntOrNull() ?: return false
+                            return id in 50..99
+                        }
+
                         val lianeEntries =
                             busEntries.filter { (_, arrivals) ->
                                 arrivals.first().numLignePublic.matches(lianeRegex)
                             }
+                        val scolaireEntries =
+                            busEntries.filter { (_, arrivals) ->
+                                arrivals.first().numLignePublic.matches(scolaireRegex)
+                            }
+                        val periurbainEntries =
+                            busEntries.filter { (_, arrivals) ->
+                                val firstArrival = arrivals.first()
+                                !firstArrival.numLignePublic.matches(lianeRegex) &&
+                                        !firstArrival.numLignePublic.matches(scolaireRegex) &&
+                                        isPeriurbain(firstArrival.idLigne)
+                            }
                         val regularBusEntries =
                             busEntries.filter { (_, arrivals) ->
-                                !arrivals.first().numLignePublic.matches(lianeRegex)
+                                val firstArrival = arrivals.first()
+                                !firstArrival.numLignePublic.matches(lianeRegex) &&
+                                        !firstArrival.numLignePublic.matches(scolaireRegex) &&
+                                        !isPeriurbain(firstArrival.idLigne)
                             }
 
-                        // Ordre : Tram (1) → Lianes (2) → Bus (0)
-                        // TODO: Periurbain, Scolaire, etc. ? (actuellement regroupés avec les bus classiques)
+                        // Ordre : Tram (1) → Lianes (2) → Bus (0) → Périurbain (4) → Scolaire (5)
                         val sections = listOf(
                             Triple(1, tramEntries, "tram"),
                             Triple(2, lianeEntries, "lianes"),
-                            Triple(0, regularBusEntries, "bus")
+                            Triple(0, regularBusEntries, "bus"),
+                            Triple(4, periurbainEntries, "periurbain"),
+                            Triple(5, scolaireEntries, "scolaire")
                         ).filter { (_, entries, _) -> entries.isNotEmpty() }
 
                         val hasMixedSections = sections.size > 1
@@ -289,6 +322,8 @@ private fun TransportSectionHeader(
         1 -> "Tram"
         2 -> "Lianes"
         3 -> "Vélocité"
+        4 -> "Périurbain"
+        5 -> "Scolaire"
         else -> "Autre"
     }
     val icon = when (mode) {
