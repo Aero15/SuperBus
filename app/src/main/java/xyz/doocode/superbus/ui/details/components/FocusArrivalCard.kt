@@ -29,7 +29,11 @@ fun FocusArrivalCard(
     times: List<Temps>,
     ligneId: String = ""
 ) {
-    val lineColor = StopDetailsUtils.parseLineColor(couleurFond)
+    val lineColor = StopDetailsUtils.resolveHighlightLineColor(
+        couleurFond = couleurFond,
+        couleurTexte = couleurTexte,
+        ligneId = ligneId
+    )
     val gradientColors = StopDetailsUtils.getGradientColors(lineColor)
 
     // Use BoxWithConstraints to detect landscape/tablet width

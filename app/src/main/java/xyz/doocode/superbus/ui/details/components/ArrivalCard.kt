@@ -37,7 +37,11 @@ fun ArrivalCard(
     forcedExpandState: Boolean? = null,
     onLongClick: (() -> Unit)? = null
 ) {
-    val lineColor = StopDetailsUtils.parseLineColor(couleurFond)
+    val lineColor = StopDetailsUtils.resolveHighlightLineColor(
+        couleurFond = couleurFond,
+        couleurTexte = couleurTexte,
+        ligneId = ligneId
+    )
     val gradientColors = StopDetailsUtils.getGradientColors(lineColor)
     val shape = RoundedCornerShape(14.dp)
     var isExpoMode by remember { mutableStateOf(initialExpoMode) }

@@ -26,6 +26,22 @@ object StopDetailsUtils {
         }
     }
 
+    fun resolveHighlightLineColor(
+        couleurFond: String,
+        couleurTexte: String,
+        ligneId: String,
+        defaultColor: Color = Color.Gray
+    ): Color {
+        val id = ligneId.toIntOrNull()
+        val isPeriurbain = id != null && id in 50..99
+
+        return if (isPeriurbain) {
+            parseLineColor(couleurTexte, defaultColor)
+        } else {
+            parseLineColor(couleurFond, defaultColor)
+        }
+    }
+
     @Composable
     fun getGradientColors(lineColor: Color): List<Color> {
         val startColor =
