@@ -20,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import xyz.doocode.superbus.core.dto.jcdecaux.Station
 import xyz.doocode.superbus.ui.theme.AvailableStandsColor
 import xyz.doocode.superbus.ui.theme.ElectricBikeColor
@@ -33,7 +34,6 @@ fun VelociteRecap(station: Station, expanded: Boolean = false, contentPadding: D
             .padding(horizontal = contentPadding),
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        // Mechanical bikes tile
         VelociteRecapTile(
             icon = Icons.Filled.PedalBike,
             label = "Vélos\nmécaniques",
@@ -43,7 +43,6 @@ fun VelociteRecap(station: Station, expanded: Boolean = false, contentPadding: D
             modifier = Modifier.weight(1f)
         )
 
-        // Electric bikes tile
         VelociteRecapTile(
             icon = Icons.Filled.ElectricBike,
             label = "Vélos\nélectriques",
@@ -53,7 +52,6 @@ fun VelociteRecap(station: Station, expanded: Boolean = false, contentPadding: D
             modifier = Modifier.weight(1f)
         )
 
-        // Available stands tile
         VelociteRecapTile(
             icon = Icons.Filled.LocalParking,
             label = "Places\ndispo",
@@ -76,20 +74,16 @@ private fun VelociteRecapTile(
 ) {
     val isZero = value.toIntOrNull() == 0
 
-    // Définition des couleurs pour un rendu "Sublime"
     val displayContentColor = if (isZero) MaterialTheme.colorScheme.error else Color.White
     val baseColor = if (isZero) MaterialTheme.colorScheme.surfaceVariant else backgroundColor
 
-    // Création d'un dégradé pour la profondeur
     val backgroundBrush = if (isZero) {
         Brush.linearGradient(
             colors = listOf(baseColor.copy(alpha = 0.5f), baseColor.copy(alpha = 0.3f))
         )
     } else {
         Brush.linearGradient(
-            colors = listOf(
-                baseColor.copy(alpha = 0.25f), baseColor
-            ),
+            colors = listOf(baseColor.copy(alpha = 0.25f), baseColor),
             start = Offset(0f, 0f),
             end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
         )
@@ -102,54 +96,67 @@ private fun VelociteRecapTile(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.Transparent)
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(backgroundBrush)
-        ) {
-            // Icône en filigrane (Watermark) décoratif
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = displayContentColor.copy(alpha = if (isZero) 0.1f else 0.2f),
+        Box(modifier = Modifier.fillMaxSize()) {
+            Box(
                 modifier = Modifier
-                    .size(90.dp)
-                    .align(Alignment.TopEnd)
-                    .offset(x = 24.dp, y = -24.dp)
-                    .rotate(-15f)
-            )
-
-            Column(
-                modifier = Modifier
-                    .padding(14.dp)
-                    .fillMaxSize(),
-                verticalArrangement = Arrangement.SpaceBetween,
-                horizontalAlignment = Alignment.Start
+                    .fillMaxSize()
+                    .background(backgroundBrush)
             ) {
-                // Valeur (Chiffre) - Mise en avant majeure
-                Text(
-                    text = value, style = MaterialTheme.typography.displaySmall.copy(
-                        fontWeight = FontWeight.ExtraBold
-                    ), color = displayContentColor
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = displayContentColor.copy(alpha = if (isZero) 0.1f else 0.2f),
+                    modifier = Modifier
+                        .size(90.dp)
+                        .align(Alignment.TopEnd)
+                        .offset(x = 24.dp, y = -24.dp)
+                        .rotate(-15f)
                 )
 
-                // Libellé
-                Text(
-                    text = label.uppercase(),
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp
-                    ), color = displayContentColor.copy(alpha = 0.9f), lineHeight = 12.sp
-                )
-
-                if (expanded) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        tint = displayContentColor,
-                        modifier = Modifier.size(42.dp)
+                Column(
+                    modifier = Modifier
+                        .padding(14.dp)
+                        .fillMaxSize(),
+                    verticalArrangement = Arrangement.SpaceBetween,
+                    horizontalAlignment = Alignment.Start
+                ) {
+                    Text(
+                        text = value,
+                        style = MaterialTheme.typography.displaySmall.copy(
+                            fontWeight = FontWeight.ExtraBold
+                        ),
+                        color = displayContentColor
                     )
+
+                    Text(
+                        text = label.uppercase(),
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.5.sp
+                        ),
+                        color = displayContentColor.copy(alpha = 0.9f),
+                        lineHeight = 12.sp
+                    )
+
+                    if (expanded) {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            tint = displayContentColor,
+                            modifier = Modifier.size(42.dp)
+                        )
+                    }
                 }
             }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(6.dp)
+                    .align(Alignment.TopCenter)
+                    .zIndex(1f)
+                    .background(if (isZero) displayContentColor else backgroundColor)
+            )
         }
     }
 }
