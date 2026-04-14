@@ -23,7 +23,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import xyz.doocode.superbus.core.dto.ginko.Arret
 import xyz.doocode.superbus.core.dto.jcdecaux.Station
-import xyz.doocode.superbus.core.util.formatVelociteStationName
 
 /**
  * Bottom sheet partagé affichant les variantes (quais) d'une station groupée.
@@ -272,11 +271,21 @@ fun StopVariantsBottomSheet(
                             },
                             headlineContent = {
                                 Text(
-                                    text = formatVelociteStationName(velociteStation.name),
+                                    text = "Vélocité",
                                     style = MaterialTheme.typography.bodyLarge
                                 )
                             },
-                            supportingContent = { Text("Station Vélocité · ${velociteStation.totalStands.capacity} bornes") },
+                            trailingContent = {
+                                Text(
+                                    text = "#${velociteStation.number}",
+                                    fontFamily = FontFamily.Monospace,
+                                    color =
+                                        MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                                            alpha = 0.6f
+                                        ),
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            },
                             modifier = Modifier.clickable { onVelociteClick() }
                         )
                         HorizontalDivider(thickness = 0.5.dp)
