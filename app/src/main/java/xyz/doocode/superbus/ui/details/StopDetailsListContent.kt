@@ -282,10 +282,10 @@ fun StopDetailsListContent(
                                             station = velociteStation,
                                             contentPadding = 0.dp
                                         )
-                                        VelociteCapacityGrid(
+                                        /*VelociteCapacityGrid(
                                             station = velociteStation,
                                             modifier = Modifier.fillMaxWidth()
-                                        )
+                                        )*/
                                     }
                                 }
                             }
