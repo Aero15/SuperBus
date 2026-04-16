@@ -27,6 +27,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -95,6 +96,7 @@ fun VelociteDetailsScreen(
         }
     }
 
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val formattedName = formatVelociteStationName(stationName)
 
     if (showUnfavoriteConfirmation) {
@@ -119,6 +121,7 @@ fun VelociteDetailsScreen(
     }
 
     Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState) { data ->
                 val isSuccess = data.visuals.message == "L'écran restera allumé"
@@ -137,7 +140,7 @@ fun VelociteDetailsScreen(
             }
         },
         topBar = {
-            TopAppBar(
+            LargeTopAppBar(
                 title = { Text(text = formattedName) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -212,7 +215,8 @@ fun VelociteDetailsScreen(
                             )
                         }
                     }
-                }
+                },
+                scrollBehavior = scrollBehavior
             )
         }) { paddingValues ->
         Box(
