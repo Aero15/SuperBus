@@ -44,6 +44,9 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import xyz.doocode.superbus.core.data.FavoritesRepository
 import xyz.doocode.superbus.core.dto.ginko.Arret
@@ -78,12 +81,14 @@ fun SearchScreen(
     val uiState by viewModel.uiState.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     val groupDuplicates = viewModel.GROUP_DUPLICATES
 
     val focusRequester = remember { FocusRequester() }
 
     DisposableEffect(Unit) {
         onDispose {
+            viewModel.stopVelociteAutoRefresh()
             viewModel.refreshStationsCache()
         }
     }
@@ -126,6 +131,39 @@ fun SearchScreen(
         if (initialFilter == SearchFilterOption.VELOCITE) {
             showVeloOnly = true
             onFilterConsumed()
+        }
+    }
+
+    DisposableEffect(lifecycleOwner, showVeloOnly) {
+        if (
+            showVeloOnly == true &&
+            lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)
+        ) {
+            viewModel.startVelociteAutoRefresh()
+        } else {
+            viewModel.stopVelociteAutoRefresh()
+        }
+
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_START -> {
+                    if (showVeloOnly == true) {
+                        viewModel.startVelociteAutoRefresh()
+                    }
+                }
+
+                Lifecycle.Event.ON_STOP -> {
+                    viewModel.stopVelociteAutoRefresh()
+                }
+
+                else -> Unit
+            }
+        }
+
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            viewModel.stopVelociteAutoRefresh()
         }
     }
 

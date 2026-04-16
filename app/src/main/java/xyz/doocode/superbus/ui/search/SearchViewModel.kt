@@ -3,11 +3,14 @@ package xyz.doocode.superbus.ui.search
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import xyz.doocode.superbus.core.api.ApiClient
 import xyz.doocode.superbus.core.data.ReferenceDataRepository
@@ -18,7 +21,9 @@ import xyz.doocode.superbus.core.util.formatVelociteStationName
 import xyz.doocode.superbus.core.util.removeAccents
 
 sealed interface SearchResult {
-    data class Stop(val arret: Arret, val displayName: String, val linkedStation: Station? = null) : SearchResult
+    data class Stop(val arret: Arret, val displayName: String, val linkedStation: Station? = null) :
+        SearchResult
+
     data class VeloStation(val station: Station, val displayName: String) : SearchResult
 }
 
@@ -49,6 +54,8 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
     private val _allStations = MutableStateFlow<List<Station>>(emptyList())
     private val _isLoading = MutableStateFlow(false)
     private val _error = MutableStateFlow<String?>(null)
+    private var velociteAutoRefreshJob: Job? = null
+    private var velociteImmediateRefreshJob: Job? = null
 
     val searchQuery = MutableStateFlow("")
 
@@ -121,7 +128,12 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
                     }.removeAccents().uppercase()
                 }
             }
-            SearchUiState.Success(filteredStops, filteredStations, mergedResults, linkedStationByStopId)
+            SearchUiState.Success(
+                filteredStops,
+                filteredStations,
+                mergedResults,
+                linkedStationByStopId
+            )
         }
     }.stateIn(
         scope = viewModelScope,
@@ -153,15 +165,52 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
             }
 
             try {
-                _allStations.value = referenceDataRepository.getVelociteStations().sortedBy {
-                    formatVelociteStationName(it.name)
-                }
+                _allStations.value = sortStations(referenceDataRepository.getVelociteStations())
             } catch (e: Exception) {
                 e.printStackTrace()
             }
 
             _isLoading.value = false
         }
+    }
+
+    private fun sortStations(stations: List<Station>): List<Station> {
+        return stations.sortedBy { formatVelociteStationName(it.name) }
+    }
+
+    private suspend fun refreshLiveVelociteStations() {
+        _allStations.value = sortStations(jcDecauxService.getStations())
+    }
+
+    fun startVelociteAutoRefresh() {
+        if (velociteAutoRefreshJob?.isActive == true) return
+
+        velociteImmediateRefreshJob?.cancel()
+        velociteImmediateRefreshJob = viewModelScope.launch {
+            try {
+                refreshLiveVelociteStations()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+
+        velociteAutoRefreshJob = viewModelScope.launch {
+            while (isActive) {
+                delay(10_000)
+                try {
+                    refreshLiveVelociteStations()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+    }
+
+    fun stopVelociteAutoRefresh() {
+        velociteAutoRefreshJob?.cancel()
+        velociteAutoRefreshJob = null
+        velociteImmediateRefreshJob?.cancel()
+        velociteImmediateRefreshJob = null
     }
 
     fun onSearchQueryChanged(query: String) {
@@ -184,5 +233,10 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
                 e.printStackTrace()
             }
         }
+    }
+
+    override fun onCleared() {
+        stopVelociteAutoRefresh()
+        super.onCleared()
     }
 }

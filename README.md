@@ -40,7 +40,7 @@ Here is a list of features I would like to add:
 - 🚲 Extended support: Mobigo, SNCF, Citiz
 - 🗺️ Map view with nearby station detection
 
-[![Drawing the tram of Ginko Besançon with Inkscape](./wiki/making-tramway-tile.gif)](./wiki/preview.png)
+[![Drawing the tram of Ginko Besançon with Inkscape](./wiki/making-tramway-tile.gif)](./wiki/inkscape.png)
 
 ## Build this app
 

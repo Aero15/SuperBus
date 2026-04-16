@@ -122,7 +122,7 @@ fun VelociteSortBottomSheet(
             ) {
                 FeaturedSortBubble(
                     label = "Nom",
-                    icon = Icons.AutoMirrored.Filled.DirectionsBike,
+                    icon = Icons.Default.TextFields,
                     isSelected = currentSortField == VelociteSortField.NAME,
                     onClick = { selectField(VelociteSortField.NAME) }
                 )
@@ -281,7 +281,7 @@ private fun SortOptionRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 4.dp)
+            .padding(horizontal = 12.dp, vertical = 0.dp)
             .clip(RoundedCornerShape(16.dp))
             .background(backgroundColor)
             .clickable { onClick() }
