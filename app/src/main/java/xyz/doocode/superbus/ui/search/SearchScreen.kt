@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -15,7 +16,9 @@ import androidx.compose.material.icons.automirrored.filled.DirectionsBike
 import androidx.compose.material.icons.filled.DirectionsBus
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.SortByAlpha
 import androidx.compose.material.icons.filled.Tram
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
@@ -31,6 +34,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -44,6 +48,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import xyz.doocode.superbus.core.data.FavoritesRepository
 import xyz.doocode.superbus.core.dto.ginko.Arret
 import xyz.doocode.superbus.core.dto.jcdecaux.Station
+import xyz.doocode.superbus.core.util.formatVelociteStationName
+import xyz.doocode.superbus.core.util.removeAccents
 import xyz.doocode.superbus.ui.components.EmptyDataView
 import xyz.doocode.superbus.ui.components.EmptyResultsView
 import xyz.doocode.superbus.ui.components.ErrorView
@@ -55,7 +61,9 @@ import xyz.doocode.superbus.ui.details.velocite.VelociteDetailsActivity
 import xyz.doocode.superbus.ui.search.components.BusStopItem
 import xyz.doocode.superbus.ui.search.components.SearchBar
 import xyz.doocode.superbus.ui.search.components.SearchFilterOption
+import xyz.doocode.superbus.ui.search.components.VelociteSortBottomSheet
 import xyz.doocode.superbus.ui.search.components.VelociteStationItem
+import xyz.doocode.superbus.ui.search.components.VelociteStationSortedItem
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -105,6 +113,11 @@ fun SearchScreen(
         )
     }
     var showBottomSheet by remember { mutableStateOf(false) }
+
+    // Vélocité sort state (only active when showVeloOnly == true)
+    var velocitySortField by remember { mutableStateOf(VelociteSortField.NAME) }
+    var velocitySortOrder by remember { mutableStateOf(VelociteSortOrder.ASCENDING) }
+    var showVelocitySortSheet by remember { mutableStateOf(false) }
 
     // Filter state: null = all, true = vélocité only, false = bus/tram only
     var showVeloOnly by remember { mutableStateOf<Boolean?>(null) }
@@ -160,6 +173,27 @@ fun SearchScreen(
                 } else {
                     val visibleStops = if (showVeloOnly == true) emptyList() else state.stops
                     val visibleStations = if (showVeloOnly == false) emptyList() else state.stations
+                    val sortedVisibleStations = if (showVeloOnly == true) {
+                        val comparator: Comparator<Station> = when (velocitySortField) {
+                            VelociteSortField.NAME -> compareBy {
+                                formatVelociteStationName(it.name).removeAccents().lowercase()
+                            }
+
+                            VelociteSortField.NUMBER -> compareBy { it.number }
+                            VelociteSortField.MECHANICAL_BIKES -> compareBy { it.mainStands.availabilities.mechanicalBikes }
+                            VelociteSortField.ELECTRICAL_BIKES -> compareBy { it.mainStands.availabilities.electricalBikes }
+                            VelociteSortField.TOTAL_BIKES -> compareBy { it.mainStands.availabilities.bikes }
+                            VelociteSortField.AVAILABLE_STANDS -> compareBy { it.mainStands.availabilities.stands }
+                            VelociteSortField.CAPACITY -> compareBy { it.totalStands.capacity }
+                        }
+                        if (velocitySortOrder == VelociteSortOrder.ASCENDING) {
+                            visibleStations.sortedWith(comparator)
+                        } else {
+                            visibleStations.sortedWith(comparator).reversed()
+                        }
+                    } else {
+                        visibleStations
+                    }
                     val totalVisible =
                         if (showVeloOnly == null) state.merged.size
                         else visibleStops.size + visibleStations.size
@@ -197,257 +231,342 @@ fun SearchScreen(
                     if (totalVisible == 0) {
                         EmptyResultsView(query = searchQuery)
                     } else {
-                        Text(
-                            text = "$displayedCount résultats",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                        )
-                        LazyColumn(modifier = Modifier.fillMaxSize()) {
-                            if (inlineGroupedResult != null) {
-                                val groupedStop = inlineGroupedResult.first
-                                val linkedStation = inlineGroupedResult.second
+                        Box(modifier = Modifier.fillMaxSize()) {
+                            Column(modifier = Modifier.fillMaxSize()) {
+                                Text(
+                                    text = "$displayedCount résultats",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                                )
+                                LazyColumn(
+                                    modifier = Modifier.weight(1f),
+                                    contentPadding = if (showVeloOnly == true) PaddingValues(bottom = 80.dp) else PaddingValues()
+                                ) {
+                                    if (inlineGroupedResult != null) {
+                                        val groupedStop = inlineGroupedResult.first
+                                        val linkedStation = inlineGroupedResult.second
 
-                                item("recommended_stop") {
-                                    val groupedFavorite =
-                                        favorites.any { it.id == groupedStop.id && !it.detailsFromId }
-                                    var showMenu by remember { mutableStateOf(false) }
+                                        item("recommended_stop") {
+                                            val groupedFavorite =
+                                                favorites.any { it.id == groupedStop.id && !it.detailsFromId }
+                                            var showMenu by remember { mutableStateOf(false) }
 
-                                    val groupedIcon =
-                                        if (groupedFavorite) Icons.Default.Favorite else Icons.Default.Search
-                                    val groupedIconTint =
-                                        if (groupedFavorite) Color(0xFFE91E63)
-                                        else MaterialTheme.colorScheme.primary
+                                            val groupedIcon =
+                                                if (groupedFavorite) Icons.Default.Favorite else Icons.Default.Search
+                                            val groupedIconTint =
+                                                if (groupedFavorite) Color(0xFFE91E63)
+                                                else MaterialTheme.colorScheme.primary
 
-                                    Box {
-                                        ListItem(
-                                            headlineContent = {
-                                                val parts = groupedStop.nom.split(" - ", limit = 2)
-                                                if (parts.size == 2) {
-                                                    Column {
-                                                        Text(
-                                                            text = parts[0],
-                                                            style = MaterialTheme.typography.labelMedium,
-                                                            color =
-                                                                MaterialTheme.colorScheme
-                                                                    .onSurfaceVariant.copy(alpha = 0.8f)
+                                            Box {
+                                                ListItem(
+                                                    headlineContent = {
+                                                        val parts =
+                                                            groupedStop.nom.split(" - ", limit = 2)
+                                                        if (parts.size == 2) {
+                                                            Column {
+                                                                Text(
+                                                                    text = parts[0],
+                                                                    style = MaterialTheme.typography.labelMedium,
+                                                                    color =
+                                                                        MaterialTheme.colorScheme
+                                                                            .onSurfaceVariant.copy(
+                                                                                alpha = 0.8f
+                                                                            )
+                                                                )
+                                                                Text(
+                                                                    text = parts[1],
+                                                                    fontWeight = FontWeight.Bold,
+                                                                    color = MaterialTheme.colorScheme.primary,
+                                                                    style = MaterialTheme.typography.bodyLarge
+                                                                )
+                                                            }
+                                                        } else {
+                                                            Text(
+                                                                text = groupedStop.nom,
+                                                                fontWeight = FontWeight.Bold,
+                                                                color = MaterialTheme.colorScheme.primary
+                                                            )
+                                                        }
+                                                    },
+                                                    supportingContent = {
+                                                        Text("Voir les horaires de tous les quais")
+                                                    },
+                                                    leadingContent = {
+                                                        Icon(
+                                                            imageVector = groupedIcon,
+                                                            contentDescription = null,
+                                                            tint = groupedIconTint
                                                         )
-                                                        Text(
-                                                            text = parts[1],
-                                                            fontWeight = FontWeight.Bold,
+                                                    },
+                                                    trailingContent = {
+                                                        Surface(
                                                             color = MaterialTheme.colorScheme.primary,
+                                                            shape = MaterialTheme.shapes.extraSmall
+                                                        ) {
+                                                            Text(
+                                                                text = "Recommandé",
+                                                                style = MaterialTheme.typography.labelSmall,
+                                                                modifier = Modifier.padding(
+                                                                    horizontal = 6.dp,
+                                                                    vertical = 2.dp
+                                                                ),
+                                                                color = MaterialTheme.colorScheme.onPrimary
+                                                            )
+                                                        }
+                                                    },
+                                                    colors =
+                                                        ListItemDefaults.colors(
+                                                            containerColor =
+                                                                MaterialTheme.colorScheme.primaryContainer
+                                                                    .copy(alpha = 0.3f)
+                                                        ),
+                                                    modifier =
+                                                        Modifier
+                                                            .padding(
+                                                                horizontal = 8.dp,
+                                                                vertical = 8.dp
+                                                            )
+                                                            .clip(MaterialTheme.shapes.medium)
+                                                            .combinedClickable(
+                                                                onClick = {
+                                                                    openStopDetails(
+                                                                        groupedStop,
+                                                                        false
+                                                                    )
+                                                                },
+                                                                onLongClick = { showMenu = true }
+                                                            )
+                                                )
+
+                                                StopActionsContainer(
+                                                    expanded = showMenu,
+                                                    onDismissRequest = { showMenu = false },
+                                                    stopName = groupedStop.nom,
+                                                    stopId = groupedStop.id,
+                                                    isFavorite = groupedFavorite,
+                                                    onToggleFavorite = {
+                                                        viewModel.toggleFavorite(groupedStop, false)
+                                                    },
+                                                    onFillQuery = { query ->
+                                                        viewModel.onSearchQueryChanged(query)
+                                                    }
+                                                )
+                                            }
+
+                                            HorizontalDivider(thickness = 0.5.dp)
+                                        }
+
+                                        items(groupedStop.duplicates) { duplicate ->
+                                            var showMenu by remember { mutableStateOf(false) }
+                                            val isFav =
+                                                favorites.any { it.id == duplicate.id && it.detailsFromId }
+                                            val isTram = duplicate.id.startsWith("t_")
+                                            val multipleTrams =
+                                                groupedStop.duplicates.count { it.id.startsWith("t_") } > 1
+                                            val multipleBuses =
+                                                groupedStop.duplicates.count { !it.id.startsWith("t_") } > 1
+                                            val idNumber = duplicate.id.filter { it.isDigit() }
+
+                                            val dupIcon =
+                                                when {
+                                                    isFav -> Icons.Default.Favorite
+                                                    isTram -> Icons.Default.Tram
+                                                    else -> Icons.Default.DirectionsBus
+                                                }
+                                            val dupIconTint =
+                                                when {
+                                                    isFav -> Color(0xFFE91E63)
+                                                    isTram -> Color(0xFF4CAF50)
+                                                    else -> Color(0xFFFF6D00)
+                                                }
+                                            val dupLabel =
+                                                when {
+                                                    isTram && multipleTrams && idNumber.isNotEmpty() ->
+                                                        "Quai de tramway n°$idNumber"
+
+                                                    isTram -> "Quai de tramway"
+                                                    multipleBuses && idNumber.isNotEmpty() -> "Arrêt de bus n°$idNumber"
+                                                    else -> "Arrêt de bus"
+                                                }
+
+                                            Box {
+                                                ListItem(
+                                                    leadingContent = {
+                                                        Icon(
+                                                            imageVector = dupIcon,
+                                                            contentDescription = null,
+                                                            tint = dupIconTint
+                                                        )
+                                                    },
+                                                    headlineContent = {
+                                                        Text(
+                                                            text = dupLabel,
                                                             style = MaterialTheme.typography.bodyLarge
                                                         )
-                                                    }
-                                                } else {
-                                                    Text(
-                                                        text = groupedStop.nom,
-                                                        fontWeight = FontWeight.Bold,
-                                                        color = MaterialTheme.colorScheme.primary
-                                                    )
-                                                }
-                                            },
-                                            supportingContent = {
-                                                Text("Voir les horaires de tous les quais")
-                                            },
-                                            leadingContent = {
-                                                Icon(
-                                                    imageVector = groupedIcon,
-                                                    contentDescription = null,
-                                                    tint = groupedIconTint
-                                                )
-                                            },
-                                            trailingContent = {
-                                                Surface(
-                                                    color = MaterialTheme.colorScheme.primary,
-                                                    shape = MaterialTheme.shapes.extraSmall
-                                                ) {
-                                                    Text(
-                                                        text = "Recommandé",
-                                                        style = MaterialTheme.typography.labelSmall,
-                                                        modifier = Modifier.padding(
-                                                            horizontal = 6.dp,
-                                                            vertical = 2.dp
-                                                        ),
-                                                        color = MaterialTheme.colorScheme.onPrimary
-                                                    )
-                                                }
-                                            },
-                                            colors =
-                                                ListItemDefaults.colors(
-                                                    containerColor =
-                                                        MaterialTheme.colorScheme.primaryContainer
-                                                            .copy(alpha = 0.3f)
-                                                ),
-                                            modifier =
-                                                Modifier
-                                                    .padding(horizontal = 8.dp, vertical = 8.dp)
-                                                    .clip(MaterialTheme.shapes.medium)
-                                                    .combinedClickable(
-                                                        onClick = {
-                                                            openStopDetails(groupedStop, false)
-                                                        },
-                                                        onLongClick = { showMenu = true }
-                                                    )
-                                        )
-
-                                        StopActionsContainer(
-                                            expanded = showMenu,
-                                            onDismissRequest = { showMenu = false },
-                                            stopName = groupedStop.nom,
-                                            stopId = groupedStop.id,
-                                            isFavorite = groupedFavorite,
-                                            onToggleFavorite = {
-                                                viewModel.toggleFavorite(groupedStop, false)
-                                            },
-                                            onFillQuery = { query ->
-                                                viewModel.onSearchQueryChanged(query)
-                                            }
-                                        )
-                                    }
-
-                                    HorizontalDivider(thickness = 0.5.dp)
-                                }
-
-                                items(groupedStop.duplicates) { duplicate ->
-                                    var showMenu by remember { mutableStateOf(false) }
-                                    val isFav =
-                                        favorites.any { it.id == duplicate.id && it.detailsFromId }
-                                    val isTram = duplicate.id.startsWith("t_")
-                                    val multipleTrams =
-                                        groupedStop.duplicates.count { it.id.startsWith("t_") } > 1
-                                    val multipleBuses =
-                                        groupedStop.duplicates.count { !it.id.startsWith("t_") } > 1
-                                    val idNumber = duplicate.id.filter { it.isDigit() }
-
-                                    val dupIcon =
-                                        when {
-                                            isFav -> Icons.Default.Favorite
-                                            isTram -> Icons.Default.Tram
-                                            else -> Icons.Default.DirectionsBus
-                                        }
-                                    val dupIconTint =
-                                        when {
-                                            isFav -> Color(0xFFE91E63)
-                                            isTram -> Color(0xFF4CAF50)
-                                            else -> Color(0xFFFF6D00)
-                                        }
-                                    val dupLabel =
-                                        when {
-                                            isTram && multipleTrams && idNumber.isNotEmpty() ->
-                                                "Quai de tramway n°$idNumber"
-
-                                            isTram -> "Quai de tramway"
-                                            multipleBuses && idNumber.isNotEmpty() -> "Arrêt de bus n°$idNumber"
-                                            else -> "Arrêt de bus"
-                                        }
-
-                                    Box {
-                                        ListItem(
-                                            leadingContent = {
-                                                Icon(
-                                                    imageVector = dupIcon,
-                                                    contentDescription = null,
-                                                    tint = dupIconTint
-                                                )
-                                            },
-                                            headlineContent = {
-                                                Text(
-                                                    text = dupLabel,
-                                                    style = MaterialTheme.typography.bodyLarge
-                                                )
-                                            },
-                                            trailingContent = {
-                                                Text(
-                                                    text = "#${duplicate.id}",
-                                                    fontFamily = FontFamily.Monospace,
-                                                    color =
-                                                        MaterialTheme.colorScheme.onSurfaceVariant.copy(
-                                                            alpha = 0.6f
-                                                        ),
-                                                    style = MaterialTheme.typography.bodyMedium
-                                                )
-                                            },
-                                            modifier =
-                                                Modifier.combinedClickable(
-                                                    onClick = {
-                                                        openStopDetails(duplicate, true)
                                                     },
-                                                    onLongClick = { showMenu = true }
+                                                    trailingContent = {
+                                                        Text(
+                                                            text = "#${duplicate.id}",
+                                                            fontFamily = FontFamily.Monospace,
+                                                            color =
+                                                                MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                                                                    alpha = 0.6f
+                                                                ),
+                                                            style = MaterialTheme.typography.bodyMedium
+                                                        )
+                                                    },
+                                                    modifier =
+                                                        Modifier.combinedClickable(
+                                                            onClick = {
+                                                                openStopDetails(duplicate, true)
+                                                            },
+                                                            onLongClick = { showMenu = true }
+                                                        )
                                                 )
-                                        )
 
-                                        StopActionsContainer(
-                                            expanded = showMenu,
-                                            onDismissRequest = { showMenu = false },
-                                            stopName = duplicate.nom,
-                                            stopId = duplicate.id,
-                                            isFavorite = isFav,
-                                            onToggleFavorite = {
-                                                viewModel.toggleFavorite(duplicate, true)
-                                            },
-                                            onFillQuery = { query ->
-                                                viewModel.onSearchQueryChanged(query)
+                                                StopActionsContainer(
+                                                    expanded = showMenu,
+                                                    onDismissRequest = { showMenu = false },
+                                                    stopName = duplicate.nom,
+                                                    stopId = duplicate.id,
+                                                    isFavorite = isFav,
+                                                    onToggleFavorite = {
+                                                        viewModel.toggleFavorite(duplicate, true)
+                                                    },
+                                                    onFillQuery = { query ->
+                                                        viewModel.onSearchQueryChanged(query)
+                                                    }
+                                                )
                                             }
-                                        )
-                                    }
 
-                                    HorizontalDivider(thickness = 0.5.dp)
-                                }
+                                            HorizontalDivider(thickness = 0.5.dp)
+                                        }
 
-                                if (linkedStation != null && showVeloOnly != false) {
-                                    item("linked_velocite_station") {
-                                        ListItem(
-                                            leadingContent = {
-                                                Icon(
-                                                    imageVector = Icons.AutoMirrored.Filled.DirectionsBike,
-                                                    contentDescription = null,
-                                                    tint = Color(0xFF00AAC2)
+                                        if (linkedStation != null && showVeloOnly != false) {
+                                            item("linked_velocite_station") {
+                                                ListItem(
+                                                    leadingContent = {
+                                                        Icon(
+                                                            imageVector = Icons.AutoMirrored.Filled.DirectionsBike,
+                                                            contentDescription = null,
+                                                            tint = Color(0xFF00AAC2)
+                                                        )
+                                                    },
+                                                    headlineContent = {
+                                                        Text(
+                                                            text = "Vélocité",
+                                                            style = MaterialTheme.typography.bodyLarge
+                                                        )
+                                                    },
+                                                    trailingContent = {
+                                                        Text(
+                                                            text = "#${linkedStation.number}",
+                                                            fontFamily = FontFamily.Monospace,
+                                                            color =
+                                                                MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                                                                    alpha = 0.6f
+                                                                ),
+                                                            style = MaterialTheme.typography.bodyMedium
+                                                        )
+                                                    },
+                                                    modifier = Modifier.clickable {
+                                                        val intent = Intent(
+                                                            context,
+                                                            VelociteDetailsActivity::class.java
+                                                        ).apply {
+                                                            putExtra(
+                                                                VelociteDetailsActivity.EXTRA_STATION_ID,
+                                                                linkedStation.number
+                                                            )
+                                                            putExtra(
+                                                                VelociteDetailsActivity.EXTRA_STATION_NAME,
+                                                                linkedStation.name
+                                                            )
+                                                        }
+                                                        context.startActivity(intent)
+                                                    }
                                                 )
-                                            },
-                                            headlineContent = {
-                                                Text(
-                                                    text = "Vélocité",
-                                                    style = MaterialTheme.typography.bodyLarge
-                                                )
-                                            },
-                                            trailingContent = {
-                                                Text(
-                                                    text = "#${linkedStation.number}",
-                                                    fontFamily = FontFamily.Monospace,
-                                                    color =
-                                                        MaterialTheme.colorScheme.onSurfaceVariant.copy(
-                                                            alpha = 0.6f
-                                                        ),
-                                                    style = MaterialTheme.typography.bodyMedium
-                                                )
-                                            },
-                                            modifier = Modifier.clickable {
-                                                val intent = Intent(
-                                                    context,
-                                                    VelociteDetailsActivity::class.java
-                                                ).apply {
-                                                    putExtra(
-                                                        VelociteDetailsActivity.EXTRA_STATION_ID,
-                                                        linkedStation.number
-                                                    )
-                                                    putExtra(
-                                                        VelociteDetailsActivity.EXTRA_STATION_NAME,
-                                                        linkedStation.name
+                                                HorizontalDivider(thickness = 0.5.dp)
+                                            }
+                                        }
+                                    } else if (showVeloOnly == null) {
+                                        // Filtre "Tout" : liste fusionnée et triée alphabétiquement
+                                        items(state.merged) { result ->
+                                            when (result) {
+                                                is SearchResult.Stop -> {
+                                                    val stop = result.arret
+                                                    val favorite =
+                                                        favorites.find {
+                                                            it.id == stop.id &&
+                                                                    ((stop.duplicates.size > 1 &&
+                                                                            !it.detailsFromId) ||
+                                                                            (stop.duplicates.size == 1 &&
+                                                                                    it.detailsFromId))
+                                                        }
+                                                    BusStopItem(
+                                                        stop = stop,
+                                                        searchQuery = searchQuery,
+                                                        isFavorite = favorite != null,
+                                                        favoriteLines = favorite?.lines
+                                                            ?: emptyList(),
+                                                        groupDuplicates = groupDuplicates,
+                                                        hasLinkedVelociteStation = result.linkedStation != null,
+                                                        onFillQuery = { name ->
+                                                            viewModel.onSearchQueryChanged(name)
+                                                        },
+                                                        onToggleFavorite = {
+                                                            viewModel.toggleFavorite(stop)
+                                                        },
+                                                        onClick = {
+                                                            if (groupDuplicates && stop.duplicates.size > 1) {
+                                                                openStopDetails(stop, false)
+                                                            } else {
+                                                                openStopDetails(
+                                                                    stop,
+                                                                    groupDuplicates
+                                                                )
+                                                            }
+                                                        },
+                                                        onVariantsClick = {
+                                                            selectedStop = stop
+                                                            selectedLinkedStation =
+                                                                result.linkedStation
+                                                            showBottomSheet = true
+                                                        },
+                                                        onDuplicateClick = { duplicate ->
+                                                            openStopDetails(duplicate, true)
+                                                        }
                                                     )
                                                 }
-                                                context.startActivity(intent)
+
+                                                is SearchResult.VeloStation -> {
+                                                    VelociteStationItem(
+                                                        station = result.station,
+                                                        searchQuery = searchQuery,
+                                                        onClick = {
+                                                            val intent = Intent(
+                                                                context,
+                                                                VelociteDetailsActivity::class.java
+                                                            ).apply {
+                                                                putExtra(
+                                                                    VelociteDetailsActivity.EXTRA_STATION_ID,
+                                                                    result.station.number
+                                                                )
+                                                                putExtra(
+                                                                    VelociteDetailsActivity.EXTRA_STATION_NAME,
+                                                                    result.station.name
+                                                                )
+                                                            }
+                                                            context.startActivity(intent)
+                                                        }
+                                                    )
+                                                }
                                             }
-                                        )
-                                        HorizontalDivider(thickness = 0.5.dp)
-                                    }
-                                }
-                            } else if (showVeloOnly == null) {
-                                // Filtre "Tout" : liste fusionnée et triée alphabétiquement
-                                items(state.merged) { result ->
-                                    when (result) {
-                                        is SearchResult.Stop -> {
-                                            val stop = result.arret
+                                        }
+                                    } else {
+                                        // Filtres "Bus & Tram" ou "Vélocité" : listes séparées
+                                        items(visibleStops) { stop ->
                                             val favorite =
                                                 favorites.find {
                                                     it.id == stop.id &&
@@ -462,13 +581,14 @@ fun SearchScreen(
                                                 isFavorite = favorite != null,
                                                 favoriteLines = favorite?.lines ?: emptyList(),
                                                 groupDuplicates = groupDuplicates,
-                                                hasLinkedVelociteStation = result.linkedStation != null,
+                                                hasLinkedVelociteStation =
+                                                    showVeloOnly != false && state.linkedStationByStopId.containsKey(
+                                                        stop.id
+                                                    ),
                                                 onFillQuery = { name ->
                                                     viewModel.onSearchQueryChanged(name)
                                                 },
-                                                onToggleFavorite = {
-                                                    viewModel.toggleFavorite(stop)
-                                                },
+                                                onToggleFavorite = { viewModel.toggleFavorite(stop) },
                                                 onClick = {
                                                     if (groupDuplicates && stop.duplicates.size > 1) {
                                                         openStopDetails(stop, false)
@@ -478,7 +598,9 @@ fun SearchScreen(
                                                 },
                                                 onVariantsClick = {
                                                     selectedStop = stop
-                                                    selectedLinkedStation = result.linkedStation
+                                                    selectedLinkedStation =
+                                                        if (showVeloOnly == false) null
+                                                        else state.linkedStationByStopId[stop.id]
                                                     showBottomSheet = true
                                                 },
                                                 onDuplicateClick = { duplicate ->
@@ -486,99 +608,69 @@ fun SearchScreen(
                                                 }
                                             )
                                         }
-
-                                        is SearchResult.VeloStation -> {
-                                            VelociteStationItem(
-                                                station = result.station,
-                                                searchQuery = searchQuery,
-                                                onClick = {
-                                                    val intent = Intent(
-                                                        context,
-                                                        VelociteDetailsActivity::class.java
-                                                    ).apply {
-                                                        putExtra(
-                                                            VelociteDetailsActivity.EXTRA_STATION_ID,
-                                                            result.station.number
-                                                        )
-                                                        putExtra(
-                                                            VelociteDetailsActivity.EXTRA_STATION_NAME,
-                                                            result.station.name
-                                                        )
+                                        items(sortedVisibleStations) { station ->
+                                            if (showVeloOnly == true) {
+                                                VelociteStationSortedItem(
+                                                    station = station,
+                                                    searchQuery = searchQuery,
+                                                    sortField = velocitySortField,
+                                                    onClick = {
+                                                        val intent = Intent(
+                                                            context,
+                                                            VelociteDetailsActivity::class.java
+                                                        ).apply {
+                                                            putExtra(
+                                                                VelociteDetailsActivity.EXTRA_STATION_ID,
+                                                                station.number
+                                                            )
+                                                            putExtra(
+                                                                VelociteDetailsActivity.EXTRA_STATION_NAME,
+                                                                station.name
+                                                            )
+                                                        }
+                                                        context.startActivity(intent)
                                                     }
-                                                    context.startActivity(intent)
-                                                }
-                                            )
+                                                )
+                                            } else {
+                                                VelociteStationItem(
+                                                    station = station,
+                                                    searchQuery = searchQuery,
+                                                    onClick = {
+                                                        val intent = Intent(
+                                                            context,
+                                                            VelociteDetailsActivity::class.java
+                                                        ).apply {
+                                                            putExtra(
+                                                                VelociteDetailsActivity.EXTRA_STATION_ID,
+                                                                station.number
+                                                            )
+                                                            putExtra(
+                                                                VelociteDetailsActivity.EXTRA_STATION_NAME,
+                                                                station.name
+                                                            )
+                                                        }
+                                                        context.startActivity(intent)
+                                                    }
+                                                )
+                                            }
                                         }
                                     }
-                                }
-                            } else {
-                                // Filtres "Bus & Tram" ou "Vélocité" : listes séparées
-                                items(visibleStops) { stop ->
-                                    val favorite =
-                                        favorites.find {
-                                            it.id == stop.id &&
-                                                    ((stop.duplicates.size > 1 &&
-                                                            !it.detailsFromId) ||
-                                                            (stop.duplicates.size == 1 &&
-                                                                    it.detailsFromId))
-                                        }
-                                    BusStopItem(
-                                        stop = stop,
-                                        searchQuery = searchQuery,
-                                        isFavorite = favorite != null,
-                                        favoriteLines = favorite?.lines ?: emptyList(),
-                                        groupDuplicates = groupDuplicates,
-                                        hasLinkedVelociteStation =
-                                            showVeloOnly != false && state.linkedStationByStopId.containsKey(
-                                                stop.id
-                                            ),
-                                        onFillQuery = { name ->
-                                            viewModel.onSearchQueryChanged(name)
-                                        },
-                                        onToggleFavorite = { viewModel.toggleFavorite(stop) },
-                                        onClick = {
-                                            if (groupDuplicates && stop.duplicates.size > 1) {
-                                                openStopDetails(stop, false)
-                                            } else {
-                                                openStopDetails(stop, groupDuplicates)
-                                            }
-                                        },
-                                        onVariantsClick = {
-                                            selectedStop = stop
-                                            selectedLinkedStation =
-                                                if (showVeloOnly == false) null
-                                                else state.linkedStationByStopId[stop.id]
-                                            showBottomSheet = true
-                                        },
-                                        onDuplicateClick = { duplicate ->
-                                            openStopDetails(duplicate, true)
-                                        }
-                                    )
-                                }
-                                items(visibleStations) { station ->
-                                    VelociteStationItem(
-                                        station = station,
-                                        searchQuery = searchQuery,
-                                        onClick = {
-                                            val intent = Intent(
-                                                context,
-                                                VelociteDetailsActivity::class.java
-                                            ).apply {
-                                                putExtra(
-                                                    VelociteDetailsActivity.EXTRA_STATION_ID,
-                                                    station.number
-                                                )
-                                                putExtra(
-                                                    VelociteDetailsActivity.EXTRA_STATION_NAME,
-                                                    station.name
-                                                )
-                                            }
-                                            context.startActivity(intent)
-                                        }
+                                } // end LazyColumn
+                            } // end Column
+                            if (showVeloOnly == true) {
+                                FloatingActionButton(
+                                    onClick = { showVelocitySortSheet = true },
+                                    modifier = Modifier
+                                        .align(Alignment.BottomEnd)
+                                        .padding(16.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Filled.SortByAlpha,
+                                        contentDescription = "Trier les stations Vélocité"
                                     )
                                 }
                             }
-                        }
+                        } // end Box
                     } // end else totalVisible > 0
 
                     if (showBottomSheet && selectedStop != null) {
@@ -637,6 +729,16 @@ fun SearchScreen(
                                         context.startActivity(intent)
                                     }
                                 }
+                        )
+                    }
+
+                    if (showVelocitySortSheet) {
+                        VelociteSortBottomSheet(
+                            currentSortField = velocitySortField,
+                            currentSortOrder = velocitySortOrder,
+                            onSortFieldChange = { velocitySortField = it },
+                            onSortOrderChange = { velocitySortOrder = it },
+                            onDismissRequest = { showVelocitySortSheet = false }
                         )
                     }
                 }
