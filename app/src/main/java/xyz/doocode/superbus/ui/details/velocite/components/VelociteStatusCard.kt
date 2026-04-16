@@ -1,6 +1,9 @@
 package xyz.doocode.superbus.ui.details.velocite.components
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.CheckCircle
@@ -12,86 +15,110 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import xyz.doocode.superbus.core.dto.jcdecaux.Station
-import xyz.doocode.superbus.ui.theme.AvailableStandsColor
-import xyz.doocode.superbus.ui.theme.ElectricBikeColor
 
 @Composable
 fun VelociteStatusCard(station: Station) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+    Column(modifier = Modifier.padding(16.dp)) {
+        Text(
+            text = "Informations",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center
         )
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = "Informations",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Row(modifier = Modifier.fillMaxWidth()) {
+            VelociteStatusItem(
+                modifier = Modifier.weight(1f),
+                icon = if (station.status == "OPEN") Icons.Default.CheckCircle
+                else Icons.Default.Cancel,
+                color = if (station.status == "OPEN") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                label = if (station.status == "OPEN") "Station ouverte" else "Station fermée",
+                positive = station.status == "OPEN"
             )
-            Spacer(modifier = Modifier.height(12.dp))
 
-            Row(
-                modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                VelociteStatusItem(
-                    icon = if (station.status == "OPEN") Icons.Default.CheckCircle
-                    else Icons.Default.Cancel,
-                    color = if (station.status == "OPEN") ElectricBikeColor else Color.Red,
-                    label = if (station.status == "OPEN") "Ouverte" else "Fermée"
-                )
+            VelociteStatusItem(
+                modifier = Modifier.weight(1f),
+                icon = if (station.connected) Icons.Default.Wifi else Icons.Default.WifiOff,
+                color = if (station.connected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                label = if (station.connected) "Station en ligne" else "Station déconnectée",
+                positive = station.connected
+            )
 
-                VelociteStatusItem(
-                    icon = if (station.connected) Icons.Default.Wifi else Icons.Default.WifiOff,
-                    color = if (station.connected) MaterialTheme.colorScheme.primary
-                    else Color.Gray,
-                    label = if (station.connected) "En Ligne" else "Déconnectée"
-                )
+            VelociteStatusItem(
+                modifier = Modifier.weight(1f),
+                icon = Icons.Default.CreditCard,
+                color = if (station.banking) MaterialTheme.colorScheme.primary
+                else Color.Gray,
+                label = if (station.banking) "Paiement CB possible" else "Paiement CB indisponible",
+                positive = station.banking
+            )
 
-                VelociteStatusItem(
-                    icon = Icons.Default.CreditCard,
-                    color = if (station.banking) MaterialTheme.colorScheme.primary
-                    else Color.Gray,
-                    label = "CB",
-                    strikeThrough = !station.banking
-                )
-
-                VelociteStatusItem(
-                    icon = Icons.Default.Star,
-                    color = if (station.bonus) AvailableStandsColor else Color.Gray,
-                    label = "Bonus",
-                    strikeThrough = !station.bonus
-                )
-            }
+            VelociteStatusItem(
+                modifier = Modifier.weight(1f),
+                icon = Icons.Default.Star,
+                color = if (station.bonus) MaterialTheme.colorScheme.primary else Color.Gray,
+                label = if (station.bonus) "Station bonus" else "Station non bonus",
+                positive = station.bonus
+            )
         }
     }
 }
 
 @Composable
 fun VelociteStatusItem(
-    icon: ImageVector, color: Color, label: String, strikeThrough: Boolean = false
+    icon: ImageVector,
+    color: Color,
+    label: String,
+    positive: Boolean,
+    modifier: Modifier = Modifier
 ) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Icon(
-            imageVector = icon,
-            contentDescription = label,
-            tint = color,
-            modifier = Modifier.size(28.dp)
-        )
+    val strikeColor = color
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Icon(
+                imageVector = icon,
+                contentDescription = label,
+                tint = color,
+                modifier = Modifier
+                    .size(28.dp)
+                    .then(
+                        if (!positive) Modifier.drawWithContent {
+                            drawContent()
+                            val strokeWidth = 2.dp.toPx()
+                            drawLine(
+                                color = strikeColor,
+                                start = Offset(0f, size.height),
+                                end = Offset(size.width, 0f),
+                                strokeWidth = strokeWidth,
+                                cap = StrokeCap.Round
+                            )
+                        } else Modifier
+                    )
+            )
+        }
         Spacer(modifier = Modifier.height(4.dp))
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
             color = color,
-            textDecoration = if (strikeThrough) TextDecoration.LineThrough else null
+            textAlign = TextAlign.Center
         )
     }
 }
