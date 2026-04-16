@@ -28,126 +28,117 @@ fun VelociteCapacityChartCard(station: Station) {
     val capacity = station.totalStands.capacity
     val unavailableStands = maxOf(0, capacity - (mechBikes + elecBikes + availableStands))
 
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-        )
-    ) {
-        Column(modifier = Modifier.padding(top = 16.dp, bottom = 16.dp)) {
-            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Répartition détaillée",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-
-            if (capacity > 0) {
-                val totalBikes = mechBikes + elecBikes
-
-                Row(
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp)
-                        .padding(top = 8.dp, bottom = 16.dp)
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Start,
-                    verticalAlignment = Alignment.Bottom
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = totalBikes.toString(),
-                            style = MaterialTheme.typography.displaySmall.copy(
-                                fontWeight = FontWeight.ExtraBold,
-                                fontSize = 72.sp
-                            ),
-                            color = if (totalBikes == 0) MaterialTheme.colorScheme.error
-                            else MaterialTheme.colorScheme.primary
-                        )
-                        Text(
-                            text = "vélos".uppercase(),
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = 0.5.sp
-                            ),
-                            color = if (totalBikes == 0) MaterialTheme.colorScheme.error
-                            else MaterialTheme.colorScheme.primary,
-                            lineHeight = 12.sp
-                        )
-                    }
-
-                    Text(
-                        text = "/",
-                        style = MaterialTheme.typography.displaySmall.copy(
-                            fontWeight = FontWeight.Light
-                        ),
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 20.dp)
-                    )
-
-                    Column {
-                        Text(
-                            text = capacity.toString(),
-                            style = MaterialTheme.typography.displaySmall.copy(
-                                fontWeight = FontWeight.ExtraBold
-                            ),
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
-                        Text(
-                            text = "bornes".uppercase(),
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = 0.5.sp
-                            ),
-                            lineHeight = 12.sp
-                        )
-                    }
-                }
-
-                VelociteCapacityGrid(
-                    station = station,
-                    modifier = Modifier.padding(horizontal = 16.dp)
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Legend
-                Column(
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    LegendItem(
-                        color = MechanicalBikeColor, label = "Vélos mécaniques", value = mechBikes
-                    )
-                    LegendItem(
-                        color = ElectricBikeColor, label = "Vélos électriques", value = elecBikes
-                    )
-                    LegendItem(
-                        color = AvailableStandsColor,
-                        label = "Places disponibles",
-                        value = availableStands
-                    )
-                    LegendItem(
-                        color = UnavailableStandsColor,
-                        label = "Hors service / Non dispo.",
-                        value = unavailableStands
-                    )
-                }
-            } else {
+    Column/*(modifier = Modifier.padding(top = 16.dp, bottom = 16.dp))*/ {
+        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text(
-                    text = "Capacité inconnue.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(horizontal = 16.dp)
+                    text = "Répartition détaillée",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
                 )
             }
+        }
+
+        if (capacity > 0) {
+            val totalBikes = mechBikes + elecBikes
+
+            Row(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .padding(top = 8.dp, bottom = 16.dp)
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.Bottom
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = totalBikes.toString(),
+                        style = MaterialTheme.typography.displaySmall.copy(
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 72.sp
+                        ),
+                        color = if (totalBikes == 0) MaterialTheme.colorScheme.error
+                        else MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = "vélos".uppercase(),
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.5.sp
+                        ),
+                        color = if (totalBikes == 0) MaterialTheme.colorScheme.error
+                        else MaterialTheme.colorScheme.primary,
+                        lineHeight = 12.sp
+                    )
+                }
+
+                Text(
+                    text = "/",
+                    style = MaterialTheme.typography.displaySmall.copy(
+                        fontWeight = FontWeight.Light
+                    ),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 26.dp)
+                )
+
+                Column {
+                    Text(
+                        text = capacity.toString(),
+                        style = MaterialTheme.typography.displaySmall.copy(
+                            fontWeight = FontWeight.ExtraBold
+                        ),
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    Text(
+                        text = "bornes".uppercase(),
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.5.sp
+                        ),
+                        lineHeight = 12.sp
+                    )
+                }
+            }
+
+            VelociteCapacityGrid(
+                station = station,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Legend
+            Column(
+                modifier = Modifier.padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                LegendItem(
+                    color = MechanicalBikeColor, label = "Vélos mécaniques", value = mechBikes
+                )
+                LegendItem(
+                    color = ElectricBikeColor, label = "Vélos électriques", value = elecBikes
+                )
+                LegendItem(
+                    color = AvailableStandsColor,
+                    label = "Places disponibles",
+                    value = availableStands
+                )
+                LegendItem(
+                    color = UnavailableStandsColor,
+                    label = "Hors service / Non dispo.",
+                    value = unavailableStands
+                )
+            }
+        } else {
+            Text(
+                text = "Capacité inconnue.",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
         }
     }
 }

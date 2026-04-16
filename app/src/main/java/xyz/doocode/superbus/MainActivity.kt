@@ -56,6 +56,7 @@ class MainActivity : ComponentActivity() {
 fun SuperBusApp() {
     var currentDestination by rememberSaveable { mutableStateOf(AppDestinations.FAVORITES) }
     var autoFocusSearch by rememberSaveable { mutableStateOf(false) }
+    var autoVelociteFilter by rememberSaveable { mutableStateOf(false) }
 
     NavigationSuiteScaffold(
         navigationSuiteItems = {
@@ -122,7 +123,9 @@ fun SuperBusApp() {
                 AppDestinations.SEARCH -> SearchScreen(
                     modifier = modifier,
                     focusOnStart = autoFocusSearch,
-                    onFocusConsumed = { autoFocusSearch = false }
+                    onFocusConsumed = { autoFocusSearch = false },
+                    initialFilter = if (autoVelociteFilter) xyz.doocode.superbus.ui.search.components.SearchFilterOption.VELOCITE else xyz.doocode.superbus.ui.search.components.SearchFilterOption.NONE,
+                    onFilterConsumed = { autoVelociteFilter = false }
                 )
 
                 AppDestinations.TRAFFIC -> TrafficScreen(modifier)
@@ -131,6 +134,9 @@ fun SuperBusApp() {
                         autoFocusSearch = true
                     }
                     currentDestination = dest
+                }, onNavigateToVelociteSearch = {
+                    autoVelociteFilter = true
+                    currentDestination = AppDestinations.SEARCH
                 })
             }
         }

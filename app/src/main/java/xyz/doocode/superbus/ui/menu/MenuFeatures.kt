@@ -14,7 +14,10 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun MainFeaturesGrid(onItemClick: (MenuFeature) -> Unit, columns: Int = 2) {
     Column(modifier = Modifier.padding(horizontal = if (columns == 2) 16.dp else 0.dp)) {
-        val topFeatures = listOf(MenuFeature.MAP, MenuFeature.FAVORITES, MenuFeature.LINES)
+        val topFeatures = listOf(/*MenuFeature.MAP,*/ MenuFeature.VELOCITE,
+            MenuFeature.FAVORITES,
+            MenuFeature.LINES
+        )
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -65,12 +68,14 @@ fun CompactFeatureTile(
     modifier: Modifier = Modifier
 ) {
     val containerColor = when (feature) {
-        MenuFeature.MAP -> MaterialTheme.colorScheme.tertiary
+        //MenuFeature.MAP -> MaterialTheme.colorScheme.tertiary
+        MenuFeature.VELOCITE -> MaterialTheme.colorScheme.tertiary
         MenuFeature.FAVORITES -> MaterialTheme.colorScheme.secondary
         else -> MaterialTheme.colorScheme.surfaceVariant
     }
     val contentColor = when (feature) {
-        MenuFeature.MAP -> MaterialTheme.colorScheme.onTertiary
+        //MenuFeature.MAP -> MaterialTheme.colorScheme.onTertiary
+        MenuFeature.VELOCITE -> MaterialTheme.colorScheme.onTertiary
         MenuFeature.FAVORITES -> MaterialTheme.colorScheme.onSecondary
         else -> MaterialTheme.colorScheme.onSurfaceVariant
     }

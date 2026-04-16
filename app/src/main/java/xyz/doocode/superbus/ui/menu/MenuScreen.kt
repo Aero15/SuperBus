@@ -21,7 +21,8 @@ import xyz.doocode.superbus.ui.about.AboutActivity
 @Composable
 fun MenuScreen(
     modifier: Modifier = Modifier,
-    onNavigateTo: (AppDestinations) -> Unit = {}
+    onNavigateTo: (AppDestinations) -> Unit = {},
+    onNavigateToVelociteSearch: () -> Unit = {}
 ) {
     val viewModel: MenuViewModel = viewModel()
     val context = LocalContext.current
@@ -35,10 +36,17 @@ fun MenuScreen(
         when (feature) {
             MenuFeature.FAVORITES -> onNavigateTo(AppDestinations.FAVORITES)
             //MenuFeature.MAP -> onNavigateTo(AppDestinations.MAP)
+            MenuFeature.VELOCITE -> onNavigateToVelociteSearch()
             MenuFeature.TRAFFIC -> onNavigateTo(AppDestinations.TRAFFIC)
             MenuFeature.LINES -> {
-                context.startActivity(Intent(context, xyz.doocode.superbus.ui.lines.LinesActivity::class.java))
+                context.startActivity(
+                    Intent(
+                        context,
+                        xyz.doocode.superbus.ui.lines.LinesActivity::class.java
+                    )
+                )
             }
+
             else -> Toast.makeText(context, "TODO: ${feature.label}", Toast.LENGTH_SHORT).show()
         }
     }
@@ -58,6 +66,7 @@ fun MenuScreen(
                 val intent = Intent(context, AboutActivity::class.java)
                 context.startActivity(intent)
             }
+
             else -> Toast.makeText(context, "TODO: ${utility.label}", Toast.LENGTH_SHORT).show()
         }
     }

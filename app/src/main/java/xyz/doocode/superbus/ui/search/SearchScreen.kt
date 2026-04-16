@@ -63,7 +63,9 @@ fun SearchScreen(
     modifier: Modifier = Modifier,
     viewModel: SearchViewModel = viewModel(),
     focusOnStart: Boolean = false,
-    onFocusConsumed: () -> Unit = {}
+    onFocusConsumed: () -> Unit = {},
+    initialFilter: SearchFilterOption = SearchFilterOption.NONE,
+    onFilterConsumed: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
@@ -106,6 +108,13 @@ fun SearchScreen(
 
     // Filter state: null = all, true = vélocité only, false = bus/tram only
     var showVeloOnly by remember { mutableStateOf<Boolean?>(null) }
+
+    LaunchedEffect(initialFilter) {
+        if (initialFilter == SearchFilterOption.VELOCITE) {
+            showVeloOnly = true
+            onFilterConsumed()
+        }
+    }
 
     // Connect to Favorites Repository
     val favoritesRepository = remember { FavoritesRepository.getInstance(context) }
