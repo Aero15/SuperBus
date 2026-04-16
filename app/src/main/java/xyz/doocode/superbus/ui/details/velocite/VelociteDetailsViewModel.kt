@@ -65,7 +65,8 @@ class VelociteDetailsViewModel(application: Application) : AndroidViewModel(appl
     }
 
     fun startPolling() {
-        pollingJob?.cancel()
+        if (pollingJob?.isActive == true) return
+
         pollingJob = viewModelScope.launch {
             while (true) {
                 stationId?.let { id ->
