@@ -34,6 +34,8 @@ import xyz.doocode.superbus.ui.home.*
 import xyz.doocode.superbus.ui.menu.MenuScreen
 import xyz.doocode.superbus.ui.favorites.FavoritesScreen
 import xyz.doocode.superbus.ui.details.StopDetailsActivity
+import xyz.doocode.superbus.ui.details.velocite.VelociteDetailsActivity
+import xyz.doocode.superbus.core.dto.ginko.FavoriteStation
 import xyz.doocode.superbus.ui.search.SearchScreen
 import xyz.doocode.superbus.ui.theme.SuperBusTheme
 
@@ -88,15 +90,31 @@ fun SuperBusApp() {
                             currentDestination = AppDestinations.SEARCH
                         },
                         onStationClick = { station ->
-                            val intent =
-                                android.content.Intent(context, StopDetailsActivity::class.java)
-                            intent.putExtra(StopDetailsActivity.EXTRA_STOP_ID, station.id)
-                            intent.putExtra(StopDetailsActivity.EXTRA_STOP_NAME, station.name)
-                            intent.putExtra(
-                                StopDetailsActivity.EXTRA_DETAILS_FROM_ID,
-                                station.detailsFromId
-                            )
-                            context.startActivity(intent)
+                            if (station.effectiveKind == FavoriteStation.KIND_VELOCITE) {
+                                val intent = android.content.Intent(
+                                    context,
+                                    VelociteDetailsActivity::class.java
+                                )
+                                intent.putExtra(
+                                    VelociteDetailsActivity.EXTRA_STATION_ID,
+                                    station.id.toInt()
+                                )
+                                intent.putExtra(
+                                    VelociteDetailsActivity.EXTRA_STATION_NAME,
+                                    station.name
+                                )
+                                context.startActivity(intent)
+                            } else {
+                                val intent =
+                                    android.content.Intent(context, StopDetailsActivity::class.java)
+                                intent.putExtra(StopDetailsActivity.EXTRA_STOP_ID, station.id)
+                                intent.putExtra(StopDetailsActivity.EXTRA_STOP_NAME, station.name)
+                                intent.putExtra(
+                                    StopDetailsActivity.EXTRA_DETAILS_FROM_ID,
+                                    station.detailsFromId
+                                )
+                                context.startActivity(intent)
+                            }
                         }
                     )
                 }

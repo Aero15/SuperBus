@@ -93,6 +93,37 @@ class FavoritesRepository(context: Context) {
         }
     }
 
+    // --- Vélocité ---
+
+    fun isFavoriteVelocite(stationId: String): Boolean {
+        return _favorites.value.any { it.id == stationId && it.effectiveKind == FavoriteStation.KIND_VELOCITE }
+    }
+
+    fun addFavoriteVelocite(stationId: String, stationName: String) {
+        val currentList = _favorites.value.toMutableList()
+        if (currentList.none { it.id == stationId && it.effectiveKind == FavoriteStation.KIND_VELOCITE }) {
+            currentList.add(
+                FavoriteStation(
+                    id = stationId,
+                    name = stationName,
+                    lines = emptyList(),
+                    detailsFromId = false,
+                    kind = FavoriteStation.KIND_VELOCITE,
+                    createdAt = System.currentTimeMillis(),
+                    updatedAt = System.currentTimeMillis()
+                )
+            )
+            saveFavorites(currentList)
+        }
+    }
+
+    fun removeFavoriteVelocite(stationId: String) {
+        val currentList = _favorites.value.toMutableList()
+        if (currentList.removeIf { it.id == stationId && it.effectiveKind == FavoriteStation.KIND_VELOCITE }) {
+            saveFavorites(currentList)
+        }
+    }
+
     fun updateFavoriteLines(stopId: String, detailsFromId: Boolean, lines: List<Ligne>) {
         val favoriteList = _favorites.value.toMutableList()
         val index =

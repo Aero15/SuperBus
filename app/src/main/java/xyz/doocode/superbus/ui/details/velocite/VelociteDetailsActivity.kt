@@ -18,7 +18,7 @@ class VelociteDetailsActivity : ComponentActivity() {
         val stationName = intent.getStringExtra(EXTRA_STATION_NAME) ?: ""
 
         if (stationId != -1) {
-            viewModel.setStationId(stationId)
+            viewModel.setStationId(stationId, stationName)
         }
 
         setContent {

@@ -1,6 +1,7 @@
 package xyz.doocode.superbus.ui.details.velocite
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.CancellationException
@@ -8,9 +9,14 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import xyz.doocode.superbus.core.api.ApiClient
+import xyz.doocode.superbus.core.data.FavoritesRepository
+import xyz.doocode.superbus.core.dto.ginko.FavoriteStation
 import xyz.doocode.superbus.core.dto.jcdecaux.Station
+import xyz.doocode.superbus.core.manager.FavoritesManager
+import xyz.doocode.superbus.core.util.formatVelociteStationName
 
 sealed interface VelociteDetailsUiState {
     object Loading : VelociteDetailsUiState
@@ -18,17 +24,43 @@ sealed interface VelociteDetailsUiState {
     data class Error(val message: String) : VelociteDetailsUiState
 }
 
-class VelociteDetailsViewModel : ViewModel() {
+class VelociteDetailsViewModel(application: Application) : AndroidViewModel(application) {
     private val _uiState = MutableStateFlow<VelociteDetailsUiState>(VelociteDetailsUiState.Loading)
     val uiState: StateFlow<VelociteDetailsUiState> = _uiState.asStateFlow()
 
+    private val _isFavorite = MutableStateFlow(false)
+    val isFavorite: StateFlow<Boolean> = _isFavorite.asStateFlow()
+
+    private val favoritesManager = FavoritesManager(application)
+    private val favoritesRepository = FavoritesRepository.getInstance(application)
+
     private var stationId: Int? = null
+    private var stationName: String = ""
     private var pollingJob: Job? = null
 
-    fun setStationId(id: Int) {
+    fun setStationId(id: Int, name: String) {
         if (stationId == null) {
             stationId = id
+            stationName = formatVelociteStationName(name)
+            observeFavoriteState(id.toString())
             startPolling()
+        }
+    }
+
+    private fun observeFavoriteState(idStr: String) {
+        viewModelScope.launch {
+            favoritesRepository.favorites.collectLatest { list ->
+                _isFavorite.value = list.any {
+                    it.id == idStr && it.effectiveKind == FavoriteStation.KIND_VELOCITE
+                }
+            }
+        }
+    }
+
+    fun toggleFavorite() {
+        val id = stationId ?: return
+        viewModelScope.launch {
+            favoritesManager.toggleFavoriteVelocite(id.toString(), stationName)
         }
     }
 
@@ -48,7 +80,7 @@ class VelociteDetailsViewModel : ViewModel() {
                         }
                     }
                 }
-                delay(15_000L) // Refresh every 15 seconds
+                delay(15_000L)
             }
         }
     }

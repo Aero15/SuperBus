@@ -358,10 +358,13 @@ fun FavoritesScreen(
                                 )
                             }
                     ) {
-                        items(favorites, key = { "${it.id}_${it.detailsFromId}" }) { station ->
-                            val stationKey = "${station.id}_${station.detailsFromId}"
+                        items(
+                            favorites,
+                            key = { "${it.id}_${it.effectiveKind}_${it.detailsFromId}" }) { station ->
+                            val stationKey =
+                                "${station.id}_${station.effectiveKind}_${station.detailsFromId}"
                             val isBeingDragged =
-                                draggedItem?.id == station.id && draggedItem?.detailsFromId == station.detailsFromId
+                                draggedItem?.id == station.id && draggedItem?.detailsFromId == station.detailsFromId && draggedItem?.effectiveKind == station.effectiveKind
                             val isSelected = stationKey in selectedIds
                             val isSingleSelection = selectedIds.size == 1
 
@@ -390,6 +393,8 @@ fun FavoritesScreen(
                                     onRemove = {
                                         if (isEditing) {
                                             viewModel.deleteSelected()
+                                        } else if (station.effectiveKind == xyz.doocode.superbus.core.dto.ginko.FavoriteStation.KIND_VELOCITE) {
+                                            viewModel.removeVelociteFavorite(station.id)
                                         } else {
                                             viewModel.removeFavorite(
                                                 station.id,
@@ -405,7 +410,8 @@ fun FavoritesScreen(
                     // Ghost Item
                     if (draggedItem != null) {
                         val density = LocalDensity.current
-                        val draggedKey = "${draggedItem!!.id}_${draggedItem!!.detailsFromId}"
+                        val draggedKey =
+                            "${draggedItem!!.id}_${draggedItem!!.effectiveKind}_${draggedItem!!.detailsFromId}"
                         val extraCount =
                             if (draggedKey in selectedIds && selectedIds.size > 1) selectedIds.size - 1 else 0
                         Box(

@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import xyz.doocode.superbus.R
 import xyz.doocode.superbus.core.dto.ginko.FavoriteStation
+import xyz.doocode.superbus.core.dto.ginko.FavoriteStation.Companion.KIND_VELOCITE
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.border
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -99,126 +100,133 @@ fun FavoriteTile(
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                val validLines = station.lines
-                val isTramDuo = validLines.size == 2 && validLines.all {
-                    it.numLignePublic.matches(Regex("T\\d+"))
-                }
-
-                if (validLines.isEmpty()) {
-                    Text(
-                        "?",
-                        style = MaterialTheme.typography.displayMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                } else if (validLines.size == 1) {
-                    val line = validLines.first()
-                    val isSingleTram = line.numLignePublic.matches(Regex("T\\d+"))
-                    if (isSingleTram) {
-                        Image(
-                            painter = painterResource(R.drawable.tram),
-                            contentDescription = null,
-                            modifier = Modifier.matchParentSize(),
-                            contentScale = ContentScale.Crop
-                        )
-                    }
-                    Box(
+                if (station.effectiveKind == KIND_VELOCITE) {
+                    VelociteBadge(
                         modifier = Modifier
-                            .fillMaxSize(if (isSingleTram) 0.72f else 1f)
-                            .then(
-                                if (isSingleTram) Modifier
-                                    .align(Alignment.TopEnd)
-                                    .offset(x = 4.dp, y = -4.dp)
-                                    .graphicsLayer { rotationZ = -5f }
-                                    .border(
-                                        3.dp,
-                                        MaterialTheme.colorScheme.surfaceVariant,
-                                        RoundedCornerShape(12.dp)
-                                    )
-                                    .clip(RoundedCornerShape(12.dp))
-                                else Modifier.padding(9.dp)
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        EnlargedLineBadge(line, fontSize = if (isSingleTram) 38.sp else 44.sp)
+                            .padding(9.dp)
+                    )
+                } else {
+                    val validLines = station.lines
+                    val isTramDuo = validLines.size == 2 && validLines.all {
+                        it.numLignePublic.matches(Regex("T\\d+"))
                     }
-                } else if (isTramDuo) {
-                    Box(modifier = Modifier.fillMaxSize()) {
-                        Row(
+
+                    if (validLines.isEmpty()) {
+                        Text(
+                            "?",
+                            style = MaterialTheme.typography.displayMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    } else if (validLines.size == 1) {
+                        val line = validLines.first()
+                        val isSingleTram = line.numLignePublic.matches(Regex("T\\d+"))
+                        if (isSingleTram) {
+                            Image(
+                                painter = painterResource(R.drawable.tram),
+                                contentDescription = null,
+                                modifier = Modifier.matchParentSize(),
+                                contentScale = ContentScale.Crop
+                            )
+                        }
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize(if (isSingleTram) 0.72f else 1f)
+                                .then(
+                                    if (isSingleTram) Modifier
+                                        .align(Alignment.TopEnd)
+                                        .offset(x = 4.dp, y = -4.dp)
+                                        .graphicsLayer { rotationZ = -5f }
+                                        .border(
+                                            3.dp,
+                                            MaterialTheme.colorScheme.surfaceVariant,
+                                            RoundedCornerShape(12.dp)
+                                        )
+                                        .clip(RoundedCornerShape(12.dp))
+                                    else Modifier.padding(9.dp)
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            EnlargedLineBadge(line, fontSize = if (isSingleTram) 38.sp else 44.sp)
+                        }
+                    } else if (isTramDuo) {
+                        Box(modifier = Modifier.fillMaxSize()) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(4.dp)
+                            ) {
+                                Spacer(modifier = Modifier.weight(1f))
+                                Column(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .fillMaxHeight(),
+                                    verticalArrangement = Arrangement.SpaceEvenly,
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    SmallLineBadge(validLines[0])
+                                    SmallLineBadge(validLines[1])
+                                }
+                            }
+                            Image(
+                                painter = painterResource(R.drawable.tram),
+                                contentDescription = null,
+                                modifier = Modifier.matchParentSize(),
+                                contentScale = ContentScale.Crop
+                            )
+                        }
+                    } else {
+                        Column(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .padding(4.dp)
+                                .padding(4.dp),
+                            verticalArrangement = Arrangement.SpaceEvenly
                         ) {
-                            Spacer(modifier = Modifier.weight(1f))
-                            Column(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .fillMaxHeight(),
-                                verticalArrangement = Arrangement.SpaceEvenly,
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                SmallLineBadge(validLines[0])
-                                SmallLineBadge(validLines[1])
-                            }
-                        }
-                        Image(
-                            painter = painterResource(R.drawable.tram),
-                            contentDescription = null,
-                            modifier = Modifier.matchParentSize(),
-                            contentScale = ContentScale.Crop
-                        )
-                    }
-                } else {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(4.dp),
-                        verticalArrangement = Arrangement.SpaceEvenly
-                    ) {
-                        val row1 = validLines.take(2)
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceEvenly
-                        ) {
-                            row1.forEach { SmallLineBadge(it) }
-                            if (row1.size < 2) Spacer(modifier = Modifier.size(32.dp))
-                        }
-
-                        val remainingCount = validLines.size - 2
-                        if (remainingCount > 0) {
+                            val row1 = validLines.take(2)
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceEvenly
                             ) {
-                                val line3 = validLines[2]
-                                SmallLineBadge(line3)
-
-                                if (validLines.size == 4) {
-                                    SmallLineBadge(validLines[3])
-                                } else if (validLines.size > 4) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(40.dp)
-                                            .background(
-                                                MaterialTheme.colorScheme.primary,
-                                                RoundedCornerShape(6.dp)
-                                            ),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(
-                                            text = "+${validLines.size - 3}",
-                                            color = MaterialTheme.colorScheme.onPrimary,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                    }
-                                } else {
-                                    Spacer(modifier = Modifier.size(40.dp))
-                                }
+                                row1.forEach { SmallLineBadge(it) }
+                                if (row1.size < 2) Spacer(modifier = Modifier.size(32.dp))
                             }
-                        } else {
-                            Spacer(modifier = Modifier.height(32.dp))
+
+                            val remainingCount = validLines.size - 2
+                            if (remainingCount > 0) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceEvenly
+                                ) {
+                                    val line3 = validLines[2]
+                                    SmallLineBadge(line3)
+
+                                    if (validLines.size == 4) {
+                                        SmallLineBadge(validLines[3])
+                                    } else if (validLines.size > 4) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(40.dp)
+                                                .background(
+                                                    MaterialTheme.colorScheme.primary,
+                                                    RoundedCornerShape(6.dp)
+                                                ),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                text = "+${validLines.size - 3}",
+                                                color = MaterialTheme.colorScheme.onPrimary,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+                                    } else {
+                                        Spacer(modifier = Modifier.size(40.dp))
+                                    }
+                                }
+                            } else {
+                                Spacer(modifier = Modifier.height(32.dp))
+                            }
                         }
                     }
-                }
+                } // closes else (bus&tram content)
             }
 
             // Edit-mode overlay bubbles

@@ -71,4 +71,18 @@ class FavoritesManager(context: Context) {
         val response = ApiClient.ginkoService.getVariantesDesservantArret(stopId)
         response.objects
     }
+
+    // --- Vélocité ---
+
+    fun isFavoriteVelocite(stationId: String): Boolean {
+        return repository.isFavoriteVelocite(stationId)
+    }
+
+    suspend fun toggleFavoriteVelocite(stationId: String, stationName: String) {
+        if (repository.isFavoriteVelocite(stationId)) {
+            repository.removeFavoriteVelocite(stationId)
+        } else {
+            repository.addFavoriteVelocite(stationId, stationName)
+        }
+    }
 }

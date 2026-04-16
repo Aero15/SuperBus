@@ -8,6 +8,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Lightbulb
@@ -25,6 +27,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.Modifier
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -45,15 +48,17 @@ fun VelociteDetailsScreen(
     stationName: String, viewModel: VelociteDetailsViewModel, onBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val isFavorite by viewModel.isFavorite.collectAsState()
     val context = LocalContext.current
     val activity = context as? Activity
 
     val prefs =
         remember { context.getSharedPreferences("superbus_app_settings", Context.MODE_PRIVATE) }
     var keepScreenOn by remember {
-        mutableStateOf(prefs.getBoolean("keep_screen_on", false))
+        mutableStateOf(prefs.getBoolean("keep_screen_on_velocite", false))
     }
     var showMenu by remember { mutableStateOf(false) }
+    var showUnfavoriteConfirmation by remember { mutableStateOf(false) }
 
     LaunchedEffect(keepScreenOn) {
         activity?.setKeepScreenOn(keepScreenOn)
@@ -64,7 +69,7 @@ fun VelociteDetailsScreen(
 
     fun toggleScreenOn() {
         keepScreenOn = !keepScreenOn
-        prefs.edit { putBoolean("keep_screen_on", keepScreenOn) }
+        prefs.edit { putBoolean("keep_screen_on_velocite", keepScreenOn) }
         scope.launch {
             snackbarHostState.currentSnackbarData?.dismiss()
             snackbarHostState.showSnackbar(
@@ -91,6 +96,27 @@ fun VelociteDetailsScreen(
     }
 
     val formattedName = formatVelociteStationName(stationName)
+
+    if (showUnfavoriteConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showUnfavoriteConfirmation = false },
+            title = { Text("Retirer des favoris") },
+            text = { Text("Voulez-vous retirer cette station de vos favoris ?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showUnfavoriteConfirmation = false
+                    viewModel.toggleFavorite()
+                }) {
+                    Text("Retirer")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showUnfavoriteConfirmation = false }) {
+                    Text("Annuler")
+                }
+            }
+        )
+    }
 
     Scaffold(
         snackbarHost = {
@@ -132,6 +158,17 @@ fun VelociteDetailsScreen(
                                 tint = MaterialTheme.colorScheme.primary
                             )
                         }
+                    }
+
+                    IconButton(onClick = {
+                        if (isFavorite) showUnfavoriteConfirmation = true
+                        else viewModel.toggleFavorite()
+                    }) {
+                        Icon(
+                            imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                            contentDescription = if (isFavorite) "Retirer des favoris" else "Ajouter aux favoris",
+                            tint = if (isFavorite) MaterialTheme.colorScheme.primary else LocalContentColor.current
+                        )
                     }
 
                     Box {

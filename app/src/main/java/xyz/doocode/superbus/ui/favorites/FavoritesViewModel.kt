@@ -87,10 +87,16 @@ class FavoritesViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
+    fun removeVelociteFavorite(stationId: String) {
+        viewModelScope.launch {
+            repository.removeFavoriteVelocite(stationId)
+        }
+    }
+
     // --- Selection state (edit mode only) ---
     val selectedIds = MutableStateFlow<Set<String>>(emptySet())
 
-    private fun FavoriteStation.selectionKey() = "${id}_${detailsFromId}"
+    private fun FavoriteStation.selectionKey() = "${id}_${effectiveKind}_${detailsFromId}"
 
     fun toggleSelection(station: FavoriteStation) {
         val key = station.selectionKey()
