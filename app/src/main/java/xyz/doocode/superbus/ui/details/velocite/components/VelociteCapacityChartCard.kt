@@ -52,30 +52,64 @@ fun VelociteCapacityChartCard(station: Station) {
             }
 
             if (capacity > 0) {
-                Column(
+                val totalBikes = mechBikes + elecBikes
+
+                Row(
                     modifier = Modifier
-                        .padding(16.dp)
-                        .fillMaxSize(),
-                    verticalArrangement = Arrangement.SpaceBetween,
-                    horizontalAlignment = Alignment.Start
+                        .padding(horizontal = 16.dp)
+                        .padding(top = 8.dp, bottom = 16.dp)
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Start,
+                    verticalAlignment = Alignment.Bottom
                 ) {
-                    Text(
-                        text = capacity.toString(),
-                        style = MaterialTheme.typography.displaySmall.copy(
-                            fontWeight = FontWeight.ExtraBold
-                        ),
-                        color = MaterialTheme.colorScheme.primary
-                    )
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = totalBikes.toString(),
+                            style = MaterialTheme.typography.displaySmall.copy(
+                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 72.sp
+                            ),
+                            color = if (totalBikes == 0) MaterialTheme.colorScheme.error
+                            else MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = "vélos".uppercase(),
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.5.sp
+                            ),
+                            color = if (totalBikes == 0) MaterialTheme.colorScheme.error
+                            else MaterialTheme.colorScheme.primary,
+                            lineHeight = 12.sp
+                        )
+                    }
 
                     Text(
-                        text = "bornes vélo".uppercase(),
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 0.5.sp
+                        text = "/",
+                        style = MaterialTheme.typography.displaySmall.copy(
+                            fontWeight = FontWeight.Light
                         ),
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.9f),
-                        lineHeight = 12.sp
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 20.dp)
                     )
+
+                    Column {
+                        Text(
+                            text = capacity.toString(),
+                            style = MaterialTheme.typography.displaySmall.copy(
+                                fontWeight = FontWeight.ExtraBold
+                            ),
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                        Text(
+                            text = "bornes".uppercase(),
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.5.sp
+                            ),
+                            lineHeight = 12.sp
+                        )
+                    }
                 }
 
                 VelociteCapacityGrid(
