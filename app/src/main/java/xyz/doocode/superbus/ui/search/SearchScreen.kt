@@ -1,5 +1,6 @@
 package xyz.doocode.superbus.ui.search
 
+import android.content.Context
 import android.content.Intent
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
@@ -83,6 +84,10 @@ fun SearchScreen(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val groupDuplicates = viewModel.GROUP_DUPLICATES
+    val prefs =
+        remember { context.getSharedPreferences("superbus_app_settings", Context.MODE_PRIVATE) }
+    val velociteSortFieldPrefKey = "search_velocite_sort_field"
+    val velociteSortOrderPrefKey = "search_velocite_sort_order"
 
     val focusRequester = remember { FocusRequester() }
 
@@ -120,12 +125,40 @@ fun SearchScreen(
     var showBottomSheet by remember { mutableStateOf(false) }
 
     // Vélocité sort state (only active when showVeloOnly == true)
-    var velocitySortField by remember { mutableStateOf(VelociteSortField.NAME) }
-    var velocitySortOrder by remember { mutableStateOf(VelociteSortOrder.ASCENDING) }
+    var velocitySortField by remember {
+        mutableStateOf(
+            runCatching {
+                VelociteSortField.valueOf(
+                    prefs.getString(velociteSortFieldPrefKey, VelociteSortField.NAME.name)
+                        ?: VelociteSortField.NAME.name
+                )
+            }.getOrDefault(VelociteSortField.NAME)
+        )
+    }
+    var velocitySortOrder by remember {
+        mutableStateOf(
+            runCatching {
+                VelociteSortOrder.valueOf(
+                    prefs.getString(velociteSortOrderPrefKey, VelociteSortOrder.ASCENDING.name)
+                        ?: VelociteSortOrder.ASCENDING.name
+                )
+            }.getOrDefault(VelociteSortOrder.ASCENDING)
+        )
+    }
     var showVelocitySortSheet by remember { mutableStateOf(false) }
 
     // Filter state: null = all, true = vélocité only, false = bus/tram only
     var showVeloOnly by remember { mutableStateOf<Boolean?>(null) }
+
+    fun updateVelociteSortField(field: VelociteSortField) {
+        velocitySortField = field
+        prefs.edit().putString(velociteSortFieldPrefKey, field.name).apply()
+    }
+
+    fun updateVelociteSortOrder(order: VelociteSortOrder) {
+        velocitySortOrder = order
+        prefs.edit().putString(velociteSortOrderPrefKey, order.name).apply()
+    }
 
     LaunchedEffect(initialFilter) {
         if (initialFilter == SearchFilterOption.VELOCITE) {
@@ -774,8 +807,8 @@ fun SearchScreen(
                         VelociteSortBottomSheet(
                             currentSortField = velocitySortField,
                             currentSortOrder = velocitySortOrder,
-                            onSortFieldChange = { velocitySortField = it },
-                            onSortOrderChange = { velocitySortOrder = it },
+                            onSortFieldChange = { updateVelociteSortField(it) },
+                            onSortOrderChange = { updateVelociteSortOrder(it) },
                             onDismissRequest = { showVelocitySortSheet = false }
                         )
                     }
