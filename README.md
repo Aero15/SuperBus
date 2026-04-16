@@ -1,47 +1,46 @@
 # SuperBus
 
-Superbus (temporary name) is a mobile app aiming to be a better alternative to the "Ginko Mobilités" app. It is an application that provides real-time waiting times for bus and tram services.
+SuperBus (temporary name) is a mobile app designed to be a better alternative to the official "Ginko Mobilités" app. It provides real-time waiting times for bus and tram services.
 
 [![Screenshots of SuperBus](./wiki/preview.png)](./wiki/preview.png)
 
-**[WARNING] This project still under development and many bugs aren't resolved. As this is a Proof of Concept project, the final result may be entierely different.**
+**[WARNING] This project is still under development and many bugs remain unresolved. As this is a proof-of-concept project, the final result may be entirely different.**
 
 ## Features
 - ⏲️ **Display waiting times**:
-    - 🔍 with bigger font size (easily readable)
-    - ↕️ full screen view (swipe cards)
-    - 🖼️ support landscape view, or tablets
-    - 💡 feature to keep the screen on
+    - 🔍 with larger font size (easily readable)
+    - ↕️ full-screen view (swipe cards)
+    - 🖼️ landscape and tablet support
+    - 💡 option to keep the screen on
     - 🌙 dark mode support
 - 📣 **Text-to-speech countdown**: announcement of waiting times (inspired by the [PANAM/SIEL screens of the Paris metro](https://youtu.be/M3j0xNkYBy0?si=6MJ926puqFzxaYgx&t=5))
-    - 1️⃣ just with one transit line
-    - *️⃣ or for several lines simultaneously (with auto-swiping cards in full screen mode)
-    - 💤 disabled countdown in background
-- ❤️ **Favorites with preview**: favorites pages with an overview of bus/tram lines
-    - 🛠️ editable grid : wobbly tiles like iOS
-    - ✏️ rename favorites items
-
-## Incoming features
-
-Here is a list of features I would like to add:
-
-- Info trafic
-- Settings page
-- Tabbed view and/or Split view
-- History support + clear history + private browsing
-- i18n: English, Spanish
-- Crowd level (affluence) on buses/trams
-- Display vehicule infos (air conditioning, accessible ramp, USB ports, etc.)
-- Allow run countdown text-to-speech in background
-- Backup favorites stations : import/export data
-- Support for Ginko Vélocité, Mobigo, SNCF, Citiz
-- Map view + detection of nearby stations
+    - 1️⃣ for a single transit line
+    - *️⃣ or for several lines simultaneously (with auto-swiping cards in full-screen mode)
+    - 💤 countdown disabled in background
+- ❤️ **Favorites with preview**: favorites page with an overview of bus/tram lines
+    - 🛠️ editable grid: wobbly tiles like iOS
+    - ✏️ rename favorite items
+- 🚲 **Ginko Vélocité included**
 
 [![Sketches and concepts for SuperBus](./wiki/sketches.png)](./wiki/sketches.png)
 
-Some drawings and vectorial images was made with Inkscape.
+## Upcoming features
 
-[![Drawing the tram of Ginko Besançon with Inkscape](./wiki/inkscape.png)](./wiki/inkscape.png)
+Here is a list of features I would like to add:
+
+- 🚧 Traffic alerts
+- ⚙️ Settings page
+- 🗂️ Tabbed and/or split view
+- 🕐 History support: clear history, private browsing
+- 🌍 Internationalisation: English, Spanish
+- 👥 Crowd level on buses/trams
+- 🚌 Vehicle info display (air conditioning, accessible ramp, USB ports, etc.)
+- 🔊 Background text-to-speech countdown
+- 💾 Favorites backup: import/export data
+- 🚲 Extended support: Mobigo, SNCF, Citiz
+- 🗺️ Map view with nearby station detection
+
+[![Drawing the tram of Ginko Besançon with Inkscape](./wiki/making-tramway-tile.gif)](./wiki/preview.png)
 
 ## Build this app
 
@@ -52,9 +51,14 @@ Some drawings and vectorial images was made with Inkscape.
 
 ### Variables
 
-This project need an API key to interact with Ginko API.
-You have to [ask Ginko](https://api.ginko.voyage/#prez) in order to receive your key from this page. You can get a temporary key if you don't want to ask.
-Then, edit `local.properties` to add this following line :
+This project need an API key to interact with Ginko API and JCDecaux API.
+
+1. **Ginko Mobilités**: You have to [ask Ginko](https://api.ginko.voyage/#prez) in order to receive your key. You can get a temporary key if you don't want to ask.
+
+2. **Ginko Vélocité (JCDecaux)**: Go to [JCDecaux Developer](https://developer.jcdecaux.com/), then create an account to get your API key.
+
+Then, edit `local.properties` to add these lines :
 ```ini
 apikey.ginko_mobilites=PUT_YOUR_GINKO_API_KEY_RIGHT_THERE
+apikey.ginko_velocite=PUT_YOUR_VELOCITE_API_KEY_RIGHT_THERE
 ```
