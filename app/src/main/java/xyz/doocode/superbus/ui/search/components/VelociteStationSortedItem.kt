@@ -24,9 +24,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import xyz.doocode.superbus.core.dto.jcdecaux.Station
@@ -72,6 +73,10 @@ fun VelociteStationSortedItem(
     }
 
     val bgColor = if (isCountSort) countColor.copy(alpha = 0.2f) else Color.Transparent
+    val tabularNumberStyle = TextStyle(
+        fontFeatureSettings = "tnum",
+        textAlign = TextAlign.End
+    )
 
     Column {
         Row(
@@ -131,7 +136,7 @@ fun VelociteStationSortedItem(
                     Text(
                         text = "$capacity",
                         fontWeight = FontWeight.ExtraBold,
-                        style = MaterialTheme.typography.bodyLarge,
+                        style = MaterialTheme.typography.bodyLarge.merge(tabularNumberStyle),
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
@@ -157,7 +162,7 @@ fun VelociteStationSortedItem(
                         Text(
                             text = "$count",
                             fontWeight = FontWeight.ExtraBold,
-                            style = MaterialTheme.typography.bodyLarge,
+                            style = MaterialTheme.typography.bodyLarge.merge(tabularNumberStyle),
                             color = countColor
                         )
                         Text(
@@ -167,7 +172,7 @@ fun VelociteStationSortedItem(
                         )
                         Text(
                             text = "$capacity",
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = MaterialTheme.typography.bodyMedium.merge(tabularNumberStyle),
                             color = MaterialTheme.colorScheme.secondary
                         )
                     }
@@ -177,8 +182,7 @@ fun VelociteStationSortedItem(
                     Text(
                         text = "#${station.number}",
                         fontWeight = FontWeight.ExtraBold,
-                        fontFamily = FontFamily.Monospace,
-                        style = MaterialTheme.typography.bodyLarge,
+                        style = MaterialTheme.typography.bodyLarge.merge(tabularNumberStyle),
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
