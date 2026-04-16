@@ -137,8 +137,8 @@ fun VelociteCapacityGrid(station: Station, modifier: Modifier = Modifier) {
         val lastRowItems = if (capacity % c == 0) c else capacity % c
         val fillRatio = lastRowItems.toFloat() / c.toFloat()
         val rowCount = (capacity + c - 1) / c
-        val shouldSelect = fillRatio > bestFillRatio ||
-                (fillRatio == bestFillRatio && rowCount < bestRowCount)
+        val shouldSelect = rowCount < bestRowCount ||
+                (rowCount == bestRowCount && fillRatio > bestFillRatio)
 
         if (shouldSelect) {
             bestFillRatio = fillRatio
