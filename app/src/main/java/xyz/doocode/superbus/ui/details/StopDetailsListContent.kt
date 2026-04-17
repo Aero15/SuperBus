@@ -202,7 +202,9 @@ fun StopDetailsListContent(
                             Triple(5, scolaireEntries, "scolaire")
                         ).filter { (_, entries, _) -> entries.isNotEmpty() }
 
-                        val hasMixedSections = sections.size > 1
+                        val totalSectionCount =
+                            sections.size + if (velociteStation != null) 1 else 0
+                        val hasMixedSections = totalSectionCount > 1
 
                         sections.forEach { (sectionKey, sectionEntries, _) ->
                             val isExpanded = expandedSections[sectionKey] != false

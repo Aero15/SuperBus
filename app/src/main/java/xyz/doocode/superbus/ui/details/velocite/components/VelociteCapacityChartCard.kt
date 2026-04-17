@@ -322,7 +322,7 @@ fun LegendItem(color: Color, label: String, value: Int, striped: Boolean = false
         )
         Text(
             text = value.toString(),
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodyLarge,
             color = textColor,
             textDecoration = textDecoration,
             fontWeight = FontWeight.Bold
