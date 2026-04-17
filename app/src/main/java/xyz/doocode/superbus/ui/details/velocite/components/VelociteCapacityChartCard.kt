@@ -8,6 +8,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.font.FontWeight
@@ -130,7 +132,8 @@ fun VelociteCapacityChartCard(station: Station) {
                 LegendItem(
                     color = UnavailableStandsColor,
                     label = "Hors service / Non dispo.",
-                    value = unavailableStands
+                    value = unavailableStands,
+                    striped = true
                 )
             }
         } else {
@@ -203,7 +206,8 @@ fun VelociteCapacityGrid(station: Station, modifier: Modifier = Modifier) {
         totalSlots.add(
             CapacitySlot(
                 color = UnavailableStandsColor,
-                counter = it + 1
+                counter = it + 1,
+                isStriped = true
             )
         )
     }
@@ -230,8 +234,15 @@ fun VelociteCapacityGrid(station: Station, modifier: Modifier = Modifier) {
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxHeight()
-                            .clip(RoundedCornerShape(6.dp))
-                            .background(slot.color),
+                            .then(
+                                if (slot.isStriped) {
+                                    Modifier.unavailableStripedBackground(baseColor = slot.color)
+                                } else {
+                                    Modifier
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(slot.color)
+                                }
+                            ),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -251,11 +262,37 @@ fun VelociteCapacityGrid(station: Station, modifier: Modifier = Modifier) {
 
 private data class CapacitySlot(
     val color: Color,
-    val counter: Int
+    val counter: Int,
+    val isStriped: Boolean = false
 )
 
+private fun Modifier.unavailableStripedBackground(
+    baseColor: Color = UnavailableStandsColor,
+    stripeColor: Color = Color(0xFFC0730D)
+): Modifier =
+    this
+        .clip(RoundedCornerShape(6.dp))
+        .background(baseColor)
+        .drawWithCache {
+            val stripeWidth = 4.dp.toPx()
+            val stripeSpacing = 10.dp.toPx()
+
+            onDrawBehind {
+                var x = -size.height
+                while (x < size.width + size.height) {
+                    drawLine(
+                        color = stripeColor,
+                        start = Offset(x, size.height),
+                        end = Offset(x + size.height, 0f),
+                        strokeWidth = stripeWidth
+                    )
+                    x += stripeSpacing
+                }
+            }
+        }
+
 @Composable
-fun LegendItem(color: Color, label: String, value: Int) {
+fun LegendItem(color: Color, label: String, value: Int, striped: Boolean = false) {
     val isZero = value == 0
     val displayColor = if (isZero) Color.Gray.copy(alpha = 0.5f) else color
     val textColor = if (isZero) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
@@ -264,11 +301,18 @@ fun LegendItem(color: Color, label: String, value: Int) {
 
     Row(verticalAlignment = Alignment.CenterVertically) {
         Box(
-            modifier = Modifier
-                .size(12.dp)
-                .background(displayColor, RoundedCornerShape(2.dp))
+            modifier =
+                Modifier
+                    .size(24.dp)
+                    .then(
+                        if (striped && !isZero) {
+                            Modifier.unavailableStripedBackground(baseColor = displayColor)
+                        } else {
+                            Modifier.background(displayColor, RoundedCornerShape(3.dp))
+                        }
+                    )
         )
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.width(10.dp))
         Text(
             text = label,
             style = MaterialTheme.typography.bodyMedium,
