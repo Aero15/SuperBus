@@ -34,6 +34,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,6 +43,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import xyz.doocode.superbus.ui.search.VelociteSortField
 import xyz.doocode.superbus.ui.search.VelociteSortOrder
 
@@ -55,18 +57,29 @@ fun VelociteSortBottomSheet(
     onDismissRequest: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState()
+    val scope = rememberCoroutineScope()
+
+    fun dismissSheetAnimated() {
+        scope.launch {
+            sheetState.hide()
+            onDismissRequest()
+        }
+    }
 
     fun selectOrder(order: VelociteSortOrder) {
         onSortOrderChange(order)
-        onDismissRequest()
+        dismissSheetAnimated()
     }
 
     fun selectField(field: VelociteSortField) {
         onSortFieldChange(field)
-        onDismissRequest()
+        dismissSheetAnimated()
     }
 
-    ModalBottomSheet(onDismissRequest = onDismissRequest, sheetState = sheetState) {
+    ModalBottomSheet(
+        onDismissRequest = { dismissSheetAnimated() },
+        sheetState = sheetState
+    ) {
         Column(modifier = Modifier.padding(bottom = 32.dp)) {
             Text(
                 text = "Tri des stations Vélocité",

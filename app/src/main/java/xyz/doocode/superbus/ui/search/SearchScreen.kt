@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.DirectionsBike
 import androidx.compose.material.icons.filled.DirectionsBus
@@ -90,6 +91,7 @@ fun SearchScreen(
     val velociteSortOrderPrefKey = "search_velocite_sort_order"
 
     val focusRequester = remember { FocusRequester() }
+    val listState = rememberLazyListState()
 
     DisposableEffect(Unit) {
         onDispose {
@@ -197,6 +199,12 @@ fun SearchScreen(
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
             viewModel.stopVelociteAutoRefresh()
+        }
+    }
+
+    LaunchedEffect(showVeloOnly, velocitySortField, velocitySortOrder) {
+        if (showVeloOnly == true) {
+            listState.animateScrollToItem(0)
         }
     }
 
@@ -323,6 +331,7 @@ fun SearchScreen(
                                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                                 )
                                 LazyColumn(
+                                    state = listState,
                                     modifier = Modifier.weight(1f),
                                     contentPadding = if (showVeloOnly == true) PaddingValues(bottom = 80.dp) else PaddingValues()
                                 ) {
