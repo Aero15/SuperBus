@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.DirectionsBike
+import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ElectricBike
 import androidx.compose.material.icons.filled.LocalParking
@@ -170,6 +171,11 @@ fun VelociteSortBottomSheet(
                     "Places disponibles",
                     VelociteSortField.AVAILABLE_STANDS,
                     Icons.Filled.LocalParking
+                ),
+                Triple(
+                    "Bornes indisponibles",
+                    VelociteSortField.UNAVAILABLE_STANDS,
+                    Icons.Filled.Block
                 ),
                 Triple("Capacité", VelociteSortField.CAPACITY, Icons.Filled.Storage),
             )

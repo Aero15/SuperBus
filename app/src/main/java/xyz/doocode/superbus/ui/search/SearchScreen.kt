@@ -255,6 +255,18 @@ fun SearchScreen(
                             VelociteSortField.ELECTRICAL_BIKES -> compareBy { it.mainStands.availabilities.electricalBikes }
                             VelociteSortField.TOTAL_BIKES -> compareBy { it.mainStands.availabilities.bikes }
                             VelociteSortField.AVAILABLE_STANDS -> compareBy { it.mainStands.availabilities.stands }
+                            VelociteSortField.UNAVAILABLE_STANDS -> compareBy {
+                                maxOf(
+                                    0,
+                                    it.totalStands.capacity -
+                                            (
+                                                    it.mainStands.availabilities.mechanicalBikes +
+                                                            it.mainStands.availabilities.electricalBikes +
+                                                            it.mainStands.availabilities.stands
+                                                    )
+                                )
+                            }
+
                             VelociteSortField.CAPACITY -> compareBy { it.totalStands.capacity }
                         }
                         if (velocitySortOrder == VelociteSortOrder.ASCENDING) {

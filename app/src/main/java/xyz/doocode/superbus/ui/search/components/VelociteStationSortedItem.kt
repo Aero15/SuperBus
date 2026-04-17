@@ -11,9 +11,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.DirectionsBike
+import androidx.compose.material.icons.filled.Block
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ElectricBike
 import androidx.compose.material.icons.filled.LocalParking
 import androidx.compose.material.icons.filled.PedalBike
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -42,17 +45,44 @@ fun VelociteStationSortedItem(
     searchQuery: String = "",
     onClick: () -> Unit = {}
 ) {
+    val unavailableStands = maxOf(
+        0,
+        station.totalStands.capacity -
+                (
+                        station.mainStands.availabilities.mechanicalBikes +
+                                station.mainStands.availabilities.electricalBikes +
+                                station.mainStands.availabilities.stands
+                        )
+    )
+
     val isCountSort = sortField in setOf(
         VelociteSortField.AVAILABLE_STANDS,
         VelociteSortField.TOTAL_BIKES,
         VelociteSortField.MECHANICAL_BIKES,
-        VelociteSortField.ELECTRICAL_BIKES
+        VelociteSortField.ELECTRICAL_BIKES,
+        VelociteSortField.UNAVAILABLE_STANDS
     )
 
-    var totemIcon = when (sortField) {
+    val unavailableColor = when {
+        unavailableStands == station.totalStands.capacity && station.totalStands.capacity > 0 -> Color(
+            0xFFD32F2F
+        )
+
+        unavailableStands > 0 -> Color(0xFFFF9800)
+        else -> Color(0xFF4CAF50)
+    }
+
+    val totemIcon = when (sortField) {
         VelociteSortField.AVAILABLE_STANDS -> Icons.Filled.LocalParking
         VelociteSortField.ELECTRICAL_BIKES -> Icons.Filled.ElectricBike
         VelociteSortField.MECHANICAL_BIKES -> Icons.Filled.PedalBike
+        VelociteSortField.UNAVAILABLE_STANDS ->
+            when {
+                unavailableStands == station.totalStands.capacity && station.totalStands.capacity > 0 -> Icons.Filled.Block
+                unavailableStands > 0 -> Icons.Filled.Warning
+                else -> Icons.Filled.CheckCircle
+            }
+
         else -> Icons.AutoMirrored.Filled.DirectionsBike
     }
 
@@ -61,6 +91,7 @@ fun VelociteStationSortedItem(
         VelociteSortField.TOTAL_BIKES -> station.mainStands.availabilities.bikes
         VelociteSortField.MECHANICAL_BIKES -> station.mainStands.availabilities.mechanicalBikes
         VelociteSortField.ELECTRICAL_BIKES -> station.mainStands.availabilities.electricalBikes
+        VelociteSortField.UNAVAILABLE_STANDS -> unavailableStands
         else -> 0
     }
 
@@ -72,7 +103,11 @@ fun VelociteStationSortedItem(
         else -> Color(0xFF4CAF50)
     }
 
-    val bgColor = if (isCountSort) countColor.copy(alpha = 0.2f) else Color.Transparent
+    val bgColor = when {
+        sortField == VelociteSortField.UNAVAILABLE_STANDS -> unavailableColor.copy(alpha = 0.2f)
+        isCountSort -> countColor.copy(alpha = 0.2f)
+        else -> Color.Transparent
+    }
     val tabularNumberStyle = TextStyle(
         fontFeatureSettings = "tnum",
         textAlign = TextAlign.End
@@ -90,7 +125,12 @@ fun VelociteStationSortedItem(
             Icon(
                 imageVector = totemIcon,
                 contentDescription = "Vélocité",
-                tint = if (isCountSort) countColor else Color(0xFF00AAC2)
+                tint =
+                    when {
+                        sortField == VelociteSortField.UNAVAILABLE_STANDS -> unavailableColor
+                        isCountSort -> countColor
+                        else -> Color(0xFF00AAC2)
+                    }
             )
             Spacer(modifier = Modifier.width(16.dp))
 
@@ -144,26 +184,30 @@ fun VelociteStationSortedItem(
                 VelociteSortField.AVAILABLE_STANDS,
                 VelociteSortField.TOTAL_BIKES,
                 VelociteSortField.MECHANICAL_BIKES,
-                VelociteSortField.ELECTRICAL_BIKES -> {
+                VelociteSortField.ELECTRICAL_BIKES,
+                VelociteSortField.UNAVAILABLE_STANDS -> {
                     val sortIcon = when (sortField) {
                         VelociteSortField.AVAILABLE_STANDS -> Icons.Filled.LocalParking
                         VelociteSortField.ELECTRICAL_BIKES -> Icons.Filled.ElectricBike
                         VelociteSortField.MECHANICAL_BIKES -> Icons.Filled.PedalBike
+                        VelociteSortField.UNAVAILABLE_STANDS -> totemIcon
                         else -> Icons.AutoMirrored.Filled.DirectionsBike
                     }
+                    val valueColor =
+                        if (sortField == VelociteSortField.UNAVAILABLE_STANDS) unavailableColor else countColor
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = sortIcon,
                             contentDescription = null,
                             modifier = Modifier.size(16.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            tint = valueColor
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = "$count",
                             fontWeight = FontWeight.ExtraBold,
                             style = MaterialTheme.typography.bodyLarge.merge(tabularNumberStyle),
-                            color = countColor
+                            color = valueColor
                         )
                         Text(
                             text = " / ",

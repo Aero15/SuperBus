@@ -7,6 +7,7 @@ enum class VelociteSortField {
     ELECTRICAL_BIKES,
     TOTAL_BIKES,
     AVAILABLE_STANDS,
+    UNAVAILABLE_STANDS,
     CAPACITY
 }
 
