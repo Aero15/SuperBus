@@ -1,7 +1,15 @@
 package xyz.doocode.superbus.ui.search.components
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -9,7 +17,6 @@ import androidx.compose.material.icons.automirrored.filled.DirectionsBike
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DirectionsBus
-import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -18,15 +25,24 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
@@ -46,37 +62,70 @@ fun SearchBar(
     modifier: Modifier = Modifier
 ) {
     val focusManager = LocalFocusManager.current
+    var isFocused by remember { mutableStateOf(false) }
+    val hidePlaceholder = isFocused || selectedFilter != SearchFilterOption.NONE
+    val placeholderAlpha by animateFloatAsState(
+        targetValue = if (hidePlaceholder) 0f else 1f,
+        animationSpec = tween(durationMillis = 180),
+        label = "placeholderAlpha"
+    )
+    val canClear = query.isNotEmpty() || selectedFilter != SearchFilterOption.NONE
 
     OutlinedTextField(
         value = query,
         onValueChange = onQueryChange,
         modifier = modifier
             .fillMaxWidth()
-            .padding(16.dp),
-        placeholder = { Text(text = placeholder) },
-        leadingIcon = {
-            if (query.isNotEmpty()) {
-                IconButton(onClick = { onQueryChange("") }) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = "Effacer"
-                    )
-                }
-            } else {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = "Recherche"
+            .padding(16.dp)
+            .onFocusChanged { isFocused = it.isFocused },
+        placeholder = {
+            Box(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = placeholder,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .graphicsLayer { alpha = placeholderAlpha },
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1
                 )
             }
         },
-        trailingIcon = {
+        leadingIcon = {
             FilterDropdown(
                 selectedFilter = selectedFilter,
                 onFilterSelected = onFilterSelected
             )
         },
+        trailingIcon = {
+            IconButton(
+                onClick = {
+                    onQueryChange("")
+                    onFilterSelected(SearchFilterOption.NONE)
+                    focusManager.clearFocus()
+                },
+                enabled = canClear
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "Réinitialiser la recherche",
+                    tint = if (canClear) MaterialTheme.colorScheme.onSurfaceVariant
+                    else LocalContentColor.current.copy(alpha = 0.35f)
+                )
+            }
+        },
         singleLine = true,
-        shape = MaterialTheme.shapes.medium,
+        shape = RoundedCornerShape(20.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            unfocusedBorderColor = Color.Transparent,
+            disabledBorderColor = Color.Transparent,
+            errorBorderColor = MaterialTheme.colorScheme.error,
+            focusedContainerColor = MaterialTheme.colorScheme.surface,
+            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+        ),
+        textStyle = MaterialTheme.typography.bodyLarge,
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
         keyboardActions = KeyboardActions(onSearch = {
             focusManager.clearFocus()
@@ -90,36 +139,50 @@ private fun FilterDropdown(
     onFilterSelected: (SearchFilterOption) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
+    val isActive = selectedFilter != SearchFilterOption.NONE
+    val activeLabel = when (selectedFilter) {
+        SearchFilterOption.NONE -> ""
+        SearchFilterOption.BUS_TRAMS -> "Bus & trams"
+        SearchFilterOption.VELOCITE -> "Vélocité"
+    }
+    val activeIcon = when (selectedFilter) {
+        SearchFilterOption.NONE -> Icons.Default.Search
+        SearchFilterOption.BUS_TRAMS -> Icons.Default.DirectionsBus
+        SearchFilterOption.VELOCITE -> Icons.AutoMirrored.Filled.DirectionsBike
+    }
 
-    IconButton(onClick = { expanded = true }) {
-        val iconTint =
-            if (selectedFilter == SearchFilterOption.NONE) LocalContentColor.current
-            else MaterialTheme.colorScheme.primary
-
-        when (selectedFilter) {
-            SearchFilterOption.NONE -> {
-                Icon(
-                    imageVector = Icons.Default.FilterList,
-                    contentDescription = "Aucun filtre",
-                    tint = iconTint
-                )
-            }
-
-            SearchFilterOption.BUS_TRAMS -> {
-                Icon(
-                    imageVector = Icons.Default.DirectionsBus,
-                    contentDescription = "Bus & trams",
-                    tint = iconTint
-                )
-            }
-
-            SearchFilterOption.VELOCITE -> {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.DirectionsBike,
-                    contentDescription = "Vélocité",
-                    tint = iconTint
-                )
-            }
+    if (isActive) {
+        Row(
+            modifier = Modifier
+                .padding(start = 8.dp, end = 6.dp)
+                .clip(RoundedCornerShape(50))
+                .background(MaterialTheme.colorScheme.primary)
+                .clickable { expanded = true }
+                .padding(start = 12.dp, end = 14.dp, top = 9.dp, bottom = 9.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = activeIcon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onPrimary,
+                modifier = Modifier
+                    .size(24.dp)
+                    .padding(end = 6.dp)
+            )
+            Text(
+                text = activeLabel,
+                color = MaterialTheme.colorScheme.onPrimary,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+    } else {
+        IconButton(onClick = { expanded = true }) {
+            Icon(
+                imageVector = Icons.Default.Search,
+                contentDescription = "Ouvrir les filtres",
+                tint = LocalContentColor.current
+            )
         }
     }
 
