@@ -1,6 +1,7 @@
 package xyz.doocode.superbus.ui.search.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -18,15 +20,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.DirectionsBike
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.ElectricBike
 import androidx.compose.material.icons.filled.LocalParking
-import androidx.compose.material.icons.filled.NorthEast
 import androidx.compose.material.icons.filled.PedalBike
-import androidx.compose.material.icons.filled.SouthEast
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Tag
 import androidx.compose.material.icons.filled.TextFields
@@ -51,6 +52,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import xyz.doocode.superbus.ui.search.VelociteSortField
@@ -102,16 +104,16 @@ fun VelociteSortBottomSheet(
                 .padding(bottom = 32.dp)
         ) {
             Text(
-                text = "Tri des stations Vélocité",
+                text = "Trier les stations",
                 fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
 
-            HorizontalDivider()
+            //HorizontalDivider()
 
             Text(
-                text = "Ordre de tri",
+                text = "Sens du tri",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
@@ -120,26 +122,29 @@ fun VelociteSortBottomSheet(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                SortOrderCard(
+                SortOrderTile(
                     label = "Croissant",
-                    icon = Icons.Filled.NorthEast,
+                    sortField = currentSortField,
+                    sortOrder = VelociteSortOrder.ASCENDING,
                     isSelected = currentSortOrder == VelociteSortOrder.ASCENDING,
                     modifier = Modifier.weight(1f),
                     onClick = { selectOrder(VelociteSortOrder.ASCENDING) }
                 )
-                SortOrderCard(
+                SortOrderTile(
                     label = "Décroissant",
-                    icon = Icons.Filled.SouthEast,
+                    sortField = currentSortField,
+                    sortOrder = VelociteSortOrder.DESCENDING,
                     isSelected = currentSortOrder == VelociteSortOrder.DESCENDING,
                     modifier = Modifier.weight(1f),
                     onClick = { selectOrder(VelociteSortOrder.DESCENDING) }
                 )
             }
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+            //HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
 
             Text(
                 text = "Trier par",
@@ -183,8 +188,15 @@ fun VelociteSortBottomSheet(
             Spacer(modifier = Modifier.padding(top = 8.dp))
 
             val topSortFieldOptions = listOf(
-                Triple("Nom", VelociteSortField.NAME, Icons.Default.TextFields),
-                Triple("Numéro", VelociteSortField.NUMBER, Icons.Default.Tag)
+                //Triple("Nom", VelociteSortField.NAME, Icons.Default.TextFields),
+                Triple("Numéro de station", VelociteSortField.NUMBER, Icons.Default.Tag)
+            )
+
+            Text(
+                text = "Décompte",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
 
             topSortFieldOptions.forEach { (label, field, icon) ->
@@ -196,19 +208,12 @@ fun VelociteSortBottomSheet(
                 )
             }
 
-            Text(
-                text = "Décompte",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-            )
-
             val countSortFieldOptions = listOf(
-                Triple(
+                /*Triple(
                     "Vélos disponibles",
                     VelociteSortField.TOTAL_BIKES,
                     Icons.AutoMirrored.Filled.DirectionsBike
-                ),
+                ),*/
                 Triple(
                     "Vélos mécaniques",
                     VelociteSortField.MECHANICAL_BIKES,
@@ -219,17 +224,17 @@ fun VelociteSortBottomSheet(
                     VelociteSortField.ELECTRICAL_BIKES,
                     Icons.Filled.ElectricBike
                 ),
-                Triple(
+                /*Triple(
                     "Places disponibles",
                     VelociteSortField.AVAILABLE_STANDS,
                     Icons.Filled.LocalParking
-                ),
+                ),*/
                 Triple(
                     "Bornes indisponibles",
                     VelociteSortField.UNAVAILABLE_STANDS,
                     Icons.Filled.Block
                 ),
-                Triple("Capacité", VelociteSortField.CAPACITY, Icons.Filled.Storage),
+                //Triple("Capacité", VelociteSortField.CAPACITY, Icons.Filled.Storage),
             )
 
             countSortFieldOptions.forEach { (label, field, icon) ->
@@ -241,7 +246,7 @@ fun VelociteSortBottomSheet(
                 )
             }
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+            //HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
 
             Text(
                 text = "Statut de la station",
@@ -270,36 +275,139 @@ fun VelociteSortBottomSheet(
 }
 
 @Composable
-private fun SortOrderCard(
+private fun SortOrderTile(
     label: String,
-    icon: ImageVector,
+    sortField: VelociteSortField,
+    sortOrder: VelociteSortOrder,
     isSelected: Boolean,
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
-    val containerColor = if (isSelected) {
-        MaterialTheme.colorScheme.primaryContainer
-    } else {
-        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-    }
+    val containerColor =
+        if (isSelected) {
+            MaterialTheme.colorScheme.primaryContainer
+        } else {
+            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        }
+    val borderColor =
+        if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent
     val contentColor =
         if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
 
     Surface(
-        modifier = modifier.clickable { onClick() },
+        modifier = modifier,
         shape = RoundedCornerShape(18.dp),
         color = containerColor
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(80.dp) // 120.dp
+                    .border(1.5.dp, borderColor, RoundedCornerShape(18.dp))
+                    .clickable { onClick() }
+                    .padding(horizontal = 12.dp, vertical = 14.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
-            Icon(imageVector = icon, contentDescription = null, tint = contentColor)
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(text = label, color = contentColor, fontWeight = FontWeight.SemiBold)
+            SortOrderIllustration(
+                sortField = sortField,
+                sortOrder = sortOrder,
+                contentColor = contentColor
+            )
+            /*Spacer(modifier = Modifier.height(10.dp))
+            Text(
+                text = label,
+                color = contentColor,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center
+            )*/
+        }
+    }
+}
+
+@Composable
+private fun SortOrderIllustration(
+    sortField: VelociteSortField,
+    sortOrder: VelociteSortOrder,
+    contentColor: Color
+) {
+    val isStatusField = sortField in setOf(
+        VelociteSortField.BONUS,
+        VelociteSortField.BANKING,
+        VelociteSortField.OPEN,
+        VelociteSortField.CONNECTED
+    )
+
+    if (isStatusField) {
+        val firstIcon = when (sortField) {
+            VelociteSortField.BONUS -> Icons.Default.AutoAwesome
+            VelociteSortField.BANKING -> Icons.Default.CreditCard
+            VelociteSortField.OPEN -> Icons.Default.CheckCircle
+            VelociteSortField.CONNECTED -> Icons.Default.Wifi
+            else -> Icons.Default.Tag
+        }
+        val positiveFirst = sortOrder == VelociteSortOrder.DESCENDING
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = if (positiveFirst) firstIcon else Icons.Default.Block,
+                contentDescription = null,
+                tint = if (positiveFirst) contentColor else MaterialTheme.colorScheme.error,
+                modifier = Modifier.size(28.dp)
+            )
+            Icon(
+                imageVector = Icons.Default.ArrowForward,
+                contentDescription = null,
+                tint = contentColor,
+                modifier = Modifier
+                    .padding(horizontal = 6.dp)
+                    .size(18.dp)
+            )
+            Icon(
+                imageVector = if (positiveFirst) Icons.Default.Block else firstIcon,
+                contentDescription = null,
+                tint = if (positiveFirst) MaterialTheme.colorScheme.error else contentColor,
+                modifier = Modifier.size(28.dp)
+            )
+        }
+    } else {
+        val isNameSort = sortField == VelociteSortField.NAME
+        val isAscending = sortOrder == VelociteSortOrder.ASCENDING
+        val values =
+            if (isNameSort) {
+                if (isAscending) listOf("A", "B", "C") else listOf("C", "B", "A")
+            } else {
+                if (isAscending) listOf("0", "1", "3") else listOf("3", "1", "0")
+            }
+        val baseColors = listOf(Color(0xFFE53935), Color(0xFFFBC02D), Color(0xFF43A047))
+        val baseSizes = listOf(18.sp, 22.sp, 26.sp)
+        val colors = if (isAscending) baseColors else baseColors.reversed()
+        val sizes = if (isAscending) baseSizes else baseSizes.reversed()
+
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Row(verticalAlignment = Alignment.Bottom) {
+                values.forEachIndexed { index, value ->
+                    Text(
+                        text = value,
+                        color = colors[index],
+                        fontSize = sizes[index],
+                        fontWeight = FontWeight.Black,
+                        modifier = Modifier.padding(horizontal = 1.dp)
+                    )
+                }
+            }
+            Icon(
+                imageVector = Icons.Default.ArrowForward,
+                contentDescription = null,
+                tint = contentColor,
+                modifier = Modifier
+                    .padding(top = 2.dp)
+                    .size(18.dp)
+            )
         }
     }
 }
