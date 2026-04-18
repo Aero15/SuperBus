@@ -20,11 +20,7 @@ object ApiClient {
 
     /** Lazy-loaded GinkoApiService instance. */
     val ginkoService: GinkoApiService by lazy {
-        val client =
-            createOkHttpClient(
-                apiKeyParamName = "apiKey",
-                apiKeyValue = BuildConfig.GINKO_API_KEY
-            )
+        val client = createOkHttpClient(apiKeyParamName = null, apiKeyValue = null)
 
         buildRetrofit(GINKO_BASE_URL, client).create(GinkoApiService::class.java)
     }
@@ -46,10 +42,11 @@ object ApiClient {
     }
 
     /**
-     * Creates a standardized OkHttpClient with logging and a query parameter interceptor for API
-     * keys.
+     * Creates a standardized OkHttpClient with logging and, when needed, a query-parameter
+     * interceptor for API keys.
      *
-     * @param apiKeyParamName The query parameter name for the API key (e.g. "apiKey")
+     * @param apiKeyParamName The query parameter name for the API key when an API expects it in
+     *   the URL.
      * @param apiKeyValue The actual API key value.
      */
     private fun createOkHttpClient(apiKeyParamName: String?, apiKeyValue: String?): OkHttpClient {
@@ -76,7 +73,7 @@ object ApiClient {
                     val original = chain.request()
                     val originalHttpUrl = original.url
 
-                    // Add the API key to every request as a query parameter
+                    // Add the API key to every request as a query parameter when required.
                     val url =
                         originalHttpUrl
                             .newBuilder()
