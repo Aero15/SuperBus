@@ -314,6 +314,14 @@ fun VelociteStationSortedItem(
                         else -> MaterialTheme.colorScheme.onSurfaceVariant
                     }
 
+                    val statusLabel = when (sortField) {
+                        VelociteSortField.BONUS -> if (statusPositive) "Bonus" else "Non bonus"
+                        VelociteSortField.BANKING -> if (statusPositive) "Disponible" else "Sans TPE"
+                        VelociteSortField.OPEN -> if (statusPositive) "Ouverte" else "Fermée"
+                        VelociteSortField.CONNECTED -> if (statusPositive) "Connectée" else "Hors-ligne"
+                        else -> ""
+                    }
+
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = statusIcon,
@@ -323,7 +331,7 @@ fun VelociteStationSortedItem(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = if (statusPositive) "Oui" else "Non",
+                            text = statusLabel,
                             fontWeight = FontWeight.ExtraBold,
                             style = MaterialTheme.typography.bodyLarge,
                             color = valueColor
