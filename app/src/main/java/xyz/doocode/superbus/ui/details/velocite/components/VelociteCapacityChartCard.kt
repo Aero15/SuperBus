@@ -3,12 +3,15 @@ package xyz.doocode.superbus.ui.details.velocite.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
@@ -135,6 +138,53 @@ fun VelociteCapacityChartCard(station: Station) {
                     value = unavailableStands,
                     striped = true
                 )
+            }
+
+            if (unavailableStands > 0) {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .padding(top = 12.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.65f)
+                ) {
+                    Box {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .offset(x = 10.dp, y = (-8).dp)
+                                .size(88.dp)
+                                .rotate(20f)
+                        )
+
+                        Column(
+                            modifier = Modifier.padding(18.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                text = "Pourquoi certaines bornes sont indisponibles ?",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "Ces bornes indisponibles (de manière temporaire) peuvent l'être pour l'une de ces raisons :",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = "• borne mise hors-service pour des travaux ou une maintenance\n" +
+                                        "• borne occupée par un vélo électrique en cours de rechargement\n" +
+                                        "• borne avec un vélo mal raccordé ou un faux contact",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
             }
         } else {
             Text(
