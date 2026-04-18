@@ -449,7 +449,10 @@ fun SearchScreen(
                                             HorizontalDivider(thickness = 0.5.dp)
                                         }
 
-                                        items(groupedStop.duplicates) { duplicate ->
+                                        items(
+                                            items = groupedStop.duplicates,
+                                            key = { duplicate -> "dup_${duplicate.id}" }
+                                        ) { duplicate ->
                                             var showMenu by remember { mutableStateOf(false) }
                                             val isFav =
                                                 favorites.any { it.id == duplicate.id && it.detailsFromId }
@@ -584,7 +587,15 @@ fun SearchScreen(
                                         }
                                     } else if (showVeloOnly == null) {
                                         // Filtre "Tout" : liste fusionnée et triée alphabétiquement
-                                        items(state.merged) { result ->
+                                        items(
+                                            items = state.merged,
+                                            key = { result ->
+                                                when (result) {
+                                                    is SearchResult.Stop -> "stop_${result.arret.id}_${result.arret.nom}"
+                                                    is SearchResult.VeloStation -> "velo_${result.station.number}"
+                                                }
+                                            }
+                                        ) { result ->
                                             when (result) {
                                                 is SearchResult.Stop -> {
                                                     val stop = result.arret
@@ -658,7 +669,10 @@ fun SearchScreen(
                                         }
                                     } else {
                                         // Filtres "Bus & Tram" ou "Vélocité" : listes séparées
-                                        items(visibleStops) { stop ->
+                                        items(
+                                            items = visibleStops,
+                                            key = { stop -> "stop_${stop.id}_${stop.nom}" }
+                                        ) { stop ->
                                             val favorite =
                                                 favorites.find {
                                                     it.id == stop.id &&
@@ -700,7 +714,10 @@ fun SearchScreen(
                                                 }
                                             )
                                         }
-                                        items(sortedVisibleStations) { station ->
+                                        items(
+                                            items = sortedVisibleStations,
+                                            key = { station -> "velo_${station.number}" }
+                                        ) { station ->
                                             if (showVeloOnly == true) {
                                                 VelociteStationSortedItem(
                                                     station = station,
