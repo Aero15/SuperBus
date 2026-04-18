@@ -2,6 +2,7 @@ package xyz.doocode.superbus.ui.search
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -40,7 +41,10 @@ sealed interface SearchUiState {
     data object Empty : SearchUiState // No data from API
 }
 
-class SearchViewModel(application: Application) : AndroidViewModel(application) {
+class SearchViewModel(
+    application: Application,
+    private val savedStateHandle: SavedStateHandle
+) : AndroidViewModel(application) {
 
     private val favoritesManager = FavoritesManager(application)
     private val referenceDataRepository = ReferenceDataRepository.getInstance(application)
@@ -57,7 +61,8 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
     private var velociteAutoRefreshJob: Job? = null
     private var velociteImmediateRefreshJob: Job? = null
 
-    val searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> =
+        savedStateHandle.getStateFlow(KEY_SEARCH_QUERY, "")
 
     val uiState: StateFlow<SearchUiState> = combine(
         _allStops,
@@ -214,7 +219,7 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun onSearchQueryChanged(query: String) {
-        searchQuery.value = query
+        savedStateHandle[KEY_SEARCH_QUERY] = query
     }
 
     fun toggleFavorite(stop: Arret, detailsFromId: Boolean? = null) {
@@ -247,5 +252,9 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
     override fun onCleared() {
         stopVelociteAutoRefresh()
         super.onCleared()
+    }
+
+    companion object {
+        private const val KEY_SEARCH_QUERY = "search_query"
     }
 }

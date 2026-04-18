@@ -36,6 +36,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -119,16 +120,12 @@ fun SearchScreen(
     }
 
     // Bottom Sheet State
-    var selectedStop by remember { mutableStateOf<Arret?>(null) }
-    var selectedLinkedStation by remember {
-        mutableStateOf<Station?>(
-            null
-        )
-    }
-    var showBottomSheet by remember { mutableStateOf(false) }
+    var selectedStopId by rememberSaveable { mutableStateOf<String?>(null) }
+    var selectedLinkedStationNumber by rememberSaveable { mutableStateOf<Int?>(null) }
+    var showBottomSheet by rememberSaveable { mutableStateOf(false) }
 
     // Vélocité sort state (only active when showVeloOnly == true)
-    var velocitySortField by remember {
+    var velocitySortField by rememberSaveable {
         mutableStateOf(
             runCatching {
                 VelociteSortField.valueOf(
@@ -138,7 +135,7 @@ fun SearchScreen(
             }.getOrDefault(VelociteSortField.NAME)
         )
     }
-    var velocitySortOrder by remember {
+    var velocitySortOrder by rememberSaveable {
         mutableStateOf(
             runCatching {
                 VelociteSortOrder.valueOf(
@@ -148,10 +145,10 @@ fun SearchScreen(
             }.getOrDefault(VelociteSortOrder.ASCENDING)
         )
     }
-    var showVelocitySortSheet by remember { mutableStateOf(false) }
+    var showVelocitySortSheet by rememberSaveable { mutableStateOf(false) }
 
     // Filter state: null = all, true = vélocité only, false = bus/tram only
-    var showVeloOnly by remember { mutableStateOf<Boolean?>(null) }
+    var showVeloOnly by rememberSaveable { mutableStateOf<Boolean?>(null) }
 
     fun updateVelociteSortField(field: VelociteSortField) {
         velocitySortField = field
@@ -226,6 +223,13 @@ fun SearchScreen(
                             )
         }
     }
+    val successState = uiState as? SearchUiState.Success
+    val selectedStop = successState?.stops?.firstOrNull { it.id == selectedStopId }
+    val selectedLinkedStation =
+        successState?.stations?.firstOrNull { it.number == selectedLinkedStationNumber }
+            ?: successState?.linkedStationByStopId?.values?.firstOrNull {
+                it.number == selectedLinkedStationNumber
+            }
 
     Column(modifier = modifier.fillMaxSize()) {
         SearchBar(
@@ -656,9 +660,9 @@ fun SearchScreen(
                                                             }
                                                         },
                                                         onVariantsClick = {
-                                                            selectedStop = stop
-                                                            selectedLinkedStation =
-                                                                result.linkedStation
+                                                            selectedStopId = stop.id
+                                                            selectedLinkedStationNumber =
+                                                                result.linkedStation?.number
                                                             showBottomSheet = true
                                                         },
                                                         onDuplicateClick = { duplicate ->
@@ -734,10 +738,10 @@ fun SearchScreen(
                                                     }
                                                 },
                                                 onVariantsClick = {
-                                                    selectedStop = stop
-                                                    selectedLinkedStation =
+                                                    selectedStopId = stop.id
+                                                    selectedLinkedStationNumber =
                                                         if (showVeloOnly == false) null
-                                                        else state.linkedStationByStopId[stop.id]
+                                                        else state.linkedStationByStopId[stop.id]?.number
                                                     showBottomSheet = true
                                                 },
                                                 onDuplicateClick = { duplicate ->
@@ -829,14 +833,15 @@ fun SearchScreen(
 
                     if (showBottomSheet && selectedStop != null) {
                         StopVariantsBottomSheet(
-                            stop = selectedStop!!,
+                            stop = selectedStop,
                             onDismissRequest = {
                                 showBottomSheet = false
-                                selectedLinkedStation = null
+                                selectedStopId = null
+                                selectedLinkedStationNumber = null
                             },
                             onGroupedClick = {
                                 showBottomSheet = false
-                                openStopDetails(selectedStop!!, false)
+                                openStopDetails(selectedStop, false)
                             },
                             onDuplicateClick = { duplicate ->
                                 showBottomSheet = false
@@ -844,13 +849,13 @@ fun SearchScreen(
                             },
                             isGroupedFavorite =
                                 favorites.any {
-                                    it.id == selectedStop!!.id && !it.detailsFromId
+                                    it.id == selectedStop.id && !it.detailsFromId
                                 },
                             isDuplicateFavorite = { duplicate ->
                                 favorites.any { it.id == duplicate.id && it.detailsFromId }
                             },
                             onToggleGroupedFavorite = {
-                                viewModel.toggleFavorite(selectedStop!!, false)
+                                viewModel.toggleFavorite(selectedStop, false)
                             },
                             onToggleDuplicateFavorite = { duplicate ->
                                 viewModel.toggleFavorite(duplicate, true)
