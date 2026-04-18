@@ -52,6 +52,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import xyz.doocode.superbus.core.data.FavoritesRepository
 import xyz.doocode.superbus.core.dto.ginko.Arret
+import xyz.doocode.superbus.core.dto.ginko.FavoriteStation
 import xyz.doocode.superbus.core.dto.jcdecaux.Station
 import xyz.doocode.superbus.core.util.formatVelociteStationName
 import xyz.doocode.superbus.core.util.removeAccents
@@ -211,6 +212,20 @@ fun SearchScreen(
     // Connect to Favorites Repository
     val favoritesRepository = remember { FavoritesRepository.getInstance(context) }
     val favorites by favoritesRepository.favorites.collectAsState()
+    val isVelociteFavorite: (Station) -> Boolean = { station ->
+        val normalizedStationName =
+            formatVelociteStationName(station.name).removeAccents().lowercase()
+
+        favorites.any { favorite ->
+            favorite.id == station.number.toString() &&
+                    (
+                            favorite.effectiveKind == FavoriteStation.KIND_VELOCITE ||
+                                    formatVelociteStationName(favorite.name).removeAccents()
+                                        .lowercase() ==
+                                    normalizedStationName
+                            )
+        }
+    }
 
     Column(modifier = modifier.fillMaxSize()) {
         SearchBar(
@@ -539,13 +554,18 @@ fun SearchScreen(
                                         }
 
                                         if (linkedStation != null && showVeloOnly != false) {
+                                            val linkedStationFavorite =
+                                                isVelociteFavorite(linkedStation)
+
                                             item("linked_velocite_station") {
                                                 ListItem(
                                                     leadingContent = {
                                                         Icon(
-                                                            imageVector = Icons.AutoMirrored.Filled.DirectionsBike,
+                                                            imageVector = if (linkedStationFavorite) Icons.Default.Favorite else Icons.AutoMirrored.Filled.DirectionsBike,
                                                             contentDescription = null,
-                                                            tint = Color(0xFF00AAC2)
+                                                            tint = if (linkedStationFavorite) Color(
+                                                                0xFFE91E63
+                                                            ) else Color(0xFF00AAC2)
                                                         )
                                                     },
                                                     headlineContent = {
@@ -647,6 +667,7 @@ fun SearchScreen(
                                                     VelociteStationItem(
                                                         station = result.station,
                                                         searchQuery = searchQuery,
+                                                        isFavorite = isVelociteFavorite(result.station),
                                                         onClick = {
                                                             val intent = Intent(
                                                                 context,
@@ -723,6 +744,7 @@ fun SearchScreen(
                                                     station = station,
                                                     searchQuery = searchQuery,
                                                     sortField = velocitySortField,
+                                                    isFavorite = isVelociteFavorite(station),
                                                     onClick = {
                                                         val intent = Intent(
                                                             context,
@@ -744,6 +766,7 @@ fun SearchScreen(
                                                 VelociteStationItem(
                                                     station = station,
                                                     searchQuery = searchQuery,
+                                                    isFavorite = isVelociteFavorite(station),
                                                     onClick = {
                                                         val intent = Intent(
                                                             context,
@@ -816,6 +839,9 @@ fun SearchScreen(
                             },
                             velociteStation =
                                 if (showVeloOnly == false) null else selectedLinkedStation,
+                            isVelociteFavorite =
+                                selectedLinkedStation?.let { station -> isVelociteFavorite(station) }
+                                        == true,
                             onVelociteClick =
                                 if (showVeloOnly == false) null
                                 else selectedLinkedStation?.let { station ->

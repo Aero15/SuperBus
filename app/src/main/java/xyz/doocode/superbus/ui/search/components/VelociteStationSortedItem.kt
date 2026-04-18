@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.DirectionsBike
 import androidx.compose.material.icons.filled.Block
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ElectricBike
 import androidx.compose.material.icons.filled.LocalParking
@@ -43,6 +44,7 @@ fun VelociteStationSortedItem(
     station: Station,
     sortField: VelociteSortField,
     searchQuery: String = "",
+    isFavorite: Boolean = false,
     onClick: () -> Unit = {}
 ) {
     val unavailableStands = maxOf(
@@ -108,6 +110,17 @@ fun VelociteStationSortedItem(
         isCountSort -> countColor.copy(alpha = 0.2f)
         else -> Color.Transparent
     }
+    val leadingIcon = if (isFavorite) Icons.Default.Favorite else totemIcon
+    val leadingTint =
+        if (isFavorite) {
+            Color(0xFFE91E63)
+        } else {
+            when {
+                sortField == VelociteSortField.UNAVAILABLE_STANDS -> unavailableColor
+                isCountSort -> countColor
+                else -> Color(0xFF00AAC2)
+            }
+        }
     val tabularNumberStyle = TextStyle(
         fontFeatureSettings = "tnum",
         textAlign = TextAlign.End
@@ -123,14 +136,9 @@ fun VelociteStationSortedItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                imageVector = totemIcon,
+                imageVector = leadingIcon,
                 contentDescription = "Vélocité",
-                tint =
-                    when {
-                        sortField == VelociteSortField.UNAVAILABLE_STANDS -> unavailableColor
-                        isCountSort -> countColor
-                        else -> Color(0xFF00AAC2)
-                    }
+                tint = leadingTint
             )
             Spacer(modifier = Modifier.width(16.dp))
 

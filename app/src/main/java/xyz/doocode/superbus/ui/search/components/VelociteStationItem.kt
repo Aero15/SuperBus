@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.DirectionsBike
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -32,6 +33,7 @@ import xyz.doocode.superbus.core.util.removeAccents
 fun VelociteStationItem(
     station: Station,
     searchQuery: String = "",
+    isFavorite: Boolean = false,
     onClick: () -> Unit = {}
 ) {
     Column {
@@ -42,10 +44,14 @@ fun VelociteStationItem(
                 .padding(vertical = 12.dp, horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            val leadingIcon =
+                if (isFavorite) Icons.Default.Favorite else Icons.AutoMirrored.Filled.DirectionsBike
+            val leadingTint = if (isFavorite) Color(0xFFE91E63) else Color(0xFF00AAC2)
+
             Icon(
-                imageVector = Icons.AutoMirrored.Filled.DirectionsBike,
+                imageVector = leadingIcon,
                 contentDescription = "Vélocité",
-                tint = Color(0xFF00AAC2)
+                tint = leadingTint
             )
             Spacer(modifier = Modifier.width(16.dp))
 

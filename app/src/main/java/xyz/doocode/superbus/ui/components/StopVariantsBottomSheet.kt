@@ -46,6 +46,7 @@ fun StopVariantsBottomSheet(
     onToggleDuplicateFavorite: ((Arret) -> Unit)? = null,
     onFillQuery: ((String) -> Unit)? = null,
     velociteStation: Station? = null,
+    isVelociteFavorite: Boolean = false,
     onVelociteClick: (() -> Unit)? = null
 ) {
     val sheetState = rememberModalBottomSheetState()
@@ -264,9 +265,11 @@ fun StopVariantsBottomSheet(
                         ListItem(
                             leadingContent = {
                                 Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.DirectionsBike,
+                                    imageVector = if (isVelociteFavorite) Icons.Default.Favorite else Icons.AutoMirrored.Filled.DirectionsBike,
                                     contentDescription = null,
-                                    tint = Color(0xFF00AAC2)
+                                    tint = if (isVelociteFavorite) Color(0xFFE91E63) else Color(
+                                        0xFF00AAC2
+                                    )
                                 )
                             },
                             headlineContent = {
