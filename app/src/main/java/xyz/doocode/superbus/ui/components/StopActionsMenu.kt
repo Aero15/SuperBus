@@ -22,7 +22,8 @@ fun StopActionsMenu(
     onCopyName: () -> Unit,
     onCopyId: () -> Unit,
     onSearchName: () -> Unit,
-    onSearchId: () -> Unit
+    onSearchId: () -> Unit,
+    includeIdActions: Boolean = true
 ) {
     DropdownMenu(
         expanded = expanded,
@@ -51,14 +52,16 @@ fun StopActionsMenu(
                 onDismissRequest()
             }
         )
-        DropdownMenuItem(
-            text = { Text("Copier l'ID") },
-            leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null) },
-            onClick = {
-                onCopyId()
-                onDismissRequest()
-            }
-        )
+        if (includeIdActions) {
+            DropdownMenuItem(
+                text = { Text("Copier l'ID") },
+                leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null) },
+                onClick = {
+                    onCopyId()
+                    onDismissRequest()
+                }
+            )
+        }
         HorizontalDivider()
         DropdownMenuItem(
             text = { Text("Rechercher ce nom") },
@@ -68,14 +71,16 @@ fun StopActionsMenu(
                 onDismissRequest()
             }
         )
-        DropdownMenuItem(
-            text = { Text("Rechercher cet ID") },
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-            onClick = {
-                onSearchId()
-                onDismissRequest()
-            }
-        )
+        if (includeIdActions) {
+            DropdownMenuItem(
+                text = { Text("Rechercher cet ID") },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                onClick = {
+                    onSearchId()
+                    onDismissRequest()
+                }
+            )
+        }
     }
 }
 
@@ -87,7 +92,8 @@ fun StopActionsContainer(
     expanded: Boolean,
     onDismissRequest: () -> Unit,
     onToggleFavorite: () -> Unit,
-    onFillQuery: (String) -> Unit
+    onFillQuery: (String) -> Unit,
+    includeIdActions: Boolean = true
 ) {
     val clipboardManager = LocalClipboardManager.current
 
@@ -101,6 +107,7 @@ fun StopActionsContainer(
         onCopyName = { clipboardManager.setText(AnnotatedString(stopName)) },
         onCopyId = { clipboardManager.setText(AnnotatedString(stopId)) },
         onSearchName = { onFillQuery(stopName) },
-        onSearchId = { onFillQuery(stopId) }
+        onSearchId = { onFillQuery(stopId) },
+        includeIdActions = includeIdActions
     )
 }

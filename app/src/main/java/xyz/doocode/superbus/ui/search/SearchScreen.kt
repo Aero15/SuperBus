@@ -668,6 +668,12 @@ fun SearchScreen(
                                                         station = result.station,
                                                         searchQuery = searchQuery,
                                                         isFavorite = isVelociteFavorite(result.station),
+                                                        onFillQuery = { name ->
+                                                            viewModel.onSearchQueryChanged(name)
+                                                        },
+                                                        onToggleFavorite = {
+                                                            viewModel.toggleFavoriteVelocite(result.station)
+                                                        },
                                                         onClick = {
                                                             val intent = Intent(
                                                                 context,
@@ -745,6 +751,12 @@ fun SearchScreen(
                                                     searchQuery = searchQuery,
                                                     sortField = velocitySortField,
                                                     isFavorite = isVelociteFavorite(station),
+                                                    onFillQuery = { name ->
+                                                        viewModel.onSearchQueryChanged(name)
+                                                    },
+                                                    onToggleFavorite = {
+                                                        viewModel.toggleFavoriteVelocite(station)
+                                                    },
                                                     onClick = {
                                                         val intent = Intent(
                                                             context,
@@ -767,6 +779,12 @@ fun SearchScreen(
                                                     station = station,
                                                     searchQuery = searchQuery,
                                                     isFavorite = isVelociteFavorite(station),
+                                                    onFillQuery = { name ->
+                                                        viewModel.onSearchQueryChanged(name)
+                                                    },
+                                                    onToggleFavorite = {
+                                                        viewModel.toggleFavoriteVelocite(station)
+                                                    },
                                                     onClick = {
                                                         val intent = Intent(
                                                             context,

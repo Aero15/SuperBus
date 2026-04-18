@@ -1,7 +1,7 @@
 package xyz.doocode.superbus.ui.search.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -23,6 +23,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -37,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import xyz.doocode.superbus.core.dto.jcdecaux.Station
 import xyz.doocode.superbus.core.util.formatVelociteStationName
 import xyz.doocode.superbus.core.util.removeAccents
+import xyz.doocode.superbus.ui.components.StopActionsContainer
 import xyz.doocode.superbus.ui.search.VelociteSortField
 
 @Composable
@@ -45,8 +50,11 @@ fun VelociteStationSortedItem(
     sortField: VelociteSortField,
     searchQuery: String = "",
     isFavorite: Boolean = false,
+    onFillQuery: (String) -> Unit = {},
+    onToggleFavorite: () -> Unit = {},
     onClick: () -> Unit = {}
 ) {
+    var showContextMenu by remember { mutableStateOf(false) }
     val unavailableStands = maxOf(
         0,
         station.totalStands.capacity -
@@ -121,6 +129,7 @@ fun VelociteStationSortedItem(
                 else -> Color(0xFF00AAC2)
             }
         }
+    val cleanName = formatVelociteStationName(station.name)
     val tabularNumberStyle = TextStyle(
         fontFeatureSettings = "tnum",
         textAlign = TextAlign.End
@@ -131,7 +140,10 @@ fun VelociteStationSortedItem(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(bgColor)
-                .clickable { onClick() }
+                .combinedClickable(
+                    onClick = onClick,
+                    onLongClick = { showContextMenu = true }
+                )
                 .padding(vertical = 12.dp, horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -144,7 +156,6 @@ fun VelociteStationSortedItem(
 
             Column(modifier = Modifier.weight(1f)) {
                 val primaryColor = MaterialTheme.colorScheme.primary
-                val cleanName = formatVelociteStationName(station.name)
 
                 fun highlight(text: String): AnnotatedString = buildAnnotatedString {
                     val query = searchQuery.trim()
@@ -239,6 +250,17 @@ fun VelociteStationSortedItem(
                     )
                 }
             }
+
+            StopActionsContainer(
+                expanded = showContextMenu,
+                onDismissRequest = { showContextMenu = false },
+                stopName = cleanName,
+                stopId = station.number.toString(),
+                isFavorite = isFavorite,
+                onToggleFavorite = onToggleFavorite,
+                onFillQuery = onFillQuery,
+                includeIdActions = false
+            )
         }
         HorizontalDivider(thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant)
     }

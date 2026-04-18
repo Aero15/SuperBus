@@ -225,6 +225,15 @@ class SearchViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
+    fun toggleFavoriteVelocite(station: Station) {
+        viewModelScope.launch {
+            favoritesManager.toggleFavoriteVelocite(
+                station.number.toString(),
+                formatVelociteStationName(station.name)
+            )
+        }
+    }
+
     fun refreshStationsCache() {
         viewModelScope.launch {
             try {
