@@ -11,13 +11,16 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.DirectionsBike
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Block
-import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.ElectricBike
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.LocalParking
 import androidx.compose.material.icons.filled.PedalBike
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -72,14 +75,22 @@ fun VelociteStationSortedItem(
         VelociteSortField.ELECTRICAL_BIKES,
         VelociteSortField.UNAVAILABLE_STANDS
     )
+    val isStatusSort = sortField in setOf(
+        VelociteSortField.BONUS,
+        VelociteSortField.BANKING,
+        VelociteSortField.OPEN,
+        VelociteSortField.CONNECTED
+    )
+
+    val orangeColor = Color(0xFFFF9800)
+    val greenColor = Color(0xFF4CAF50)
+    val redColor = Color(0xFFD32F2F)
+    val blueColor = Color(0xFF00AAC2)
 
     val unavailableColor = when {
-        unavailableStands == station.totalStands.capacity && station.totalStands.capacity > 0 -> Color(
-            0xFFD32F2F
-        )
-
-        unavailableStands > 0 -> Color(0xFFFF9800)
-        else -> Color(0xFF4CAF50)
+        unavailableStands == station.totalStands.capacity && station.totalStands.capacity > 0 -> redColor
+        unavailableStands > 0 -> orangeColor
+        else -> greenColor
     }
 
     val totemIcon = when (sortField) {
@@ -106,27 +117,69 @@ fun VelociteStationSortedItem(
     }
 
     val capacity = station.totalStands.capacity
+    val isBonus = station.bonus
+    val hasBanking = station.banking
+    val isOpen = station.status == "OPEN"
+    val isConnected = station.connected
 
     val countColor = when {
-        count == 0 -> Color(0xFFD32F2F)
-        count <= 2 -> Color(0xFFFF9800)
-        else -> Color(0xFF4CAF50)
+        count == 0 -> redColor
+        count <= 2 -> orangeColor
+        else -> greenColor
+    }
+
+    val statusPositive = when (sortField) {
+        VelociteSortField.BONUS -> isBonus
+        VelociteSortField.BANKING -> hasBanking
+        VelociteSortField.OPEN -> isOpen
+        VelociteSortField.CONNECTED -> isConnected
+        else -> false
+    }
+
+    val statusSortIcon = when (sortField) {
+        VelociteSortField.BONUS -> if (statusPositive) Icons.Filled.AutoAwesome else Icons.AutoMirrored.Filled.DirectionsBike
+        VelociteSortField.BANKING -> if (statusPositive) Icons.Filled.CreditCard else Icons.AutoMirrored.Filled.DirectionsBike
+        VelociteSortField.OPEN -> if (statusPositive) Icons.Filled.CheckCircle else Icons.Filled.Block
+        VelociteSortField.CONNECTED -> if (statusPositive) Icons.Filled.Wifi else Icons.Filled.Block
+        else -> totemIcon
+    }
+
+    val statusColor = when (sortField) {
+        VelociteSortField.BONUS -> if (statusPositive) orangeColor else blueColor
+        VelociteSortField.BANKING -> if (statusPositive) greenColor else blueColor
+        VelociteSortField.OPEN,
+        VelociteSortField.CONNECTED -> if (statusPositive) greenColor else redColor
+
+        else -> blueColor
     }
 
     val bgColor = when {
+        sortField == VelociteSortField.BONUS -> if (isBonus) orangeColor.copy(alpha = 0.2f) else Color.Transparent
+        sortField == VelociteSortField.BANKING -> if (hasBanking) greenColor.copy(alpha = 0.2f) else Color.Transparent
+        sortField == VelociteSortField.OPEN -> if (isOpen) greenColor.copy(alpha = 0.2f) else redColor.copy(
+            alpha = 0.2f
+        )
+
+        sortField == VelociteSortField.CONNECTED -> if (isConnected) greenColor.copy(alpha = 0.2f) else redColor.copy(
+            alpha = 0.2f
+        )
+
         sortField == VelociteSortField.UNAVAILABLE_STANDS -> unavailableColor.copy(alpha = 0.2f)
         isCountSort -> countColor.copy(alpha = 0.2f)
         else -> Color.Transparent
     }
-    val leadingIcon = if (isFavorite) Icons.Default.Favorite else totemIcon
+    val leadingIcon =
+        if (isFavorite) Icons.Default.Favorite else if (isStatusSort) statusSortIcon else totemIcon
     val leadingTint =
         if (isFavorite) {
             Color(0xFFE91E63)
+        } else if (isStatusSort) {
+            statusColor
         } else {
             when {
                 sortField == VelociteSortField.UNAVAILABLE_STANDS -> unavailableColor
                 isCountSort -> countColor
-                else -> Color(0xFF00AAC2)
+                else -> blueColor
             }
         }
     val cleanName = formatVelociteStationName(station.name)
@@ -237,6 +290,43 @@ fun VelociteStationSortedItem(
                             text = "$capacity",
                             style = MaterialTheme.typography.bodyMedium.merge(tabularNumberStyle),
                             color = MaterialTheme.colorScheme.secondary
+                        )
+                    }
+                }
+
+                VelociteSortField.BONUS,
+                VelociteSortField.BANKING,
+                VelociteSortField.OPEN,
+                VelociteSortField.CONNECTED -> {
+                    val statusIcon = when (sortField) {
+                        VelociteSortField.BONUS -> if (statusPositive) Icons.Filled.AutoAwesome else Icons.Filled.Block
+                        VelociteSortField.BANKING -> if (statusPositive) Icons.Filled.CreditCard else Icons.Filled.Block
+                        VelociteSortField.OPEN -> if (statusPositive) Icons.Filled.CheckCircle else Icons.Filled.Block
+                        VelociteSortField.CONNECTED -> if (statusPositive) Icons.Filled.Wifi else Icons.Filled.Block
+                        else -> Icons.Filled.Block
+                    }
+                    val valueColor = when (sortField) {
+                        VelociteSortField.BONUS -> if (statusPositive) orangeColor else MaterialTheme.colorScheme.onSurfaceVariant
+                        VelociteSortField.BANKING -> if (statusPositive) greenColor else MaterialTheme.colorScheme.onSurfaceVariant
+                        VelociteSortField.OPEN,
+                        VelociteSortField.CONNECTED -> if (statusPositive) greenColor else redColor
+
+                        else -> MaterialTheme.colorScheme.onSurfaceVariant
+                    }
+
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = statusIcon,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = valueColor
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = if (statusPositive) "Oui" else "Non",
+                            fontWeight = FontWeight.ExtraBold,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = valueColor
                         )
                     }
                 }

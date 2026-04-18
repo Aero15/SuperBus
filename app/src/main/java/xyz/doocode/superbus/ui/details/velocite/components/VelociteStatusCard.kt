@@ -5,10 +5,10 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CreditCard
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material.icons.filled.WifiOff
 import androidx.compose.material3.*
@@ -69,8 +69,8 @@ fun VelociteStatusCard(station: Station) {
 
             VelociteStatusItem(
                 modifier = Modifier.weight(1f),
-                icon = Icons.Default.Star,
-                color = if (station.bonus) MaterialTheme.colorScheme.primary else Color.Gray,
+                icon = Icons.Default.AutoAwesome,
+                color = if (station.bonus) Color(0xFFFF9800) else Color.Gray,
                 label = if (station.bonus) "Station bonus" else "Station non bonus",
                 positive = station.bonus
             )

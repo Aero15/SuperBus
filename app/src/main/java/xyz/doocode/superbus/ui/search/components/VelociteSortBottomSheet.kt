@@ -2,6 +2,8 @@ package xyz.doocode.superbus.ui.search.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,8 +17,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.DirectionsBike
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.ElectricBike
 import androidx.compose.material.icons.filled.LocalParking
 import androidx.compose.material.icons.filled.NorthEast
@@ -25,6 +30,7 @@ import androidx.compose.material.icons.filled.SouthEast
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Tag
 import androidx.compose.material.icons.filled.TextFields
+import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -62,6 +68,7 @@ fun VelociteSortBottomSheet(
     val sheetState = rememberModalBottomSheetState()
     val scope = rememberCoroutineScope()
     val isDismissing = remember { mutableStateOf(false) }
+    val scrollState = rememberScrollState()
 
     fun dismissSheetAnimated() {
         if (isDismissing.value) return
@@ -89,7 +96,11 @@ fun VelociteSortBottomSheet(
         onDismissRequest = { dismissSheetAnimated() },
         sheetState = sheetState
     ) {
-        Column(modifier = Modifier.padding(bottom = 32.dp)) {
+        Column(
+            modifier = Modifier
+                .verticalScroll(scrollState)
+                .padding(bottom = 32.dp)
+        ) {
             Text(
                 text = "Tri des stations Vélocité",
                 fontWeight = FontWeight.Bold,
@@ -171,9 +182,28 @@ fun VelociteSortBottomSheet(
 
             Spacer(modifier = Modifier.padding(top = 8.dp))
 
-            val sortFieldOptions = listOf(
+            val topSortFieldOptions = listOf(
                 Triple("Nom", VelociteSortField.NAME, Icons.Default.TextFields),
-                Triple("Numéro", VelociteSortField.NUMBER, Icons.Default.Tag),
+                Triple("Numéro", VelociteSortField.NUMBER, Icons.Default.Tag)
+            )
+
+            topSortFieldOptions.forEach { (label, field, icon) ->
+                SortOptionRow(
+                    label = label,
+                    icon = icon,
+                    isSelected = currentSortField == field,
+                    onClick = { selectField(field) }
+                )
+            }
+
+            Text(
+                text = "Décompte",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+
+            val countSortFieldOptions = listOf(
                 Triple(
                     "Vélos disponibles",
                     VelociteSortField.TOTAL_BIKES,
@@ -202,7 +232,32 @@ fun VelociteSortBottomSheet(
                 Triple("Capacité", VelociteSortField.CAPACITY, Icons.Filled.Storage),
             )
 
-            sortFieldOptions.forEach { (label, field, icon) ->
+            countSortFieldOptions.forEach { (label, field, icon) ->
+                SortOptionRow(
+                    label = label,
+                    icon = icon,
+                    isSelected = currentSortField == field,
+                    onClick = { selectField(field) }
+                )
+            }
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+
+            Text(
+                text = "Statut de la station",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+
+            val statusSortOptions = listOf(
+                Triple("Bonus", VelociteSortField.BONUS, Icons.Default.AutoAwesome),
+                Triple("Paiement CB", VelociteSortField.BANKING, Icons.Default.CreditCard),
+                Triple("Ouverte", VelociteSortField.OPEN, Icons.Default.CheckCircle),
+                Triple("En ligne", VelociteSortField.CONNECTED, Icons.Default.Wifi)
+            )
+
+            statusSortOptions.forEach { (label, field, icon) ->
                 SortOptionRow(
                     label = label,
                     icon = icon,

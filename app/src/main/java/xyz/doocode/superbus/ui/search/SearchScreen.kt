@@ -291,6 +291,10 @@ fun SearchScreen(
                             }
 
                             VelociteSortField.CAPACITY -> compareBy { it.totalStands.capacity }
+                            VelociteSortField.BONUS -> compareBy { it.bonus }
+                            VelociteSortField.BANKING -> compareBy { it.banking }
+                            VelociteSortField.OPEN -> compareBy { it.status == "OPEN" }
+                            VelociteSortField.CONNECTED -> compareBy { it.connected }
                         }
                         if (velocitySortOrder == VelociteSortOrder.ASCENDING) {
                             visibleStations.sortedWith(comparator)

@@ -8,7 +8,11 @@ enum class VelociteSortField {
     TOTAL_BIKES,
     AVAILABLE_STANDS,
     UNAVAILABLE_STANDS,
-    CAPACITY
+    CAPACITY,
+    BONUS,
+    BANKING,
+    OPEN,
+    CONNECTED
 }
 
 enum class VelociteSortOrder {
