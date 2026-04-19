@@ -129,7 +129,7 @@ fun TimeDisplayMinimal(temps: Temps, accentColor: Color, isFirst: Boolean) {
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = temps.temps.replace("min", " min"),
+            text = temps.temps,
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = if (isFirst) FontWeight.Black else FontWeight.Normal,
             color = animatedColor

@@ -102,9 +102,15 @@ object StopDetailsUtils {
 fun Modifier.scrollingGradient(
     colors: List<Color>,
     trigger: Any?,
-    shape: Shape
+    shape: Shape,
+    isPersistent: Boolean = true
 ): Modifier = composed {
     val progress = remember { Animatable(1f) }
+    val persistentAlpha by animateFloatAsState(
+        targetValue = if (isPersistent) 1f else 0f,
+        animationSpec = tween(durationMillis = 450, easing = FastOutSlowInEasing),
+        label = "scrollingGradientAlpha"
+    )
 
     LaunchedEffect(trigger) {
         progress.snapTo(0f)
@@ -130,7 +136,15 @@ fun Modifier.scrollingGradient(
             )
 
             onDrawBehind {
-                drawRect(brush)
+                val transientAlpha = if (isPersistent) {
+                    0f
+                } else {
+                    (1f - (kotlin.math.abs(progress.value - 0.5f) * 2f)).coerceIn(0f, 1f)
+                }
+                val finalAlpha = maxOf(persistentAlpha, transientAlpha)
+                if (finalAlpha > 0f) {
+                    drawRect(brush = brush, alpha = finalAlpha)
+                }
             }
         }
 }

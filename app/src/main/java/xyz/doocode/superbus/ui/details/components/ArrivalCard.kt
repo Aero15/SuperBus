@@ -1,30 +1,41 @@
 package xyz.doocode.superbus.ui.details.components
 
+import android.content.Intent
 import android.content.res.Configuration
 import androidx.compose.animation.*
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.TextDecrease
+import androidx.compose.material.icons.filled.TextIncrease
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.google.gson.Gson
+import kotlinx.coroutines.launch
+import xyz.doocode.superbus.core.data.ReferenceDataRepository
+import xyz.doocode.superbus.core.dto.ginko.Ligne
 import xyz.doocode.superbus.core.dto.ginko.Temps
 import xyz.doocode.superbus.ui.components.LineBadge
+import xyz.doocode.superbus.ui.linedetails.LineDetailsActivity
+import xyz.doocode.superbus.ui.lines.LineVariantsSheetContent
 import xyz.doocode.superbus.ui.theme.SuperBusTheme
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun ArrivalCard(
     numLigne: String,
@@ -37,6 +48,10 @@ fun ArrivalCard(
     forcedExpandState: Boolean? = null,
     onLongClick: (() -> Unit)? = null
 ) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val referenceDataRepository = remember(context) { ReferenceDataRepository.getInstance(context) }
+
     val lineColor = StopDetailsUtils.resolveHighlightLineColor(
         couleurFond = couleurFond,
         couleurTexte = couleurTexte,
@@ -44,12 +59,40 @@ fun ArrivalCard(
     )
     val gradientColors = StopDetailsUtils.getGradientColors(lineColor)
     val shape = RoundedCornerShape(14.dp)
-    var isExpoMode by remember { mutableStateOf(initialExpoMode) }
+    var isWaitingTimesLarge by remember { mutableStateOf(initialExpoMode) }
     var isExpanded by remember { mutableStateOf(true) }
+    var selectedLine by remember { mutableStateOf<Ligne?>(null) }
+    val lineSheetState = rememberModalBottomSheetState()
+    val contentPadding by animateDpAsState(
+        targetValue = if (isExpanded) 10.dp else 0.dp,
+        animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing),
+        label = "arrivalCardContentPadding"
+    )
 
     LaunchedEffect(forcedExpandState) {
         if (forcedExpandState != null) {
             isExpanded = forcedExpandState
+        }
+    }
+
+    if (selectedLine != null) {
+        ModalBottomSheet(
+            onDismissRequest = { selectedLine = null },
+            sheetState = lineSheetState
+        ) {
+            LineVariantsSheetContent(
+                line = selectedLine!!,
+                onVariantClick = { variant ->
+                    val line = selectedLine!!
+                    val intent = Intent(context, LineDetailsActivity::class.java).apply {
+                        putExtra("EXTRA_LINE_ID", line.id)
+                        putExtra("EXTRA_VARIANT_ID", variant.id)
+                        putExtra("EXTRA_LINE_JSON", Gson().toJson(line))
+                    }
+                    context.startActivity(intent)
+                    selectedLine = null
+                }
+            )
         }
     }
 
@@ -63,10 +106,15 @@ fun ArrivalCard(
         modifier = Modifier
             .fillMaxWidth()
             .combinedClickable(
-                onClick = {}, // No op click on body (handled by children or ignored)
+                onClick = {},
                 onLongClick = onLongClick
             )
-            .scrollingGradient(gradientColors, times, shape)
+            .scrollingGradient(
+                colors = gradientColors,
+                trigger = times,
+                shape = shape,
+                isPersistent = isExpanded
+            )
     ) {
         Column {
             // Top Border Strip
@@ -84,7 +132,7 @@ fun ArrivalCard(
             }
 
             Column(
-                modifier = Modifier.padding(10.dp)
+                modifier = Modifier.padding(contentPadding)
             ) {
                 ArrivalCardHeader(
                     numLigne = numLigne,
@@ -94,6 +142,16 @@ fun ArrivalCard(
                     ligneId = ligneId,
                     isExpanded = isExpanded,
                     onToggleExpand = { isExpanded = !isExpanded },
+                    onOpenLineDetails = {
+                        scope.launch {
+                            selectedLine = referenceDataRepository.getLignes().firstOrNull {
+                                it.id == ligneId || it.numLignePublic.equals(
+                                    numLigne,
+                                    ignoreCase = true
+                                )
+                            }
+                        }
+                    },
                     onLongClick = onLongClick
                 )
 
@@ -102,24 +160,41 @@ fun ArrivalCard(
                     enter = expandVertically() + fadeIn(),
                     exit = shrinkVertically() + fadeOut()
                 ) {
-                    Column {
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        // Check for "Non desservi" case
-                        val firstTime = times.firstOrNull()?.temps
-                        if (firstTime != null && firstTime.equals(
-                                "Non desservi",
-                                ignoreCase = true
-                            )
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        Column(
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            ServiceNotServed()
-                        } else {
-                            ArrivalTimesRow(
-                                times = times,
-                                lineColor = lineColor,
-                                isExpoMode = isExpoMode,
-                                onToggleMode = { isExpoMode = !isExpoMode },
-                                onLongClick = onLongClick
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            // Check for "Non desservi" case
+                            val firstTime = times.firstOrNull()?.temps
+                            if (firstTime != null && firstTime.equals(
+                                    "Non desservi",
+                                    ignoreCase = true
+                                )
+                            ) {
+                                ServiceNotServed()
+                            } else {
+                                ArrivalTimesRow(
+                                    times = times,
+                                    lineColor = lineColor,
+                                    isExpoMode = isWaitingTimesLarge,
+                                    onToggleMode = { isWaitingTimesLarge = !isWaitingTimesLarge },
+                                    onLongClick = onLongClick
+                                )
+                            }
+                        }
+
+                        FilledTonalIconButton(
+                            onClick = { isWaitingTimesLarge = !isWaitingTimesLarge },
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .padding(4.dp)
+                                .size(36.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (isWaitingTimesLarge) Icons.Default.TextDecrease else Icons.Default.TextIncrease,
+                                contentDescription = if (isWaitingTimesLarge) "Réduire la police" else "Agrandir la police"
                             )
                         }
                     }
@@ -139,42 +214,49 @@ fun ArrivalCardHeader(
     ligneId: String = "",
     isExpanded: Boolean,
     onToggleExpand: () -> Unit,
+    onOpenLineDetails: () -> Unit = {},
     onLongClick: (() -> Unit)? = null
 ) {
-    val rotation by animateFloatAsState(
-        targetValue = if (isExpanded) 180f else 0f,
-        label = "chevronRotation"
-    )
-
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .combinedClickable(
-                onClick = onToggleExpand,
-                onLongClick = onLongClick
-            )
+        modifier = Modifier.fillMaxWidth()
     ) {
-        LineBadge(
-            numLigne = numLigne,
-            couleurFond = couleurFond,
-            couleurTexte = couleurTexte,
-            ligneId = ligneId
-        )
-        Spacer(modifier = Modifier.width(16.dp))
-        Text(
-            text = destination,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            maxLines = 1,
-            modifier = Modifier.weight(1f)
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .weight(1f)
+                .combinedClickable(
+                    onClick = onOpenLineDetails,
+                    onLongClick = onLongClick
+                )
+                .padding(vertical = 2.dp)
+        ) {
+            LineBadge(
+                numLigne = numLigne,
+                couleurFond = couleurFond,
+                couleurTexte = couleurTexte,
+                ligneId = ligneId,
+                modifier = Modifier.size(40.dp),
+                shape = RoundedCornerShape(8.dp)
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                text = destination,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                modifier = Modifier.weight(1f)
+            )
+        }
+
         Spacer(modifier = Modifier.width(8.dp))
-        Icon(
-            imageVector = Icons.Default.KeyboardArrowDown,
-            contentDescription = if (isExpanded) "Réduire" else "Étendre",
-            modifier = Modifier.rotate(rotation)
-        )
+
+        IconButton(onClick = onToggleExpand) {
+            Icon(
+                imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                contentDescription = if (isExpanded) "Réduire la carte" else "Agrandir la carte"
+            )
+        }
     }
 }
 
