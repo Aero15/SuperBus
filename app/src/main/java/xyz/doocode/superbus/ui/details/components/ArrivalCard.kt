@@ -5,6 +5,7 @@ import android.content.res.Configuration
 import androidx.compose.animation.*
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -20,12 +21,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.google.gson.Gson
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import xyz.doocode.superbus.core.data.ReferenceDataRepository
 import xyz.doocode.superbus.core.dto.ginko.Ligne
@@ -61,6 +64,8 @@ fun ArrivalCard(
     val shape = RoundedCornerShape(14.dp)
     var isWaitingTimesLarge by remember { mutableStateOf(initialExpoMode) }
     var isExpanded by remember { mutableStateOf(true) }
+    var isFontButtonActive by remember { mutableStateOf(true) }
+    var fontButtonActivityKey by remember { mutableIntStateOf(0) }
     var selectedLine by remember { mutableStateOf<Ligne?>(null) }
     val lineSheetState = rememberModalBottomSheetState()
     val contentPadding by animateDpAsState(
@@ -68,10 +73,25 @@ fun ArrivalCard(
         animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing),
         label = "arrivalCardContentPadding"
     )
+    val fontButtonAlpha by animateFloatAsState(
+        targetValue = if (isFontButtonActive && isExpanded) 1f else 0.2f,
+        animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing),
+        label = "fontButtonAlpha"
+    )
 
     LaunchedEffect(forcedExpandState) {
         if (forcedExpandState != null) {
             isExpanded = forcedExpandState
+        }
+    }
+
+    LaunchedEffect(isExpanded, fontButtonActivityKey) {
+        if (isExpanded) {
+            isFontButtonActive = true
+            delay(5000)
+            isFontButtonActive = false
+        } else {
+            isFontButtonActive = false
         }
     }
 
@@ -186,11 +206,16 @@ fun ArrivalCard(
                         }
 
                         FilledTonalIconButton(
-                            onClick = { isWaitingTimesLarge = !isWaitingTimesLarge },
+                            onClick = {
+                                isWaitingTimesLarge = !isWaitingTimesLarge
+                                isFontButtonActive = true
+                                fontButtonActivityKey++
+                            },
                             modifier = Modifier
                                 .align(Alignment.BottomEnd)
                                 .padding(4.dp)
                                 .size(36.dp)
+                                .alpha(fontButtonAlpha)
                         ) {
                             Icon(
                                 imageVector = if (isWaitingTimesLarge) Icons.Default.TextDecrease else Icons.Default.TextIncrease,
