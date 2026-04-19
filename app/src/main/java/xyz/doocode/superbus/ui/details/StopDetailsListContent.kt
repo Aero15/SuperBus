@@ -53,6 +53,7 @@ fun StopDetailsListContent(
     isLoadingNearbyStops: Boolean = false,
     onRetry: () -> Unit,
     onItemLongClick: (String) -> Unit,
+    onArrivalTimeClick: (key: String, timeIndex: Int) -> Unit = { _, _ -> },
     onNearbyStopClick: (stop: Arret, fromId: Boolean) -> Unit = { _, _ -> },
     onToggleNearbyFavorite: (stop: Arret, fromId: Boolean) -> Unit = { _, _ -> },
     onFillQuery: (String) -> Unit = {}
@@ -273,10 +274,13 @@ fun StopDetailsListContent(
                                                 couleurFond = arrivals.first().couleurFond,
                                                 couleurTexte = arrivals.first().couleurTexte,
                                                 ligneId = arrivals.first().idLigne,
-                                                times = arrivals.take(3),
+                                                times = arrivals,
                                                 initialExpoMode = list.size < 4,
                                                 forcedExpandState = forcedExpandState,
-                                                onLongClick = { onItemLongClick(key) }
+                                                onLongClick = { onItemLongClick(key) },
+                                                onTimeClick = { timeIndex ->
+                                                    onArrivalTimeClick(key, timeIndex)
+                                                }
                                             )
                                         }
                                     }

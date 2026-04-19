@@ -49,7 +49,8 @@ fun ArrivalCard(
     ligneId: String = "",
     initialExpoMode: Boolean = false,
     forcedExpandState: Boolean? = null,
-    onLongClick: (() -> Unit)? = null
+    onLongClick: (() -> Unit)? = null,
+    onTimeClick: (Int) -> Unit = {}
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -199,7 +200,7 @@ fun ArrivalCard(
                                     times = times,
                                     lineColor = lineColor,
                                     isExpoMode = isWaitingTimesLarge,
-                                    onToggleMode = { isWaitingTimesLarge = !isWaitingTimesLarge },
+                                    onTimeClick = onTimeClick,
                                     onLongClick = onLongClick
                                 )
                             }

@@ -153,6 +153,7 @@ fun StopDetailsScreen(
     var forcedExpandState by remember { mutableStateOf<Boolean?>(null) }
     var forcedSectionsExpandState by remember { mutableStateOf<Boolean?>(null) }
     var focusedItemKey by remember { mutableStateOf<String?>(null) }
+    var focusedTimeIndex by remember { mutableIntStateOf(0) }
     var showExitConfirmation by remember { mutableStateOf(false) }
     var showTtsSettings by remember { mutableStateOf(false) }
     var doNotAskExitAgain by remember { mutableStateOf(false) }
@@ -164,6 +165,7 @@ fun StopDetailsScreen(
     BackHandler(enabled = true) {
         if (focusedItemKey != null) {
             focusedItemKey = null
+            focusedTimeIndex = 0
         } else if (viewModel.hasTtsSubscriptions() && ttsSettings.askBeforeExit) {
             showExitConfirmation = true
         } else {
@@ -346,6 +348,7 @@ fun StopDetailsScreen(
                         FloatingActionButton(
                             onClick = {
                                 focusedItemKey = successState.groupedArrivals.keys.firstOrNull()
+                                focusedTimeIndex = 0
                             }
                         ) {
                             Icon(
@@ -505,10 +508,12 @@ fun StopDetailsScreen(
                                     onClick = {
                                         if (focusedItemKey != null) {
                                             focusedItemKey = null
+                                            focusedTimeIndex = 0
                                         } else {
                                             focusedItemKey =
                                                 (uiState as? StopDetailsUiState.Success)
                                                     ?.groupedArrivals?.keys?.firstOrNull()
+                                            focusedTimeIndex = 0
                                         }
                                         showMenu = false
                                     }
@@ -630,6 +635,7 @@ fun StopDetailsScreen(
                 if (state is StopDetailsUiState.Success && focusedItemKey != null) {
                     if (!state.groupedArrivals.containsKey(focusedItemKey)) {
                         focusedItemKey = null
+                        focusedTimeIndex = 0
                     }
                 }
             }
@@ -657,7 +663,16 @@ fun StopDetailsScreen(
                 StopDetailsFocusContent(
                     arrivalsList = arrivalsList,
                     focusedItemKey = focusedItemKey,
-                    onFocusedItemChanged = { focusedItemKey = it },
+                    focusedTimeIndex = focusedTimeIndex,
+                    onFocusedItemChanged = {
+                        if (focusedItemKey != it) {
+                            focusedItemKey = it
+                            focusedTimeIndex = 0
+                        }
+                    },
+                    onFocusedTimeIndexChanged = { newIndex ->
+                        focusedTimeIndex = newIndex
+                    },
                     activeSubscriptionKeys = ttsSubscriptions.keys,
                     currentlySpeakingKey = currentlySpeakingKey,
                     onToggleTts = { key, numLigne, destination ->
@@ -690,7 +705,14 @@ fun StopDetailsScreen(
                     favorites = favorites,
                     isLoadingNearbyStops = isLoadingNearbyStops,
                     onRetry = { viewModel.init(stopName, stopId) },
-                    onItemLongClick = { focusedItemKey = it },
+                    onItemLongClick = {
+                        focusedItemKey = it
+                        focusedTimeIndex = 0
+                    },
+                    onArrivalTimeClick = { key, timeIndex ->
+                        focusedItemKey = key
+                        focusedTimeIndex = timeIndex
+                    },
                     onNearbyStopClick = openNearbyStop,
                     onToggleNearbyFavorite = { stop, fromId ->
                         viewModel.toggleFavorite(stop, fromId)

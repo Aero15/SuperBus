@@ -23,17 +23,13 @@ fun ArrivalTimesRow(
     times: List<Temps>,
     lineColor: Color,
     isExpoMode: Boolean = false,
-    onToggleMode: () -> Unit = {},
+    onTimeClick: (Int) -> Unit = {},
     onLongClick: (() -> Unit)? = null
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(IntrinsicSize.Min)
-            .combinedClickable(
-                onClick = onToggleMode,
-                onLongClick = onLongClick
-            ),
+            .height(IntrinsicSize.Min),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -41,7 +37,12 @@ fun ArrivalTimesRow(
 
         displayTimes.forEachIndexed { index, temps ->
             Box(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .combinedClickable(
+                        onClick = { onTimeClick(index) },
+                        onLongClick = onLongClick
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 if (isExpoMode) {

@@ -1,11 +1,13 @@
 package xyz.doocode.superbus.ui.details.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
@@ -27,7 +29,9 @@ fun FocusArrivalCard(
     couleurFond: String,
     couleurTexte: String,
     times: List<Temps>,
-    ligneId: String = ""
+    ligneId: String = "",
+    startIndex: Int = 0,
+    onStartIndexChanged: (Int) -> Unit = {}
 ) {
     val lineColor = StopDetailsUtils.resolveHighlightLineColor(
         couleurFond = couleurFond,
@@ -35,12 +39,21 @@ fun FocusArrivalCard(
         ligneId = ligneId
     )
     val gradientColors = StopDetailsUtils.getGradientColors(lineColor)
+    var currentStartIndex by rememberSaveable(numLigne, destination, startIndex) {
+        mutableStateOf(startIndex.coerceIn(0, times.lastIndex.coerceAtLeast(0)))
+    }
+    LaunchedEffect(times) {
+        currentStartIndex = currentStartIndex.coerceIn(0, times.lastIndex.coerceAtLeast(0))
+    }
+    val displayedTimes = remember(times, currentStartIndex) {
+        times.drop(currentStartIndex.coerceAtLeast(0)).ifEmpty { times }
+    }
 
     // Use BoxWithConstraints to detect landscape/tablet width
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
-            .scrollingGradient(gradientColors, times, RectangleShape)
+            .scrollingGradient(gradientColors, displayedTimes, RectangleShape)
     ) {
         // Stripe
         Box(
@@ -103,9 +116,15 @@ fun FocusArrivalCard(
                         // Add some spacers to center it vertically if needed, or let it distribute
                         // FocusTimesContent uses weights, so let's give it a container with height
                         FocusTimesContent(
-                            times = times,
+                            times = displayedTimes,
                             lineColor = lineColor,
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            onTimeSelected = { relativeIndex ->
+                                val newStartIndex = (currentStartIndex + relativeIndex)
+                                    .coerceIn(0, times.lastIndex.coerceAtLeast(0))
+                                currentStartIndex = newStartIndex
+                                onStartIndexChanged(newStartIndex)
+                            }
                         )
                     }
                 }
@@ -132,8 +151,14 @@ fun FocusArrivalCard(
                 Spacer(modifier = Modifier.weight(1f))
 
                 FocusTimesContent(
-                    times = times,
-                    lineColor = lineColor
+                    times = displayedTimes,
+                    lineColor = lineColor,
+                    onTimeSelected = { relativeIndex ->
+                        val newStartIndex = (currentStartIndex + relativeIndex)
+                            .coerceIn(0, times.lastIndex.coerceAtLeast(0))
+                        currentStartIndex = newStartIndex
+                        onStartIndexChanged(newStartIndex)
+                    }
                 )
 
                 Spacer(modifier = Modifier.height(32.dp))
@@ -188,7 +213,8 @@ private fun FocusHeader(
 private fun FocusTimesContent(
     times: List<Temps>,
     lineColor: Color,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onTimeSelected: (Int) -> Unit = {}
 ) {
     val firstTimeStr = times.firstOrNull()?.temps
     val isNotServed = firstTimeStr != null && firstTimeStr.equals("Non desservi", ignoreCase = true)
@@ -234,9 +260,11 @@ private fun FocusTimesContent(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    bottomTimes.forEach { time ->
+                    bottomTimes.forEachIndexed { index, time ->
                         Box(
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { onTimeSelected(index + 1) },
                             contentAlignment = Alignment.Center
                         ) {
                             TimeDisplayExpo(time, lineColor)

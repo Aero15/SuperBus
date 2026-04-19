@@ -20,7 +20,9 @@ import xyz.doocode.superbus.ui.details.components.FocusArrivalCard
 fun StopDetailsFocusContent(
     arrivalsList: List<Pair<String, List<Temps>>>,
     focusedItemKey: String?,
+    focusedTimeIndex: Int = 0,
     onFocusedItemChanged: (String) -> Unit,
+    onFocusedTimeIndexChanged: (Int) -> Unit = {},
     activeSubscriptionKeys: Set<String> = emptySet(),
     currentlySpeakingKey: String? = null,
     onToggleTts: (key: String, numLigne: String, destination: String) -> Unit = { _, _, _ -> }
@@ -45,10 +47,13 @@ fun StopDetailsFocusContent(
         }
     }
 
-    LaunchedEffect(pagerState, arrivalsList) {
+    LaunchedEffect(pagerState, arrivalsList, focusedItemKey) {
         snapshotFlow { pagerState.currentPage }.collect { page ->
             if (focusedItemKey != null && page in arrivalsList.indices) {
-                onFocusedItemChanged(arrivalsList[page].first)
+                val newKey = arrivalsList[page].first
+                if (newKey != focusedItemKey) {
+                    onFocusedItemChanged(newKey)
+                }
             }
         }
     }
@@ -77,7 +82,13 @@ fun StopDetailsFocusContent(
                         couleurFond = arrivals.first().couleurFond,
                         couleurTexte = arrivals.first().couleurTexte,
                         ligneId = arrivals.first().idLigne,
-                        times = arrivals
+                        times = arrivals,
+                        startIndex = if (focusedItemKey == key) focusedTimeIndex else 0,
+                        onStartIndexChanged = { newIndex ->
+                            if (focusedItemKey == key) {
+                                onFocusedTimeIndexChanged(newIndex)
+                            }
+                        }
                     )
                 }
 
