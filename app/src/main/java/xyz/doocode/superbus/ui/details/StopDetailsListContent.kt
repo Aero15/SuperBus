@@ -53,7 +53,9 @@ fun StopDetailsListContent(
     isLoadingNearbyStops: Boolean = false,
     onRetry: () -> Unit,
     onItemLongClick: (String) -> Unit,
-    onNearbyStopClick: (stop: Arret, fromId: Boolean) -> Unit = { _, _ -> }
+    onNearbyStopClick: (stop: Arret, fromId: Boolean) -> Unit = { _, _ -> },
+    onToggleNearbyFavorite: (stop: Arret, fromId: Boolean) -> Unit = { _, _ -> },
+    onFillQuery: (String) -> Unit = {}
 ) {
     var selectedStop by remember { mutableStateOf<Arret?>(null) }
 
@@ -164,6 +166,10 @@ fun StopDetailsListContent(
                                             stop = stop,
                                             isFavorite = isNearbyStopFavorite(stop),
                                             groupDuplicates = hasVariants,
+                                            onFillQuery = onFillQuery,
+                                            onToggleFavorite = {
+                                                onToggleNearbyFavorite(stop, !hasVariants)
+                                            },
                                             onClick = {
                                                 if (hasVariants) onNearbyStopClick(stop, false)
                                                 else onNearbyStopClick(stop, true)
@@ -335,7 +341,14 @@ fun StopDetailsListContent(
                 selectedStop = null
             },
             isGroupedFavorite = isNearbyStopFavorite(selectedStop!!),
-            isDuplicateFavorite = { duplicate -> isNearbyDuplicateFavorite(duplicate) }
+            isDuplicateFavorite = { duplicate -> isNearbyDuplicateFavorite(duplicate) },
+            onToggleGroupedFavorite = {
+                onToggleNearbyFavorite(selectedStop!!, false)
+            },
+            onToggleDuplicateFavorite = { duplicate ->
+                onToggleNearbyFavorite(duplicate, true)
+            },
+            onFillQuery = onFillQuery
         )
     }
 }

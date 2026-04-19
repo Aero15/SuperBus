@@ -37,6 +37,8 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import xyz.doocode.superbus.AppDestinations
+import xyz.doocode.superbus.MainActivity
 import xyz.doocode.superbus.core.dto.ginko.Arret
 import xyz.doocode.superbus.core.dto.ginko.FavoriteStation
 import xyz.doocode.superbus.core.util.formatVelociteStationName
@@ -122,6 +124,16 @@ fun VelociteDetailsScreen(
             putExtra(StopDetailsActivity.EXTRA_DETAILS_FROM_ID, fromId)
         }
         context.startActivity(intent)
+    }
+
+    fun openSearchWithQuery(query: String) {
+        val intent = Intent(context, MainActivity::class.java).apply {
+            putExtra(MainActivity.EXTRA_DESTINATION, AppDestinations.SEARCH.name)
+            putExtra(MainActivity.EXTRA_SEARCH_QUERY, query)
+            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        }
+        context.startActivity(intent)
+        activity?.finish()
     }
 
     fun isNearbyStopFavorite(stop: Arret): Boolean {
@@ -339,6 +351,10 @@ fun VelociteDetailsScreen(
                                             stop = stop,
                                             isFavorite = isNearbyStopFavorite(stop),
                                             groupDuplicates = hasVariants,
+                                            onFillQuery = { query -> openSearchWithQuery(query) },
+                                            onToggleFavorite = {
+                                                viewModel.toggleFavorite(stop, !hasVariants)
+                                            },
                                             onClick = {
                                                 openStopDetails(stop, fromId = !hasVariants)
                                             },
@@ -393,6 +409,10 @@ fun VelociteDetailsScreen(
                         stop = stop,
                         isFavorite = isNearbyStopFavorite(stop),
                         groupDuplicates = hasVariants,
+                        onFillQuery = { query -> openSearchWithQuery(query) },
+                        onToggleFavorite = {
+                            viewModel.toggleFavorite(stop, !hasVariants)
+                        },
                         onClick = {
                             showAllNearbyStopsSheet = false
                             openStopDetails(stop, fromId = !hasVariants)
@@ -421,7 +441,14 @@ fun VelociteDetailsScreen(
                 selectedStop = null
             },
             isGroupedFavorite = isNearbyStopFavorite(selectedStop!!),
-            isDuplicateFavorite = { duplicate -> isNearbyDuplicateFavorite(duplicate) }
+            isDuplicateFavorite = { duplicate -> isNearbyDuplicateFavorite(duplicate) },
+            onToggleGroupedFavorite = {
+                viewModel.toggleFavorite(selectedStop!!, false)
+            },
+            onToggleDuplicateFavorite = { duplicate ->
+                viewModel.toggleFavorite(duplicate, true)
+            },
+            onFillQuery = { query -> openSearchWithQuery(query) }
         )
     }
 }

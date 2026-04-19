@@ -118,6 +118,12 @@ class StopDetailsViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
 
+    fun toggleFavorite(stop: Arret, detailsFromId: Boolean) {
+        viewModelScope.launch {
+            favoritesManager.toggleFavorite(stop.id, stop.nom, detailsFromId)
+        }
+    }
+
     fun refresh() {
         val now = System.currentTimeMillis()
         if (now - lastRefreshTime < 10000) {

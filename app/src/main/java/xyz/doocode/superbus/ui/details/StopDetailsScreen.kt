@@ -43,6 +43,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
+import xyz.doocode.superbus.AppDestinations
+import xyz.doocode.superbus.MainActivity
 import xyz.doocode.superbus.core.util.setKeepScreenOn
 import xyz.doocode.superbus.core.dto.ginko.Arret
 import xyz.doocode.superbus.ui.details.components.StopDetailsUtils
@@ -110,6 +112,16 @@ fun StopDetailsScreen(
             putExtra(StopDetailsActivity.EXTRA_DETAILS_FROM_ID, fromId)
         }
         context.startActivity(intent)
+    }
+
+    val openSearchWithQuery = { query: String ->
+        val intent = Intent(context, MainActivity::class.java).apply {
+            putExtra(MainActivity.EXTRA_DESTINATION, AppDestinations.SEARCH.name)
+            putExtra(MainActivity.EXTRA_SEARCH_QUERY, query)
+            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        }
+        context.startActivity(intent)
+        activity?.finish()
     }
     val prefs =
         remember { context.getSharedPreferences("superbus_app_settings", Context.MODE_PRIVATE) }
@@ -679,7 +691,11 @@ fun StopDetailsScreen(
                     isLoadingNearbyStops = isLoadingNearbyStops,
                     onRetry = { viewModel.init(stopName, stopId) },
                     onItemLongClick = { focusedItemKey = it },
-                    onNearbyStopClick = openNearbyStop
+                    onNearbyStopClick = openNearbyStop,
+                    onToggleNearbyFavorite = { stop, fromId ->
+                        viewModel.toggleFavorite(stop, fromId)
+                    },
+                    onFillQuery = { query -> openSearchWithQuery(query) }
                 )
             }
         }

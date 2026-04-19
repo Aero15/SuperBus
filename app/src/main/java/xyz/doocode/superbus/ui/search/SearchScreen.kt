@@ -79,6 +79,8 @@ fun SearchScreen(
     viewModel: SearchViewModel = viewModel(),
     focusOnStart: Boolean = false,
     onFocusConsumed: () -> Unit = {},
+    initialQuery: String? = null,
+    onInitialQueryConsumed: () -> Unit = {},
     initialFilter: SearchFilterOption = SearchFilterOption.NONE,
     onFilterConsumed: () -> Unit = {}
 ) {
@@ -149,6 +151,15 @@ fun SearchScreen(
 
     // Filter state: null = all, true = vélocité only, false = bus/tram only
     var showVeloOnly by rememberSaveable { mutableStateOf<Boolean?>(null) }
+
+    LaunchedEffect(initialQuery) {
+        if (!initialQuery.isNullOrBlank()) {
+            showVeloOnly = null
+            viewModel.onSearchQueryChanged(initialQuery)
+            focusRequester.requestFocus()
+            onInitialQueryConsumed()
+        }
+    }
 
     fun updateVelociteSortField(field: VelociteSortField) {
         velocitySortField = field

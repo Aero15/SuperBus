@@ -73,6 +73,12 @@ class VelociteDetailsViewModel(application: Application) : AndroidViewModel(appl
         }
     }
 
+    fun toggleFavorite(stop: Arret, detailsFromId: Boolean) {
+        viewModelScope.launch {
+            favoritesManager.toggleFavorite(stop.id, stop.nom, detailsFromId)
+        }
+    }
+
     fun startPolling() {
         if (pollingJob?.isActive == true) return
 
