@@ -11,12 +11,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.DirectionsBike
 import androidx.compose.material.icons.filled.DirectionsBus
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.ManageSearch
 import androidx.compose.material.icons.filled.Train
 import androidx.compose.material.icons.filled.Tram
-import androidx.compose.material.icons.outlined.FolderOpen
+import androidx.compose.material.icons.outlined.Layers
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -152,15 +153,30 @@ fun BusStopItem(
 
             val showVariantsIndicator = groupDuplicates &&
                     (stop.duplicates.size > 1 || hasLinkedVelociteStation)
-            val variantsCount = stop.duplicates.size + if (hasLinkedVelociteStation) 1 else 0
+            val variantsCount = stop.duplicates.size
 
             if (showVariantsIndicator) {
                 Row(
                     modifier = Modifier.clickable { onVariantsClick() },
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    if (hasLinkedVelociteStation) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.DirectionsBike,
+                            contentDescription = "Station Vélocité liée",
+                            tint = Color(0xFF4CAF50),
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Text(
+                            text = "+",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(horizontal = 4.dp)
+                        )
+                    }
+
                     Icon(
-                        imageVector = Icons.Outlined.FolderOpen,
+                        imageVector = Icons.Outlined.Layers,
                         contentDescription = "Ouvrir les variantes",
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(22.dp)
@@ -168,7 +184,7 @@ fun BusStopItem(
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = "${variantsCount} quais",
-                        style = MaterialTheme.typography.bodyLarge,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
