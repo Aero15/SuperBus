@@ -2,12 +2,16 @@ package xyz.doocode.superbus.ui.details.velocite
 
 import android.app.Activity
 import android.content.Context
+import android.content.Intent
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Lightbulb
@@ -26,20 +30,25 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import xyz.doocode.superbus.core.dto.ginko.Arret
 import xyz.doocode.superbus.core.util.formatVelociteStationName
 import xyz.doocode.superbus.core.util.setKeepScreenOn
 import xyz.doocode.superbus.ui.components.ErrorView
+import xyz.doocode.superbus.ui.components.StopVariantsBottomSheet
+import xyz.doocode.superbus.ui.details.StopDetailsActivity
 import xyz.doocode.superbus.ui.details.StopDetailsLoadingView
 import xyz.doocode.superbus.ui.details.velocite.components.VelociteAddressCard
 import xyz.doocode.superbus.ui.details.velocite.components.VelociteCapacityChartCard
 import xyz.doocode.superbus.ui.details.velocite.components.VelociteRecap
 import xyz.doocode.superbus.ui.details.velocite.components.VelociteStatusCard
+import xyz.doocode.superbus.ui.search.components.BusStopItem
 import androidx.core.content.edit
 import kotlinx.coroutines.launch
 
@@ -50,8 +59,11 @@ fun VelociteDetailsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val isFavorite by viewModel.isFavorite.collectAsState()
+    val nearbyStops by viewModel.nearbyStops.collectAsState()
+    val isLoadingNearbyStops by viewModel.isLoadingNearbyStops.collectAsState()
     val context = LocalContext.current
     val activity = context as? Activity
+    val scrollState = rememberScrollState()
 
     val prefs =
         remember { context.getSharedPreferences("superbus_app_settings", Context.MODE_PRIVATE) }
@@ -60,6 +72,8 @@ fun VelociteDetailsScreen(
     }
     var showMenu by remember { mutableStateOf(false) }
     var showUnfavoriteConfirmation by remember { mutableStateOf(false) }
+    var selectedStop by remember { mutableStateOf<Arret?>(null) }
+    var showAllNearbyStopsSheet by remember { mutableStateOf(false) }
 
     LaunchedEffect(keepScreenOn) {
         activity?.setKeepScreenOn(keepScreenOn)
@@ -98,6 +112,15 @@ fun VelociteDetailsScreen(
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val formattedName = formatVelociteStationName(stationName)
+
+    fun openStopDetails(stop: Arret, fromId: Boolean) {
+        val intent = Intent(context, StopDetailsActivity::class.java).apply {
+            putExtra(StopDetailsActivity.EXTRA_STOP_NAME, stop.nom)
+            putExtra(StopDetailsActivity.EXTRA_STOP_ID, stop.id)
+            putExtra(StopDetailsActivity.EXTRA_DETAILS_FROM_ID, fromId)
+        }
+        context.startActivity(intent)
+    }
 
     if (showUnfavoriteConfirmation) {
         AlertDialog(
@@ -243,7 +266,7 @@ fun VelociteDetailsScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .verticalScroll(rememberScrollState())
+                            .verticalScroll(scrollState)
                             .padding(bottom = 16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
@@ -251,9 +274,129 @@ fun VelociteDetailsScreen(
                         VelociteCapacityChartCard(station = state.station)
                         VelociteStatusCard(station = state.station)
                         VelociteAddressCard(station = state.station)
+
+                        if (isLoadingNearbyStops || nearbyStops.isNotEmpty()) {
+                            val visibleNearbyStops = nearbyStops.take(3)
+                            val remainingCount =
+                                (nearbyStops.size - visibleNearbyStops.size).coerceAtLeast(0)
+
+                            Column(modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp)) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Explore,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                    Text(
+                                        text = "Bus et trams à proximité",
+                                        style = MaterialTheme.typography.titleMedium
+                                    )
+                                }
+                                HorizontalDivider()
+
+                                if (isLoadingNearbyStops) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        CircularProgressIndicator(modifier = Modifier.size(28.dp))
+                                    }
+                                } else {
+                                    visibleNearbyStops.forEach { stop ->
+                                        val hasVariants = stop.duplicates.size > 1
+                                        BusStopItem(
+                                            stop = stop,
+                                            groupDuplicates = hasVariants,
+                                            onClick = {
+                                                openStopDetails(stop, fromId = !hasVariants)
+                                            },
+                                            onVariantsClick = { selectedStop = stop }
+                                        )
+                                    }
+
+                                    if (remainingCount > 0) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Button(
+                                                onClick = { showAllNearbyStopsSheet = true },
+                                                shape = RoundedCornerShape(999.dp)
+                                            ) {
+                                                Text(text = "+$remainingCount résultats supplémentaires")
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
         }
+    }
+
+    if (showAllNearbyStopsSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showAllNearbyStopsSheet = false }
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(bottom = 24.dp)
+            ) {
+                Text(
+                    text = "Bus et trams à proximité",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(16.dp)
+                )
+                HorizontalDivider()
+
+                nearbyStops.drop(3).forEach { stop ->
+                    val hasVariants = stop.duplicates.size > 1
+                    BusStopItem(
+                        stop = stop,
+                        groupDuplicates = hasVariants,
+                        onClick = {
+                            showAllNearbyStopsSheet = false
+                            openStopDetails(stop, fromId = !hasVariants)
+                        },
+                        onVariantsClick = {
+                            showAllNearbyStopsSheet = false
+                            selectedStop = stop
+                        }
+                    )
+                }
+            }
+        }
+    }
+
+    if (selectedStop != null) {
+        StopVariantsBottomSheet(
+            stop = selectedStop!!,
+            onDismissRequest = { selectedStop = null },
+            onGroupedClick = {
+                val stop = selectedStop!!
+                openStopDetails(stop, fromId = false)
+                selectedStop = null
+            },
+            onDuplicateClick = { duplicate ->
+                openStopDetails(duplicate, fromId = true)
+                selectedStop = null
+            }
+        )
     }
 }

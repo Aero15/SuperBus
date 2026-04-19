@@ -252,7 +252,7 @@ class StopDetailsViewModel(application: Application) : AndroidViewModel(applicat
                             }
                         )
                     }
-                    .sortedBy { it.nom }
+                //.sortedBy { it.nom }
 
                 _nearbyStops.value = grouped
                 nearbyStopsLoaded = true

@@ -128,7 +128,7 @@ fun StopDetailsListContent(
                                     }
                                 ) {
                                     Text(
-                                        text = "Stations à proximité",
+                                        text = "Stations de bus/tram à proximité",
                                         style = MaterialTheme.typography.titleMedium,
                                         modifier = Modifier.padding(
                                             start = 16.dp,

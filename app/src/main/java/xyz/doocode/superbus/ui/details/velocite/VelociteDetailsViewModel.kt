@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import xyz.doocode.superbus.core.api.ApiClient
 import xyz.doocode.superbus.core.data.FavoritesRepository
+import xyz.doocode.superbus.core.dto.ginko.Arret
 import xyz.doocode.superbus.core.dto.ginko.FavoriteStation
 import xyz.doocode.superbus.core.dto.jcdecaux.Station
 import xyz.doocode.superbus.core.manager.FavoritesManager
@@ -31,12 +32,19 @@ class VelociteDetailsViewModel(application: Application) : AndroidViewModel(appl
     private val _isFavorite = MutableStateFlow(false)
     val isFavorite: StateFlow<Boolean> = _isFavorite.asStateFlow()
 
+    private val _nearbyStops = MutableStateFlow<List<Arret>>(emptyList())
+    val nearbyStops: StateFlow<List<Arret>> = _nearbyStops.asStateFlow()
+
+    private val _isLoadingNearbyStops = MutableStateFlow(false)
+    val isLoadingNearbyStops: StateFlow<Boolean> = _isLoadingNearbyStops.asStateFlow()
+
     private val favoritesManager = FavoritesManager(application)
     private val favoritesRepository = FavoritesRepository.getInstance(application)
 
     private var stationId: Int? = null
     private var stationName: String = ""
     private var pollingJob: Job? = null
+    private var nearbyStopsLoaded = false
 
     fun setStationId(id: Int, name: String) {
         if (stationId == null) {
@@ -73,6 +81,9 @@ class VelociteDetailsViewModel(application: Application) : AndroidViewModel(appl
                     try {
                         val station = ApiClient.jcDecauxService.getStation(id)
                         _uiState.value = VelociteDetailsUiState.Success(station)
+                        if (!nearbyStopsLoaded) {
+                            loadNearbyStops(station)
+                        }
                     } catch (e: Exception) {
                         if (e is CancellationException) throw e
                         if (_uiState.value is VelociteDetailsUiState.Loading) {
@@ -93,15 +104,46 @@ class VelociteDetailsViewModel(application: Application) : AndroidViewModel(appl
 
     fun reload() {
         _uiState.value = VelociteDetailsUiState.Loading
+        nearbyStopsLoaded = false
         stationId?.let {
             viewModelScope.launch {
                 try {
                     val station = ApiClient.jcDecauxService.getStation(it)
                     _uiState.value = VelociteDetailsUiState.Success(station)
+                    loadNearbyStops(station, forceRefresh = true)
                 } catch (e: Exception) {
                     if (e is CancellationException) throw e
                     _uiState.value = VelociteDetailsUiState.Error(e.message ?: "Unknown error")
                 }
+            }
+        }
+    }
+
+    private fun loadNearbyStops(station: Station, forceRefresh: Boolean = false) {
+        if (nearbyStopsLoaded && !forceRefresh) return
+
+        viewModelScope.launch {
+            _isLoadingNearbyStops.value = true
+            try {
+                val rawNearby = ApiClient.ginkoService.getArretsProches(
+                    latitude = station.position.latitude,
+                    longitude = station.position.longitude
+                ).objects
+
+                val grouped = rawNearby
+                    .groupBy { it.nom }
+                    .map { (_, stops) ->
+                        val sorted = stops.sortedBy { it.id }
+                        sorted.first().copy(duplicates = sorted)
+                    }
+
+                _nearbyStops.value = grouped
+                nearbyStopsLoaded = true
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                _nearbyStops.value = emptyList()
+            } finally {
+                _isLoadingNearbyStops.value = false
             }
         }
     }
