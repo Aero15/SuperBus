@@ -38,6 +38,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import xyz.doocode.superbus.core.dto.ginko.Arret
+import xyz.doocode.superbus.core.dto.ginko.FavoriteStation
 import xyz.doocode.superbus.core.util.formatVelociteStationName
 import xyz.doocode.superbus.core.util.setKeepScreenOn
 import xyz.doocode.superbus.ui.components.ErrorView
@@ -59,6 +60,7 @@ fun VelociteDetailsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val isFavorite by viewModel.isFavorite.collectAsState()
+    val favorites by viewModel.favorites.collectAsState()
     val nearbyStops by viewModel.nearbyStops.collectAsState()
     val isLoadingNearbyStops by viewModel.isLoadingNearbyStops.collectAsState()
     val context = LocalContext.current
@@ -120,6 +122,23 @@ fun VelociteDetailsScreen(
             putExtra(StopDetailsActivity.EXTRA_DETAILS_FROM_ID, fromId)
         }
         context.startActivity(intent)
+    }
+
+    fun isNearbyStopFavorite(stop: Arret): Boolean {
+        val duplicateIds = stop.duplicates.ifEmpty { listOf(stop) }.map { it.id }.toSet()
+        return favorites.any { favorite ->
+            favorite.effectiveKind == FavoriteStation.KIND_BUS_TRAM && (
+                    (!favorite.detailsFromId && favorite.id == stop.id) ||
+                            (favorite.detailsFromId && favorite.id in duplicateIds)
+                    )
+        }
+    }
+
+    fun isNearbyDuplicateFavorite(stop: Arret): Boolean {
+        return favorites.any { favorite ->
+            favorite.effectiveKind == FavoriteStation.KIND_BUS_TRAM &&
+                    favorite.detailsFromId && favorite.id == stop.id
+        }
     }
 
     if (showUnfavoriteConfirmation) {
@@ -280,9 +299,11 @@ fun VelociteDetailsScreen(
                             val remainingCount =
                                 (nearbyStops.size - visibleNearbyStops.size).coerceAtLeast(0)
 
-                            Column(modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 8.dp)) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 8.dp)
+                            ) {
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -316,6 +337,7 @@ fun VelociteDetailsScreen(
                                         val hasVariants = stop.duplicates.size > 1
                                         BusStopItem(
                                             stop = stop,
+                                            isFavorite = isNearbyStopFavorite(stop),
                                             groupDuplicates = hasVariants,
                                             onClick = {
                                                 openStopDetails(stop, fromId = !hasVariants)
@@ -369,6 +391,7 @@ fun VelociteDetailsScreen(
                     val hasVariants = stop.duplicates.size > 1
                     BusStopItem(
                         stop = stop,
+                        isFavorite = isNearbyStopFavorite(stop),
                         groupDuplicates = hasVariants,
                         onClick = {
                             showAllNearbyStopsSheet = false
@@ -396,7 +419,9 @@ fun VelociteDetailsScreen(
             onDuplicateClick = { duplicate ->
                 openStopDetails(duplicate, fromId = true)
                 selectedStop = null
-            }
+            },
+            isGroupedFavorite = isNearbyStopFavorite(selectedStop!!),
+            isDuplicateFavorite = { duplicate -> isNearbyDuplicateFavorite(duplicate) }
         )
     }
 }

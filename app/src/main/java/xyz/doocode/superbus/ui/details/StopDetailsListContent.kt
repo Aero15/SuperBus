@@ -30,6 +30,7 @@ import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import xyz.doocode.superbus.core.dto.ginko.Arret
+import xyz.doocode.superbus.core.dto.ginko.FavoriteStation
 import xyz.doocode.superbus.ui.components.EmptyUpcomingPassagesView
 import xyz.doocode.superbus.ui.components.ErrorView
 import xyz.doocode.superbus.ui.components.StopVariantsBottomSheet
@@ -48,12 +49,31 @@ fun StopDetailsListContent(
     velociteStation: Station? = null,
     onVelociteClick: (() -> Unit)? = null,
     nearbyStops: List<Arret> = emptyList(),
+    favorites: List<FavoriteStation> = emptyList(),
     isLoadingNearbyStops: Boolean = false,
     onRetry: () -> Unit,
     onItemLongClick: (String) -> Unit,
     onNearbyStopClick: (stop: Arret, fromId: Boolean) -> Unit = { _, _ -> }
 ) {
     var selectedStop by remember { mutableStateOf<Arret?>(null) }
+
+    fun isNearbyStopFavorite(stop: Arret): Boolean {
+        val duplicateIds = stop.duplicates.ifEmpty { listOf(stop) }.map { it.id }.toSet()
+        return favorites.any { favorite ->
+            favorite.effectiveKind == FavoriteStation.KIND_BUS_TRAM && (
+                    (!favorite.detailsFromId && favorite.id == stop.id) ||
+                            (favorite.detailsFromId && favorite.id in duplicateIds)
+                    )
+        }
+    }
+
+    fun isNearbyDuplicateFavorite(stop: Arret): Boolean {
+        return favorites.any { favorite ->
+            favorite.effectiveKind == FavoriteStation.KIND_BUS_TRAM &&
+                    favorite.detailsFromId && favorite.id == stop.id
+        }
+    }
+
     val expandedSections =
         remember {
             mutableStateMapOf(
@@ -142,6 +162,7 @@ fun StopDetailsListContent(
                                         val hasVariants = stop.duplicates.size > 1
                                         BusStopItem(
                                             stop = stop,
+                                            isFavorite = isNearbyStopFavorite(stop),
                                             groupDuplicates = hasVariants,
                                             onClick = {
                                                 if (hasVariants) onNearbyStopClick(stop, false)
@@ -312,7 +333,9 @@ fun StopDetailsListContent(
             onDuplicateClick = { duplicate ->
                 onNearbyStopClick(duplicate, true)
                 selectedStop = null
-            }
+            },
+            isGroupedFavorite = isNearbyStopFavorite(selectedStop!!),
+            isDuplicateFavorite = { duplicate -> isNearbyDuplicateFavorite(duplicate) }
         )
     }
 }

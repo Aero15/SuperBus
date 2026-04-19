@@ -32,14 +32,15 @@ class VelociteDetailsViewModel(application: Application) : AndroidViewModel(appl
     private val _isFavorite = MutableStateFlow(false)
     val isFavorite: StateFlow<Boolean> = _isFavorite.asStateFlow()
 
+    private val favoritesManager = FavoritesManager(application)
+    private val favoritesRepository = FavoritesRepository.getInstance(application)
+    val favorites: StateFlow<List<FavoriteStation>> = favoritesRepository.favorites
+
     private val _nearbyStops = MutableStateFlow<List<Arret>>(emptyList())
     val nearbyStops: StateFlow<List<Arret>> = _nearbyStops.asStateFlow()
 
     private val _isLoadingNearbyStops = MutableStateFlow(false)
     val isLoadingNearbyStops: StateFlow<Boolean> = _isLoadingNearbyStops.asStateFlow()
-
-    private val favoritesManager = FavoritesManager(application)
-    private val favoritesRepository = FavoritesRepository.getInstance(application)
 
     private var stationId: Int? = null
     private var stationName: String = ""

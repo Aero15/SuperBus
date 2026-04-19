@@ -86,6 +86,7 @@ fun StopDetailsScreen(
     val uiState by viewModel.uiState.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
     val isFavorite by viewModel.isFavorite.collectAsState()
+    val favorites by viewModel.favorites.collectAsState()
     val nearbyStops by viewModel.nearbyStops.collectAsState()
     val isLoadingNearbyStops by viewModel.isLoadingNearbyStops.collectAsState()
     val ttsSubscriptions by viewModel.ttsManager.activeSubscriptions.collectAsState()
@@ -674,6 +675,7 @@ fun StopDetailsScreen(
                         }
                     },
                     nearbyStops = nearbyStops,
+                    favorites = favorites,
                     isLoadingNearbyStops = isLoadingNearbyStops,
                     onRetry = { viewModel.init(stopName, stopId) },
                     onItemLongClick = { focusedItemKey = it },

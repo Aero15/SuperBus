@@ -16,6 +16,7 @@ import xyz.doocode.superbus.core.api.ApiClient
 import xyz.doocode.superbus.core.data.FavoritesRepository
 import xyz.doocode.superbus.core.data.ReferenceDataRepository
 import xyz.doocode.superbus.core.dto.ginko.Arret
+import xyz.doocode.superbus.core.dto.ginko.FavoriteStation
 import xyz.doocode.superbus.core.dto.ginko.Temps
 import xyz.doocode.superbus.core.dto.ginko.TempsLieu
 import xyz.doocode.superbus.core.dto.jcdecaux.Station
@@ -58,6 +59,8 @@ class StopDetailsViewModel(application: Application) : AndroidViewModel(applicat
 
     private val _isFavorite = MutableStateFlow(false)
     val isFavorite: StateFlow<Boolean> = _isFavorite.asStateFlow()
+
+    val favorites: StateFlow<List<FavoriteStation>> = repository.favorites
 
     private val _nearbyStops = MutableStateFlow<List<Arret>>(emptyList())
     val nearbyStops: StateFlow<List<Arret>> = _nearbyStops.asStateFlow()
