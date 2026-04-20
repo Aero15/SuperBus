@@ -1,6 +1,7 @@
 package xyz.doocode.superbus.ui.details.components
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -30,7 +31,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import xyz.doocode.superbus.R
 import xyz.doocode.superbus.core.dto.ginko.VehiculeDR
 import xyz.doocode.superbus.ui.theme.SuperBusTheme
 
@@ -122,6 +125,16 @@ fun VehicleInfoCard(
                                 .padding(16.dp),
                             verticalArrangement = Arrangement.spacedBy(14.dp)
                         ) {
+                            if (vehicle.typeVehicule == "Tramway 33 mètres") {
+                                Image(
+                                    painter = painterResource(id = R.drawable.alstom_citadis),
+                                    contentDescription = "Alstom Citadis",
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 4.dp)
+                                )
+                            }
+
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(14.dp),
