@@ -65,7 +65,7 @@ interface GinkoApiService {
     @FormUrlEncoded
     @POST("DR/getDetailsVehicule.do")
     suspend fun getDetailsVehiculeDR(
-        @Field("num") num: Int,
+        @Field("num") num: String,
         @Field("apiKey") apiKey: String = BuildConfig.GINKO_API_KEY
     ): GinkoResponse<VehiculeDR>
 

@@ -3,6 +3,8 @@ package xyz.doocode.superbus.ui.details.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
@@ -14,12 +16,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import xyz.doocode.superbus.core.data.ReferenceDataRepository
 import xyz.doocode.superbus.core.dto.ginko.Temps
+import xyz.doocode.superbus.core.dto.ginko.VehiculeDR
 import xyz.doocode.superbus.ui.components.LineBadge
 import xyz.doocode.superbus.ui.theme.SuperBusTheme
 
@@ -34,6 +39,9 @@ fun FocusArrivalCard(
     startIndex: Int = 0,
     onStartIndexChanged: (Int) -> Unit = {}
 ) {
+    val context = LocalContext.current
+    val referenceDataRepository = remember(context) { ReferenceDataRepository.getInstance(context) }
+
     val lineColor = StopDetailsUtils.resolveHighlightLineColor(
         couleurFond = couleurFond,
         couleurTexte = couleurTexte,
@@ -54,138 +62,189 @@ fun FocusArrivalCard(
         currentStartIndex = boundedIndex
         onStartIndexChanged(boundedIndex)
     }
+    val targetedDeparture = times.getOrNull(currentStartIndex)
+    val targetedVehicleNumber = targetedDeparture?.numVehicule?.trim().orEmpty()
+    var vehicleInfo by remember(targetedVehicleNumber) { mutableStateOf<VehiculeDR?>(null) }
+    var isVehicleInfoLoading by remember(targetedVehicleNumber) { mutableStateOf(false) }
+
+    LaunchedEffect(targetedVehicleNumber) {
+        if (targetedVehicleNumber.isBlank()) {
+            vehicleInfo = null
+            isVehicleInfoLoading = false
+        } else {
+            isVehicleInfoLoading = true
+            vehicleInfo = referenceDataRepository.getDetailsVehiculeDR(targetedVehicleNumber)
+            isVehicleInfoLoading = false
+        }
+    }
 
     // Use BoxWithConstraints to detect landscape/tablet width
     BoxWithConstraints(
-        modifier = Modifier
-            .fillMaxSize()
-            .scrollingGradient(gradientColors, displayedTimes, RectangleShape)
+        modifier = Modifier.fillMaxSize()
     ) {
-        // Stripe
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .fillMaxWidth()
-                .height(10.dp)
-                .background(lineColor)
-        )
-
         val isLandscape = maxWidth > 600.dp
 
         if (isLandscape) {
-            Row(
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(24.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .scrollingGradient(gradientColors, displayedTimes, RectangleShape)
             ) {
-                // Column 1: Header (Centered)
                 Box(
                     modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    FocusHeader(
-                        numLigne = numLigne,
-                        destination = destination,
-                        couleurFond = couleurFond,
-                        couleurTexte = couleurTexte,
-                        ligneId = ligneId,
-                        isLandscape = true
-                    )
-                }
-
-                // Separator
-                VerticalDivider(
-                    modifier = Modifier
-                        .fillMaxHeight(0.6f)
-                        .width(1.dp),
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
+                        .align(Alignment.TopCenter)
+                        .fillMaxWidth()
+                        .height(10.dp)
+                        .background(lineColor)
                 )
 
-                // Column 2: Times
-                Box(
+                Row(
                     modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight(),
-                    contentAlignment = Alignment.Center
+                        .fillMaxSize()
+                        .padding(24.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // We need to constrain height if the content is small, but fill width?
-                    // Actually FocusTimesContent uses spacers/weights so it expects to fill some space.
-                    // Let's create a Column here to simulate the layout logic or adapt FocusTimesContent
-                    Column(
-                        modifier = Modifier.fillMaxHeight(),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight(),
+                        contentAlignment = Alignment.Center
                     ) {
-                        // Add some spacers to center it vertically if needed, or let it distribute
-                        // FocusTimesContent uses weights, so let's give it a container with height
-                        if (currentStartIndex == 0) {
-                            FocusTimesContent(
-                                times = displayedTimes,
-                                lineColor = lineColor,
-                                modifier = Modifier.fillMaxWidth(),
-                                onTimeSelected = { relativeIndex ->
-                                    updateStartIndex(currentStartIndex + relativeIndex)
-                                }
+                        FocusHeader(
+                            numLigne = numLigne,
+                            destination = destination,
+                            couleurFond = couleurFond,
+                            couleurTexte = couleurTexte,
+                            ligneId = ligneId,
+                            isLandscape = true
+                        )
+                    }
+
+                    VerticalDivider(
+                        modifier = Modifier
+                            .fillMaxHeight(0.6f)
+                            .width(1.dp),
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState())
+                                .padding(24.dp),
+                            verticalArrangement = Arrangement.spacedBy(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            if (currentStartIndex == 0) {
+                                FocusTimesContent(
+                                    times = displayedTimes,
+                                    lineColor = lineColor,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    onTimeSelected = { relativeIndex ->
+                                        updateStartIndex(currentStartIndex + relativeIndex)
+                                    }
+                                )
+                            } else {
+                                FocusShiftedTimesContent(
+                                    times = times,
+                                    currentIndex = currentStartIndex,
+                                    lineColor = lineColor,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    onPreviousClick = { updateStartIndex(currentStartIndex - 1) },
+                                    onNextClick = { updateStartIndex(currentStartIndex + 1) }
+                                )
+                            }
+
+                            VehicleInfoCard(
+                                vehicleNumber = targetedVehicleNumber,
+                                vehicle = vehicleInfo,
+                                isLoading = isVehicleInfoLoading
                             )
-                        } else {
-                            FocusShiftedTimesContent(
-                                times = times,
-                                currentIndex = currentStartIndex,
-                                lineColor = lineColor,
-                                modifier = Modifier.fillMaxWidth(),
-                                onPreviousClick = { updateStartIndex(currentStartIndex - 1) },
-                                onNextClick = { updateStartIndex(currentStartIndex + 1) }
-                            )
+
+                            Spacer(modifier = Modifier.height(8.dp))
                         }
                     }
                 }
             }
         } else {
-            // Portrait Mode
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(24.dp),
+                    .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Spacer(modifier = Modifier.height(24.dp))
-
-                FocusHeader(
-                    numLigne = numLigne,
-                    destination = destination,
-                    couleurFond = couleurFond,
-                    couleurTexte = couleurTexte,
-                    ligneId = ligneId,
-                    modifier = Modifier.padding(top = 24.dp)
-                )
-
-                Spacer(modifier = Modifier.weight(1f))
-
-                if (currentStartIndex == 0) {
-                    FocusTimesContent(
-                        times = displayedTimes,
-                        lineColor = lineColor,
-                        onTimeSelected = { relativeIndex ->
-                            updateStartIndex(currentStartIndex + relativeIndex)
-                        }
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .scrollingGradient(gradientColors, displayedTimes, RectangleShape)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .fillMaxWidth()
+                            .height(10.dp)
+                            .background(lineColor)
                     )
-                } else {
-                    FocusShiftedTimesContentPortrait(
-                        times = times,
-                        currentIndex = currentStartIndex,
-                        lineColor = lineColor,
+
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 4.dp),
-                        onPreviousClick = { updateStartIndex(currentStartIndex - 1) },
-                        onNextClick = { updateStartIndex(currentStartIndex + 1) }
-                    )
+                            .padding(horizontal = 24.dp, vertical = 24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(24.dp)
+                    ) {
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        FocusHeader(
+                            numLigne = numLigne,
+                            destination = destination,
+                            couleurFond = couleurFond,
+                            couleurTexte = couleurTexte,
+                            ligneId = ligneId,
+                            modifier = Modifier.padding(top = 24.dp)
+                        )
+
+                        if (currentStartIndex == 0) {
+                            FocusTimesContent(
+                                times = displayedTimes,
+                                lineColor = lineColor,
+                                onTimeSelected = { relativeIndex ->
+                                    updateStartIndex(currentStartIndex + relativeIndex)
+                                }
+                            )
+                        } else {
+                            FocusShiftedTimesContentPortrait(
+                                times = times,
+                                currentIndex = currentStartIndex,
+                                lineColor = lineColor,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 4.dp),
+                                onPreviousClick = { updateStartIndex(currentStartIndex - 1) },
+                                onNextClick = { updateStartIndex(currentStartIndex + 1) }
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
                 }
 
-                Spacer(modifier = Modifier.height(32.dp))
+                VehicleInfoCard(
+                    vehicleNumber = targetedVehicleNumber,
+                    vehicle = vehicleInfo,
+                    isLoading = isVehicleInfoLoading,
+                    modifier = Modifier.fillMaxWidth(),
+                    fullBleed = true
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
             }
         }
     }
@@ -221,7 +280,7 @@ private fun FocusHeader(
                 .padding(8.dp)
         )
         // Add more spacing if scaled up to avoid overlap visually if using scale modifier
-        Spacer(modifier = Modifier.height(if (isLandscape) 48.dp else 24.dp))
+        Spacer(modifier = Modifier.height(if (isLandscape) 48.dp else 12.dp))
         Text(
             text = destination,
             style = textStyle,

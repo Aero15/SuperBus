@@ -7,6 +7,7 @@ import com.google.gson.reflect.TypeToken
 import xyz.doocode.superbus.core.api.ApiClient
 import xyz.doocode.superbus.core.dto.ginko.Arret
 import xyz.doocode.superbus.core.dto.ginko.Ligne
+import xyz.doocode.superbus.core.dto.ginko.VehiculeDR
 import xyz.doocode.superbus.core.dto.jcdecaux.Station
 
 class ReferenceDataRepository(context: Context) {
@@ -15,8 +16,8 @@ class ReferenceDataRepository(context: Context) {
         context.getSharedPreferences("superbus_cache", Context.MODE_PRIVATE)
     private val gson = Gson()
 
-    // 24 hours in milliseconds
-    private val CACHE_VALIDITY_DURATION = 24 * 60 * 60 * 1000L // 24 hours
+    private val DEFAULT_CACHE_VALIDITY_DURATION = 24 * 60 * 60 * 1000L // 24 hours
+    private val VEHICULE_CACHE_VALIDITY_DURATION = 14 * 24 * 60 * 60 * 1000L // 14 days
 
     companion object {
         private const val KEY_ARRETS_DATA = "cache_arrets_data"
@@ -92,6 +93,44 @@ class ReferenceDataRepository(context: Context) {
         }
     }
 
+    suspend fun getDetailsVehiculeDR(
+        num: String,
+        forceRefresh: Boolean = false
+    ): VehiculeDR? {
+        val normalizedNum = num.trim()
+        if (normalizedNum.isBlank()) return null
+
+        val cacheKeyData = "cache_vehicule_${normalizedNum}_data"
+        val cacheKeyTimestamp = "cache_vehicule_${normalizedNum}_timestamp"
+
+        if (!forceRefresh && isCacheValid(cacheKeyTimestamp, VEHICULE_CACHE_VALIDITY_DURATION)) {
+            val json = prefs.getString(cacheKeyData, null)
+            if (json != null) {
+                try {
+                    return gson.fromJson(json, VehiculeDR::class.java)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+
+        return try {
+            val vehicle = ApiClient.ginkoService.getDetailsVehiculeDR(normalizedNum).objects
+            val json = gson.toJson(vehicle)
+            prefs.edit()
+                .putString(cacheKeyData, json)
+                .putLong(cacheKeyTimestamp, System.currentTimeMillis())
+                .apply()
+            vehicle
+        } catch (e: Exception) {
+            e.printStackTrace()
+            val cachedJson = prefs.getString(cacheKeyData, null)
+            cachedJson?.let {
+                runCatching { gson.fromJson(it, VehiculeDR::class.java) }.getOrNull()
+            }
+        }
+    }
+
     private suspend fun <T> getData(
         cacheKeyData: String,
         cacheKeyTimestamp: String,
@@ -124,8 +163,11 @@ class ReferenceDataRepository(context: Context) {
         return data
     }
 
-    private fun isCacheValid(timestampKey: String): Boolean {
+    private fun isCacheValid(
+        timestampKey: String,
+        validityDuration: Long = DEFAULT_CACHE_VALIDITY_DURATION
+    ): Boolean {
         val lastUpdate = prefs.getLong(timestampKey, 0)
-        return (System.currentTimeMillis() - lastUpdate) < CACHE_VALIDITY_DURATION
+        return (System.currentTimeMillis() - lastUpdate) < validityDuration
     }
 }
