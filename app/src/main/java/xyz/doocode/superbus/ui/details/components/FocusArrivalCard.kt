@@ -3,9 +3,10 @@ package xyz.doocode.superbus.ui.details.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.VerticalDivider
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -47,6 +48,11 @@ fun FocusArrivalCard(
     }
     val displayedTimes = remember(times, currentStartIndex) {
         times.drop(currentStartIndex.coerceAtLeast(0)).ifEmpty { times }
+    }
+    val updateStartIndex: (Int) -> Unit = { newIndex ->
+        val boundedIndex = newIndex.coerceIn(0, times.lastIndex.coerceAtLeast(0))
+        currentStartIndex = boundedIndex
+        onStartIndexChanged(boundedIndex)
     }
 
     // Use BoxWithConstraints to detect landscape/tablet width
@@ -115,17 +121,25 @@ fun FocusArrivalCard(
                     ) {
                         // Add some spacers to center it vertically if needed, or let it distribute
                         // FocusTimesContent uses weights, so let's give it a container with height
-                        FocusTimesContent(
-                            times = displayedTimes,
-                            lineColor = lineColor,
-                            modifier = Modifier.fillMaxWidth(),
-                            onTimeSelected = { relativeIndex ->
-                                val newStartIndex = (currentStartIndex + relativeIndex)
-                                    .coerceIn(0, times.lastIndex.coerceAtLeast(0))
-                                currentStartIndex = newStartIndex
-                                onStartIndexChanged(newStartIndex)
-                            }
-                        )
+                        if (currentStartIndex == 0) {
+                            FocusTimesContent(
+                                times = displayedTimes,
+                                lineColor = lineColor,
+                                modifier = Modifier.fillMaxWidth(),
+                                onTimeSelected = { relativeIndex ->
+                                    updateStartIndex(currentStartIndex + relativeIndex)
+                                }
+                            )
+                        } else {
+                            FocusShiftedTimesContent(
+                                times = times,
+                                currentIndex = currentStartIndex,
+                                lineColor = lineColor,
+                                modifier = Modifier.fillMaxWidth(),
+                                onPreviousClick = { updateStartIndex(currentStartIndex - 1) },
+                                onNextClick = { updateStartIndex(currentStartIndex + 1) }
+                            )
+                        }
                     }
                 }
             }
@@ -150,16 +164,26 @@ fun FocusArrivalCard(
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                FocusTimesContent(
-                    times = displayedTimes,
-                    lineColor = lineColor,
-                    onTimeSelected = { relativeIndex ->
-                        val newStartIndex = (currentStartIndex + relativeIndex)
-                            .coerceIn(0, times.lastIndex.coerceAtLeast(0))
-                        currentStartIndex = newStartIndex
-                        onStartIndexChanged(newStartIndex)
-                    }
-                )
+                if (currentStartIndex == 0) {
+                    FocusTimesContent(
+                        times = displayedTimes,
+                        lineColor = lineColor,
+                        onTimeSelected = { relativeIndex ->
+                            updateStartIndex(currentStartIndex + relativeIndex)
+                        }
+                    )
+                } else {
+                    FocusShiftedTimesContentPortrait(
+                        times = times,
+                        currentIndex = currentStartIndex,
+                        lineColor = lineColor,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 4.dp),
+                        onPreviousClick = { updateStartIndex(currentStartIndex - 1) },
+                        onNextClick = { updateStartIndex(currentStartIndex + 1) }
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(32.dp))
             }
@@ -276,6 +300,198 @@ private fun FocusTimesContent(
     }
 }
 
+@Composable
+private fun FocusShiftedTimesContent(
+    times: List<Temps>,
+    currentIndex: Int,
+    lineColor: Color,
+    modifier: Modifier = Modifier,
+    onPreviousClick: () -> Unit = {},
+    onNextClick: () -> Unit = {}
+) {
+    val previousTime = times.getOrNull(currentIndex - 1)
+    val selectedTime = times.getOrNull(currentIndex)
+    val nextTime = times.getOrNull(currentIndex + 1)
+
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        FocusShiftedSideTime(
+            temps = previousTime,
+            lineColor = lineColor,
+            icon = {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Départ précédent"
+                )
+            },
+            modifier = Modifier.weight(1f),
+            onClick = onPreviousClick
+        )
+
+        Box(
+            modifier = Modifier.weight(1.2f),
+            contentAlignment = Alignment.Center
+        ) {
+            if (selectedTime != null) {
+                FocusTimeDisplay(selectedTime, isPrimary = true)
+            }
+        }
+
+        if (nextTime != null) {
+            FocusShiftedSideTime(
+                temps = nextTime,
+                lineColor = lineColor,
+                icon = {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = "Départ suivant"
+                    )
+                },
+                modifier = Modifier.weight(1f),
+                onClick = onNextClick
+            )
+        } else {
+            Spacer(modifier = Modifier.weight(1f))
+        }
+    }
+}
+
+@Composable
+private fun FocusShiftedTimesContentPortrait(
+    times: List<Temps>,
+    currentIndex: Int,
+    lineColor: Color,
+    modifier: Modifier = Modifier,
+    onPreviousClick: () -> Unit = {},
+    onNextClick: () -> Unit = {}
+) {
+    val previousTime = times.getOrNull(currentIndex - 1)
+    val selectedTime = times.getOrNull(currentIndex)
+    val nextTime = times.getOrNull(currentIndex + 1)
+
+    Box(
+        modifier = modifier.heightIn(min = 200.dp)
+    ) {
+        if (previousTime != null) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .offset(x = (-12).dp, y = (-4).dp)
+                    .width(82.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .scale(0.78f)
+                        .clickable { onPreviousClick() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    TimeDisplayExpo(previousTime, lineColor)
+                }
+            }
+
+            FilledTonalIconButton(
+                onClick = onPreviousClick,
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .offset(x = 10.dp, y = 54.dp)
+                    .size(34.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Départ précédent"
+                )
+            }
+        }
+
+        if (nextTime != null) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .offset(x = 12.dp, y = (-4).dp)
+                    .width(82.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .scale(0.78f)
+                        .clickable { onNextClick() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    TimeDisplayExpo(nextTime, lineColor)
+                }
+            }
+
+            FilledTonalIconButton(
+                onClick = onNextClick,
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .offset(x = (-10).dp, y = 54.dp)
+                    .size(34.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                    contentDescription = "Départ suivant"
+                )
+            }
+        }
+
+        Box(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .fillMaxWidth(),
+            contentAlignment = Alignment.Center
+        ) {
+            if (selectedTime != null) {
+                FocusTimeDisplay(selectedTime, isPrimary = true)
+            }
+        }
+    }
+}
+
+@Composable
+private fun FocusShiftedSideTime(
+    temps: Temps?,
+    lineColor: Color,
+    icon: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit = {}
+) {
+    Column(
+        modifier = modifier
+            .heightIn(min = 140.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .then(if (temps != null) Modifier.clickable { onClick() } else Modifier),
+            contentAlignment = Alignment.Center
+        ) {
+            if (temps != null) {
+                TimeDisplayExpo(temps, lineColor)
+            } else {
+                Spacer(modifier = Modifier.height(72.dp))
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        if (temps != null) {
+            FilledTonalIconButton(
+                onClick = onClick,
+                modifier = Modifier.size(40.dp)
+            ) {
+                icon()
+            }
+        } else {
+            Spacer(modifier = Modifier.size(40.dp))
+        }
+    }
+}
 
 // Mock Helper for Previews
 private fun mockTemps(

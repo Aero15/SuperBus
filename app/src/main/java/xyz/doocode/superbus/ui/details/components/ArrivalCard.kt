@@ -153,7 +153,9 @@ fun ArrivalCard(
             }
 
             Column(
-                modifier = Modifier.padding(contentPadding)
+                modifier = Modifier
+                    .padding(horizontal = contentPadding)
+                    .padding(top = 5.dp, bottom = contentPadding)
             ) {
                 ArrivalCardHeader(
                     numLigne = numLigne,
