@@ -85,93 +85,112 @@ fun FocusArrivalCard(
         val isLandscape = maxWidth > 600.dp
 
         if (isLandscape) {
-            Box(
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .scrollingGradient(gradientColors, displayedTimes, RectangleShape)
+                    .verticalScroll(rememberScrollState())
             ) {
                 Box(
                     modifier = Modifier
-                        .align(Alignment.TopCenter)
                         .fillMaxWidth()
-                        .height(10.dp)
-                        .background(lineColor)
-                )
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(24.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                        .scrollingGradient(gradientColors, displayedTimes, RectangleShape)
                 ) {
                     Box(
                         modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        FocusHeader(
-                            numLigne = numLigne,
-                            destination = destination,
-                            couleurFond = couleurFond,
-                            couleurTexte = couleurTexte,
-                            ligneId = ligneId,
-                            isLandscape = true
-                        )
-                    }
-
-                    VerticalDivider(
-                        modifier = Modifier
-                            .fillMaxHeight(0.6f)
-                            .width(1.dp),
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
+                            .align(Alignment.TopCenter)
+                            .fillMaxWidth()
+                            .height(10.dp)
+                            .background(lineColor)
                     )
 
-                    Box(
+                    Row(
                         modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight()
+                            .fillMaxWidth()
+                            .height(IntrinsicSize.Max)
+                            .padding(24.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column(
+                        Box(
                             modifier = Modifier
-                                .fillMaxSize()
-                                .verticalScroll(rememberScrollState())
-                                .padding(24.dp),
-                            verticalArrangement = Arrangement.spacedBy(24.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
+                                .weight(1f)
+                                .fillMaxHeight(),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            if (currentStartIndex == 0) {
-                                FocusTimesContent(
-                                    times = displayedTimes,
-                                    lineColor = lineColor,
-                                    modifier = Modifier.fillMaxWidth(),
-                                    onTimeSelected = { relativeIndex ->
-                                        updateStartIndex(currentStartIndex + relativeIndex)
-                                    }
-                                )
-                            } else {
-                                FocusShiftedTimesContent(
-                                    times = times,
-                                    currentIndex = currentStartIndex,
-                                    lineColor = lineColor,
-                                    modifier = Modifier.fillMaxWidth(),
-                                    onPreviousClick = { updateStartIndex(currentStartIndex - 1) },
-                                    onNextClick = { updateStartIndex(currentStartIndex + 1) }
-                                )
-                            }
-
-                            VehicleInfoCard(
-                                vehicleNumber = targetedVehicleNumber,
-                                vehicle = vehicleInfo,
-                                isLoading = isVehicleInfoLoading
+                            FocusHeader(
+                                numLigne = numLigne,
+                                destination = destination,
+                                couleurFond = couleurFond,
+                                couleurTexte = couleurTexte,
+                                ligneId = ligneId,
+                                isLandscape = true
                             )
+                        }
 
-                            Spacer(modifier = Modifier.height(8.dp))
+                        VerticalDivider(
+                            modifier = Modifier
+                                .fillMaxHeight(0.6f)
+                                .width(1.dp),
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
+                        )
+
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(24.dp),
+                                verticalArrangement = Arrangement.spacedBy(24.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                if (currentStartIndex == 0) {
+                                    FocusTimesContent(
+                                        times = displayedTimes,
+                                        lineColor = lineColor,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        onTimeSelected = { relativeIndex ->
+                                            updateStartIndex(currentStartIndex + relativeIndex)
+                                        }
+                                    )
+                                } else {
+                                    FocusShiftedTimesContent(
+                                        times = times,
+                                        currentIndex = currentStartIndex,
+                                        lineColor = lineColor,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        onPreviousClick = { updateStartIndex(currentStartIndex - 1) },
+                                        onNextClick = { updateStartIndex(currentStartIndex + 1) }
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.height(8.dp))
+                            }
                         }
                     }
                 }
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(4.dp)
+                        .background(lineColor)
+                )
+
+                VehicleInfoCard(
+                    vehicleNumber = targetedVehicleNumber,
+                    vehicle = vehicleInfo,
+                    isLoading = isVehicleInfoLoading,
+                    modifier = Modifier.fillMaxWidth(),
+                    fullBleed = true,
+                    twoColumn = true
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
             }
         } else {
             Column(
@@ -235,6 +254,13 @@ fun FocusArrivalCard(
                         Spacer(modifier = Modifier.height(8.dp))
                     }
                 }
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(4.dp)
+                        .background(lineColor)
+                )
 
                 VehicleInfoCard(
                     vehicleNumber = targetedVehicleNumber,

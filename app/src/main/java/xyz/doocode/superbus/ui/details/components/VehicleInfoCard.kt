@@ -49,7 +49,8 @@ fun VehicleInfoCard(
     vehicle: VehiculeDR?,
     isLoading: Boolean,
     modifier: Modifier = Modifier,
-    fullBleed: Boolean = false
+    fullBleed: Boolean = false,
+    twoColumn: Boolean = false
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -110,164 +111,348 @@ fun VehicleInfoCard(
                 }
 
                 else -> {
-                    VehicleSectionHeader(
-                        title = "Infos du véhicule",
-                        icon = Icons.Default.DirectionsBus
-                    )
-
-                    Surface(
-                        shape = RoundedCornerShape(22.dp),
-                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.38f)
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(14.dp)
+                    if (twoColumn) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-                            if (vehicle.typeVehicule == "Tramway 33 mètres") {
-                                Image(
-                                    painter = painterResource(id = R.drawable.alstom_citadis),
-                                    contentDescription = "Alstom Citadis",
+                            // Left: Infos du véhicule
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                verticalArrangement = Arrangement.spacedBy(18.dp)
+                            ) {
+                                VehicleSectionHeader(
+                                    title = "Infos du véhicule",
+                                    icon = Icons.Default.DirectionsBus
+                                )
+
+                                Surface(
+                                    shape = RoundedCornerShape(22.dp),
+                                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.38f)
+                                ) {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp),
+                                        verticalArrangement = Arrangement.spacedBy(14.dp)
+                                    ) {
+                                        if (vehicle.typeVehicule == "Tramway 33 mètres") {
+                                            Image(
+                                                painter = painterResource(id = R.drawable.alstom_citadis),
+                                                contentDescription = "Alstom Citadis",
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(vertical = 4.dp)
+                                            )
+                                        }
+
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.spacedBy(14.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Surface(
+                                                shape = RoundedCornerShape(12.dp),
+                                                color = MaterialTheme.colorScheme.primary,
+                                                contentColor = MaterialTheme.colorScheme.onPrimary
+                                            ) {
+                                                Column(
+                                                    modifier = Modifier.padding(
+                                                        horizontal = 18.dp,
+                                                        vertical = 14.dp
+                                                    ),
+                                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                                                ) {
+                                                    Text(
+                                                        text = "Numéro",
+                                                        style = MaterialTheme.typography.labelMedium
+                                                    )
+                                                    Text(
+                                                        text = vehicle.num.ifBlank { "?" },
+                                                        style = MaterialTheme.typography.headlineLarge,
+                                                        fontWeight = FontWeight.Black
+                                                    )
+                                                }
+                                            }
+
+                                            Column(
+                                                modifier = Modifier.weight(1f),
+                                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                                            ) {
+                                                Text(
+                                                    text = "Type de véhicule",
+                                                    style = MaterialTheme.typography.labelMedium,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                                Text(
+                                                    text = vehicle.typeVehicule.ifBlank { "Information non disponible" },
+                                                    style = MaterialTheme.typography.titleMedium,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            }
+                                        }
+
+                                        HorizontalDivider(
+                                            color = MaterialTheme.colorScheme.onSurface.copy(
+                                                alpha = 0.12f
+                                            )
+                                        )
+
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(horizontal = 4.dp, vertical = 2.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = energyIcon(vehicle.energie),
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.primary,
+                                                modifier = Modifier.size(40.dp)
+                                            )
+                                            Column {
+                                                Text(
+                                                    text = "Type d'énergie",
+                                                    style = MaterialTheme.typography.labelMedium,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                                Text(
+                                                    text = energyLabel(vehicle.energie),
+                                                    style = MaterialTheme.typography.bodyLarge,
+                                                    fontWeight = FontWeight.SemiBold
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Right: Équipements du véhicule
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                verticalArrangement = Arrangement.spacedBy(18.dp)
+                            ) {
+                                VehicleSectionHeader(
+                                    title = "Équipements du véhicule",
+                                    icon = Icons.Default.AutoAwesome
+                                )
+
+                                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        EquipmentBubble(
+                                            title = accessibilityLabel(vehicle.accessiblite),
+                                            icon = Icons.AutoMirrored.Filled.Accessible,
+                                            status = when (vehicle.accessiblite) {
+                                                1 -> EquipmentStatus.Available
+                                                2 -> EquipmentStatus.Unavailable
+                                                else -> EquipmentStatus.Unknown
+                                            },
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        EquipmentBubble(
+                                            title = "Climatisation",
+                                            icon = Icons.Default.AcUnit,
+                                            status = if (vehicle.climatisation) EquipmentStatus.Available else EquipmentStatus.Unavailable,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        EquipmentBubble(
+                                            title = "Prises USB",
+                                            icon = Icons.Default.Power,
+                                            status = if (vehicle.prisesUSB) EquipmentStatus.Available else EquipmentStatus.Unavailable,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                    }
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        EquipmentBubble(
+                                            title = "Affichage dynamique",
+                                            icon = Icons.AutoMirrored.Filled.Dvr,
+                                            status = if (vehicle.affichageDynamique) EquipmentStatus.Available else EquipmentStatus.Unavailable,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        EquipmentBubble(
+                                            title = "Annonces sonores",
+                                            icon = Icons.Default.Campaign,
+                                            status = if (vehicle.annoncesSonores) EquipmentStatus.Available else EquipmentStatus.Unavailable,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        Spacer(modifier = Modifier.weight(1f))
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        VehicleSectionHeader(
+                            title = "Infos du véhicule",
+                            icon = Icons.Default.DirectionsBus
+                        )
+
+                        Surface(
+                            shape = RoundedCornerShape(22.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.38f)
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(14.dp)
+                            ) {
+                                if (vehicle.typeVehicule == "Tramway 33 mètres") {
+                                    Image(
+                                        painter = painterResource(id = R.drawable.alstom_citadis),
+                                        contentDescription = "Alstom Citadis",
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 4.dp)
+                                    )
+                                }
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(14.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Surface(
+                                        shape = RoundedCornerShape(12.dp),
+                                        color = MaterialTheme.colorScheme.primary,
+                                        contentColor = MaterialTheme.colorScheme.onPrimary
+                                    ) {
+                                        Column(
+                                            modifier = Modifier.padding(
+                                                horizontal = 18.dp,
+                                                vertical = 14.dp
+                                            ),
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                                        ) {
+                                            Text(
+                                                text = "Numéro",
+                                                style = MaterialTheme.typography.labelMedium
+                                            )
+                                            Text(
+                                                text = vehicle.num.ifBlank { "?" },
+                                                style = MaterialTheme.typography.headlineLarge,
+                                                fontWeight = FontWeight.Black
+                                            )
+                                        }
+                                    }
+
+                                    Column(
+                                        modifier = Modifier.weight(1f),
+                                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        Text(
+                                            text = "Type de véhicule",
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        Text(
+                                            text = vehicle.typeVehicule.ifBlank { "Information non disponible" },
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
+
+                                HorizontalDivider(
+                                    color = MaterialTheme.colorScheme.onSurface.copy(
+                                        alpha = 0.12f
+                                    )
+                                )
+
+                                Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(vertical = 4.dp)
+                                        .padding(horizontal = 4.dp, vertical = 2.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = energyIcon(vehicle.energie),
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(40.dp)
+                                    )
+                                    Column {
+                                        Text(
+                                            text = "Type d'énergie",
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        Text(
+                                            text = energyLabel(vehicle.energie),
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        VehicleSectionHeader(
+                            title = "Équipements du véhicule",
+                            icon = Icons.Default.AutoAwesome
+                        )
+
+                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                EquipmentBubble(
+                                    title = accessibilityLabel(vehicle.accessiblite),
+                                    icon = Icons.AutoMirrored.Filled.Accessible,
+                                    status = when (vehicle.accessiblite) {
+                                        1 -> EquipmentStatus.Available
+                                        2 -> EquipmentStatus.Unavailable
+                                        else -> EquipmentStatus.Unknown
+                                    },
+                                    modifier = Modifier.weight(1f)
+                                )
+                                EquipmentBubble(
+                                    title = "Climatisation",
+                                    icon = Icons.Default.AcUnit,
+                                    status = if (vehicle.climatisation) EquipmentStatus.Available else EquipmentStatus.Unavailable,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                EquipmentBubble(
+                                    title = "Prises USB",
+                                    icon = Icons.Default.Power,
+                                    status = if (vehicle.prisesUSB) EquipmentStatus.Available else EquipmentStatus.Unavailable,
+                                    modifier = Modifier.weight(1f)
                                 )
                             }
 
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(14.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                Surface(
-                                    shape = RoundedCornerShape(12.dp),
-                                    color = MaterialTheme.colorScheme.primary,
-                                    contentColor = MaterialTheme.colorScheme.onPrimary
-                                ) {
-                                    Column(
-                                        modifier = Modifier.padding(
-                                            horizontal = 18.dp,
-                                            vertical = 14.dp
-                                        ),
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                                    ) {
-                                        Text(
-                                            text = "Numéro",
-                                            style = MaterialTheme.typography.labelMedium
-                                        )
-                                        Text(
-                                            text = vehicle.num.ifBlank { "?" },
-                                            style = MaterialTheme.typography.headlineLarge,
-                                            fontWeight = FontWeight.Black
-                                        )
-                                    }
-                                }
-
-                                Column(
-                                    modifier = Modifier.weight(1f),
-                                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                                ) {
-                                    Text(
-                                        text = "Type de véhicule",
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                    Text(
-                                        text = vehicle.typeVehicule.ifBlank { "Information non disponible" },
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                            }
-
-                            HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f))
-
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 4.dp, vertical = 2.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                Icon(
-                                    imageVector = energyIcon(vehicle.energie),
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(40.dp)
+                                EquipmentBubble(
+                                    title = "Affichage dynamique",
+                                    icon = Icons.AutoMirrored.Filled.Dvr,
+                                    status = if (vehicle.affichageDynamique) EquipmentStatus.Available else EquipmentStatus.Unavailable,
+                                    modifier = Modifier.weight(1f)
                                 )
-                                Column {
-                                    Text(
-                                        text = "Type d'énergie",
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                    Text(
-                                        text = energyLabel(vehicle.energie),
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        fontWeight = FontWeight.SemiBold
-                                    )
-                                }
+                                EquipmentBubble(
+                                    title = "Annonces sonores",
+                                    icon = Icons.Default.Campaign,
+                                    status = if (vehicle.annoncesSonores) EquipmentStatus.Available else EquipmentStatus.Unavailable,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                Spacer(modifier = Modifier.weight(1f))
                             }
                         }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    VehicleSectionHeader(
-                        title = "Équipements du véhicule",
-                        icon = Icons.Default.AutoAwesome
-                    )
-
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            EquipmentBubble(
-                                title = accessibilityLabel(vehicle.accessiblite),
-                                icon = Icons.AutoMirrored.Filled.Accessible,
-                                status = when (vehicle.accessiblite) {
-                                    1 -> EquipmentStatus.Available
-                                    2 -> EquipmentStatus.Unavailable
-                                    else -> EquipmentStatus.Unknown
-                                },
-                                modifier = Modifier.weight(1f)
-                            )
-                            EquipmentBubble(
-                                title = "Climatisation",
-                                icon = Icons.Default.AcUnit,
-                                status = if (vehicle.climatisation) EquipmentStatus.Available else EquipmentStatus.Unavailable,
-                                modifier = Modifier.weight(1f)
-                            )
-                            EquipmentBubble(
-                                title = "Prises USB",
-                                icon = Icons.Default.Power,
-                                status = if (vehicle.prisesUSB) EquipmentStatus.Available else EquipmentStatus.Unavailable,
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            EquipmentBubble(
-                                title = "Affichage dynamique",
-                                icon = Icons.AutoMirrored.Filled.Dvr,
-                                status = if (vehicle.affichageDynamique) EquipmentStatus.Available else EquipmentStatus.Unavailable,
-                                modifier = Modifier.weight(1f)
-                            )
-                            EquipmentBubble(
-                                title = "Annonces sonores",
-                                icon = Icons.Default.Campaign,
-                                status = if (vehicle.annoncesSonores) EquipmentStatus.Available else EquipmentStatus.Unavailable,
-                                modifier = Modifier.weight(1f)
-                            )
-                            Spacer(modifier = Modifier.weight(1f))
-                        }
-                    }
+                    } // end else (twoColumn)
                 }
             }
         }
