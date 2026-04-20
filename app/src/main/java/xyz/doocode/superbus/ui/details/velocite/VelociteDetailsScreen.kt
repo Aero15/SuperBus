@@ -6,12 +6,10 @@ import android.content.Intent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Lightbulb
@@ -49,6 +47,7 @@ import xyz.doocode.superbus.ui.details.StopDetailsActivity
 import xyz.doocode.superbus.ui.details.StopDetailsLoadingView
 import xyz.doocode.superbus.ui.details.velocite.components.VelociteAddressCard
 import xyz.doocode.superbus.ui.details.velocite.components.VelociteCapacityChartCard
+import xyz.doocode.superbus.ui.details.velocite.components.VelociteNearbyStops
 import xyz.doocode.superbus.ui.details.velocite.components.VelociteRecap
 import xyz.doocode.superbus.ui.details.velocite.components.VelociteStatusCard
 import xyz.doocode.superbus.ui.search.components.BusStopItem
@@ -306,80 +305,24 @@ fun VelociteDetailsScreen(
                         VelociteStatusCard(station = state.station)
                         VelociteAddressCard(station = state.station)
 
-                        if (isLoadingNearbyStops || nearbyStops.isNotEmpty()) {
-                            val visibleNearbyStops = nearbyStops.take(3)
-                            val remainingCount =
-                                (nearbyStops.size - visibleNearbyStops.size).coerceAtLeast(0)
-
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 8.dp)
-                            ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Explore,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.primary
-                                    )
-                                    Text(
-                                        text = "Bus et trams à proximité",
-                                        style = MaterialTheme.typography.titleMedium
-                                    )
-                                }
-                                HorizontalDivider()
-
-                                if (isLoadingNearbyStops) {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(16.dp),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        CircularProgressIndicator(modifier = Modifier.size(28.dp))
-                                    }
-                                } else {
-                                    visibleNearbyStops.forEach { stop ->
-                                        val hasVariants = stop.duplicates.size > 1
-                                        BusStopItem(
-                                            stop = stop,
-                                            isFavorite = isNearbyStopFavorite(stop),
-                                            groupDuplicates = hasVariants,
-                                            onFillQuery = { query -> openSearchWithQuery(query) },
-                                            onToggleFavorite = {
-                                                viewModel.toggleFavorite(stop, !hasVariants)
-                                            },
-                                            onClick = {
-                                                openStopDetails(stop, fromId = !hasVariants)
-                                            },
-                                            onVariantsClick = { selectedStop = stop }
-                                        )
-                                    }
-
-                                    if (remainingCount > 0) {
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(horizontal = 16.dp, vertical = 12.dp),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Button(
-                                                onClick = { showAllNearbyStopsSheet = true },
-                                                shape = RoundedCornerShape(999.dp)
-                                            ) {
-                                                Text(text = "+$remainingCount résultats supplémentaires")
-                                            }
-                                        }
-                                    }
-                                }
+                        VelociteNearbyStops(
+                            nearbyStops = nearbyStops,
+                            isLoading = isLoadingNearbyStops,
+                            isFavorite = { stop -> isNearbyStopFavorite(stop) },
+                            onFillQuery = { query -> openSearchWithQuery(query) },
+                            onToggleFavorite = { stop, fromId ->
+                                viewModel.toggleFavorite(stop, fromId)
+                            },
+                            onStopClick = { stop, fromId ->
+                                openStopDetails(stop, fromId)
+                            },
+                            onVariantsClick = { stop ->
+                                selectedStop = stop
+                            },
+                            onShowMoreClick = {
+                                showAllNearbyStopsSheet = true
                             }
-                        }
+                        )
                     }
                 }
             }
