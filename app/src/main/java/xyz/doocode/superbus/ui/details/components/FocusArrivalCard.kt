@@ -99,7 +99,7 @@ fun FocusArrivalCard(
                         modifier = Modifier
                             .align(Alignment.TopCenter)
                             .fillMaxWidth()
-                            .height(10.dp)
+                            .height(5.dp)
                             .background(lineColor)
                     )
 
@@ -208,7 +208,7 @@ fun FocusArrivalCard(
                         modifier = Modifier
                             .align(Alignment.TopCenter)
                             .fillMaxWidth()
-                            .height(10.dp)
+                            .height(5.dp)
                             .background(lineColor)
                     )
 
@@ -243,9 +243,7 @@ fun FocusArrivalCard(
                                 times = times,
                                 currentIndex = currentStartIndex,
                                 lineColor = lineColor,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 4.dp),
+                                modifier = Modifier.fillMaxWidth(),
                                 onPreviousClick = { updateStartIndex(currentStartIndex - 1) },
                                 onNextClick = { updateStartIndex(currentStartIndex + 1) }
                             )
@@ -464,7 +462,7 @@ private fun FocusShiftedTimesContentPortrait(
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterStart)
-                    .offset(x = (-12).dp, y = (-4).dp)
+                    .offset(x = (-20).dp, y = (-4).dp)
                     .width(82.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -482,7 +480,7 @@ private fun FocusShiftedTimesContentPortrait(
                 onClick = onPreviousClick,
                 modifier = Modifier
                     .align(Alignment.CenterStart)
-                    .offset(x = 10.dp, y = 54.dp)
+                    .offset(x = 4.dp, y = 54.dp)
                     .size(34.dp)
             ) {
                 Icon(
@@ -496,7 +494,7 @@ private fun FocusShiftedTimesContentPortrait(
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
-                    .offset(x = 12.dp, y = (-4).dp)
+                    .offset(x = 20.dp, y = (-4).dp)
                     .width(82.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -514,7 +512,7 @@ private fun FocusShiftedTimesContentPortrait(
                 onClick = onNextClick,
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
-                    .offset(x = (-10).dp, y = 54.dp)
+                    .offset(x = (-4).dp, y = 54.dp)
                     .size(34.dp)
             ) {
                 Icon(
