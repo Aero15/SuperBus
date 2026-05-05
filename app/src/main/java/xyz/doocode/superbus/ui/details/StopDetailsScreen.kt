@@ -13,7 +13,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.Block
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.CompareArrows
+import androidx.compose.material.icons.filled.DirectionsBus
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Fullscreen
@@ -47,6 +51,7 @@ import xyz.doocode.superbus.AppDestinations
 import xyz.doocode.superbus.MainActivity
 import xyz.doocode.superbus.core.util.setKeepScreenOn
 import xyz.doocode.superbus.core.dto.ginko.Arret
+import xyz.doocode.superbus.ui.details.GroupingMode
 import xyz.doocode.superbus.ui.details.components.StopDetailsUtils
 import xyz.doocode.superbus.ui.details.components.TtsSettingsDialog
 import xyz.doocode.superbus.ui.details.velocite.VelociteDetailsActivity
@@ -159,6 +164,15 @@ fun StopDetailsScreen(
     var doNotAskExitAgain by remember { mutableStateOf(false) }
     var showLineSelectionDialog by remember { mutableStateOf(false) }
     var showUnfavoriteConfirmation by remember { mutableStateOf(false) }
+    var groupingMode by remember {
+        mutableStateOf(
+            when (prefs.getString("arrival_grouping_mode", GroupingMode.BY_TRANSPORT.name)) {
+                GroupingMode.BY_DIRECTION.name -> GroupingMode.BY_DIRECTION
+                GroupingMode.NONE.name -> GroupingMode.NONE
+                else -> GroupingMode.BY_TRANSPORT
+            }
+        )
+    }
 
     // Back handler: confirm exit when TTS subscriptions are active
     val ttsSettings = viewModel.getTtsSettings()
@@ -612,6 +626,104 @@ fun StopDetailsScreen(
                                         showMenu = false
                                     }
                                 )
+                                HorizontalDivider()
+                                Box(
+                                    modifier = Modifier.padding(
+                                        start = 16.dp,
+                                        top = 10.dp,
+                                        bottom = 2.dp
+                                    )
+                                ) {
+                                    Text(
+                                        text = "Groupes",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                                DropdownMenuItem(
+                                    text = { Text("Ne pas grouper") },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Default.Block,
+                                            contentDescription = null
+                                        )
+                                    },
+                                    trailingIcon = {
+                                        if (groupingMode == GroupingMode.NONE) {
+                                            Icon(
+                                                imageVector = Icons.Default.Check,
+                                                contentDescription = "Sélectionné",
+                                                tint = MaterialTheme.colorScheme.primary
+                                            )
+                                        }
+                                    },
+                                    onClick = {
+                                        groupingMode = GroupingMode.NONE
+                                        prefs.edit {
+                                            putString(
+                                                "arrival_grouping_mode",
+                                                GroupingMode.NONE.name
+                                            )
+                                        }
+                                        showMenu = false
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Grouper par sens de la ligne") },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Default.CompareArrows,
+                                            contentDescription = null
+                                        )
+                                    },
+                                    trailingIcon = {
+                                        if (groupingMode == GroupingMode.BY_DIRECTION) {
+                                            Icon(
+                                                imageVector = Icons.Default.Check,
+                                                contentDescription = "Sélectionné",
+                                                tint = MaterialTheme.colorScheme.primary
+                                            )
+                                        }
+                                    },
+                                    onClick = {
+                                        groupingMode = GroupingMode.BY_DIRECTION
+                                        prefs.edit {
+                                            putString(
+                                                "arrival_grouping_mode",
+                                                GroupingMode.BY_DIRECTION.name
+                                            )
+                                        }
+                                        showMenu = false
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Grouper par type de transport") },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Default.DirectionsBus,
+                                            contentDescription = null
+                                        )
+                                    },
+                                    trailingIcon = {
+                                        if (groupingMode == GroupingMode.BY_TRANSPORT) {
+                                            Icon(
+                                                imageVector = Icons.Default.Check,
+                                                contentDescription = "Sélectionné",
+                                                tint = MaterialTheme.colorScheme.primary
+                                            )
+                                        }
+                                    },
+                                    onClick = {
+                                        groupingMode = GroupingMode.BY_TRANSPORT
+                                        prefs.edit {
+                                            putString(
+                                                "arrival_grouping_mode",
+                                                GroupingMode.BY_TRANSPORT.name
+                                            )
+                                        }
+                                        showMenu = false
+                                    }
+                                )
                             }
                         }
                     }
@@ -684,6 +796,7 @@ fun StopDetailsScreen(
                     state = state,
                     forcedExpandState = forcedExpandState,
                     forcedSectionsExpandState = forcedSectionsExpandState,
+                    groupingMode = groupingMode,
                     velociteStation = velociteStation,
                     onVelociteClick = velociteStation?.let { station ->
                         {
