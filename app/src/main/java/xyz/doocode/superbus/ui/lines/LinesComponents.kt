@@ -259,7 +259,7 @@ fun LineVariantsSheetContent(
         Spacer(modifier = Modifier.height(32.dp))
 
         Text(
-            text = "Variantes",
+            text = "Destinations",
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier
                 .align(Alignment.Start)

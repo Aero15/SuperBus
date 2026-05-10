@@ -34,7 +34,7 @@ sealed class BadgeContent {
     data class Simple(val text: String) : BadgeContent()
     data class TwoLine(val top: String, val bottom: String) : BadgeContent()
     data class ThreeLine(val top: String, val mid: String, val bottom: String) : BadgeContent()
-    object DrawableOnly : BadgeContent()
+    data class DrawableOnly(val drawableRes: Int) : BadgeContent()
     data class TextWithOverlay(val text: String) : BadgeContent()
 }
 
@@ -43,20 +43,22 @@ private val proxyRegex = Regex("^Proxy (.+)$", RegexOption.IGNORE_CASE)
 
 fun resolveBadgeContent(ligneId: String, numLignePublic: String): BadgeContent {
     return when {
-        ligneId == "27" -> BadgeContent.DrawableOnly
+        ligneId == "27" -> BadgeContent.DrawableOnly(R.drawable.citadelle)
         ligneId == "98" -> BadgeContent.Simple("C")
         ligneId == "99" -> BadgeContent.Simple("H")
-        ligneId == "110" -> BadgeContent.TextWithOverlay("B")
+        ligneId == "110" -> BadgeContent.DrawableOnly(R.drawable.planb)
         proxyTgvRegex.matches(numLignePublic) -> {
             val match = proxyTgvRegex.find(numLignePublic)
             val suffix = match?.groupValues?.getOrNull(1) ?: ""
             BadgeContent.ThreeLine("PROXY", "TGV", suffix)
         }
+
         proxyRegex.matches(numLignePublic) -> {
             val match = proxyRegex.find(numLignePublic)
             val letter = match?.groupValues?.getOrNull(1) ?: ""
             BadgeContent.TwoLine("PROXY", letter)
         }
+
         else -> BadgeContent.Simple(numLignePublic)
     }
 }
@@ -89,6 +91,7 @@ fun BoxScope.BadgeBoxContent(
                     .widthIn(min = 28.dp)
             )
         }
+
         is BadgeContent.TwoLine -> {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -116,6 +119,7 @@ fun BoxScope.BadgeBoxContent(
                 )
             }
         }
+
         is BadgeContent.ThreeLine -> {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -151,14 +155,16 @@ fun BoxScope.BadgeBoxContent(
                 )
             }
         }
+
         is BadgeContent.DrawableOnly -> {
             Image(
-                painter = painterResource(id = R.drawable.citadelle),
+                painter = painterResource(id = content.drawableRes),
                 contentDescription = null,
                 modifier = Modifier.matchParentSize(),
                 contentScale = ContentScale.Crop
             )
         }
+
         is BadgeContent.TextWithOverlay -> {
             Text(
                 text = content.text,

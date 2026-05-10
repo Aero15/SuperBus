@@ -1,12 +1,28 @@
+<!--
+  ~ Copyright (C) 2026 The Android Open Source Project
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~      http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="32dp"
     android:height="32dp"
     android:viewportWidth="32"
     android:viewportHeight="32">
   <path
-      android:strokeWidth="1"
-      android:pathData="m3,0v1.5h3v-1.5zM9,0v1.5h3v-1.5zM15,0v1.5h3v-1.5zM21,0v1.5h3v-1.5zM27,0v1.5h3v-1.5zM30.5,1v3h1.5v-3zM0,2v3h1.5v-3zM30.5,7v3h1.5v-3zM0,8v3h1.5v-3zM30.5,13v3h1.5v-3zM0,14v3h1.5v-3zM30.5,19v3h1.5v-3zM0,20v3h1.5v-3zM30.5,25v3h1.5v-3zM0,26v3h1.5v-3zM0,30.5v1.5h3v-1.5zM6,30.5v1.5h3v-1.5zM12,30.5v1.5h3v-1.5zM18,30.5v1.5h3v-1.5zM24,30.5v1.5h3v-1.5zM30,30.5v1.5h2v-0.697,-0.303 -0.5h-1z"
+      android:pathData="M1.793,0 L5.426,3.633L9.148,3.633L5.516,0ZM9.238,0 L12.871,3.633L16.594,3.633L12.961,0ZM16.688,0 L20.32,3.633h3.723L20.41,0ZM24.133,0 L27.766,3.633h0.602L28.367,4.232L32,7.865L32,4.145L27.855,0ZM31.58,0 L32,0.42L32,0ZM0,1.934L0,5.656L3.633,9.289L3.633,5.566ZM6.791,7.113v1.156L9.631,8.27L6.791,9.9v1.469h4.551v-1.156L8.5,10.213l2.842,-1.631v-1.469zM12.996,7.113L12.996,24.887h5.611c4.088,0 6.602,-1.98 6.602,-5.23 0,-1.854 -1.041,-3.377 -2.92,-4.215 1.244,-0.813 1.904,-2.057 1.904,-3.504 0,-2.996 -2.26,-4.824 -5.967,-4.824zM28.367,7.959L28.367,11.68L32,15.313L32,11.592ZM0,9.379v3.723l3.633,3.633v-3.723zM16.6,10.109h1.703c1.371,0 2.184,0.736 2.184,1.98 0,1.295 -0.812,2.031 -2.184,2.031h-1.703zM11.342,12.258 L6.791,13.908v1.508l4.551,1.65L11.342,15.838L10.27,15.469v-1.611l1.072,-0.371zM9.293,14.195v0.936L7.955,14.662ZM28.367,15.406v3.721L32,22.76L32,19.039ZM0,16.828v3.719l3.633,3.633v-3.719zM16.6,17.117h2.211c1.676,0 2.691,0.863 2.691,2.387 0,1.498 -1.016,2.387 -2.691,2.387h-2.211zM10.295,17.773v1.65L6.791,19.424v1.156h4.551v-2.807zM8.209,21.541c-0.89,0 -1.418,0.655 -1.418,1.721v1.625h4.551v-1.156L9.619,23.73v-0.469c0,-1.066 -0.526,-1.721 -1.41,-1.721zM8.195,22.736c0.279,0 0.469,0.169 0.469,0.461v0.533L7.748,23.73v-0.533c0,-0.292 0.187,-0.461 0.447,-0.461zM28.367,22.854v3.721L32,30.207L32,26.486ZM0,24.273v3.723L4.004,32L7.725,32L4.092,28.367L3.633,28.367L3.633,27.908ZM7.818,28.367 L11.451,32h3.723l-3.633,-3.633zM15.266,28.367L18.898,32h3.721l-3.633,-3.633zM22.713,28.367L26.346,32h3.723L26.436,28.367ZM0,31.721L0,32h0.279z"
       android:strokeLineJoin="round"
+      android:strokeWidth="10"
       android:fillColor="#ffed00"
-      android:strokeColor="#00000000"/>
+      android:strokeColor="#00000000"
+      android:strokeLineCap="square"/>
 </vector>

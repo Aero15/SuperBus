@@ -178,7 +178,8 @@ fun VelociteCapacityChartCard(station: Station) {
                             Text(
                                 text = "• borne mise hors-service pour des travaux ou une maintenance\n" +
                                         "• borne occupée par un vélo électrique en cours de rechargement\n" +
-                                        "• borne avec un vélo mal raccordé ou un faux contact",
+                                        "• borne avec un vélo mal raccordé ou un faux contact\n" +
+                                        "• borne avec un vélo réservé par un utilisateur",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
