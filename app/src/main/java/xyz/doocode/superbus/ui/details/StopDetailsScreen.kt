@@ -164,6 +164,12 @@ fun StopDetailsScreen(
     var doNotAskExitAgain by remember { mutableStateOf(false) }
     var showLineSelectionDialog by remember { mutableStateOf(false) }
     var showUnfavoriteConfirmation by remember { mutableStateOf(false) }
+    var singleItemFocusEnabled by remember { mutableStateOf(true) }
+
+    LaunchedEffect(isSingleItem) {
+        if (!isSingleItem) singleItemFocusEnabled = true
+    }
+
     var groupingMode by remember {
         mutableStateOf(
             when (prefs.getString("arrival_grouping_mode", GroupingMode.BY_TRANSPORT.name)) {
@@ -253,7 +259,7 @@ fun StopDetailsScreen(
     }
 
     val showFocusMode =
-        uiState is StopDetailsUiState.Success && (isSingleItem || focusedItemKey != null)
+        uiState is StopDetailsUiState.Success && ((isSingleItem && singleItemFocusEnabled) || focusedItemKey != null)
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -510,29 +516,49 @@ fun StopDetailsScreen(
                                     showMenu = false
                                 }
                             )
-                            if (!isSingleItem) {
-                                DropdownMenuItem(
-                                    text = { Text(if (focusedItemKey != null) "Quitter le plein écran" else "Plein écran") },
-                                    leadingIcon = {
-                                        Icon(
-                                            imageVector = if (focusedItemKey != null) Icons.Default.FullscreenExit else Icons.Default.Fullscreen,
-                                            contentDescription = null
-                                        )
-                                    },
-                                    onClick = {
-                                        if (focusedItemKey != null) {
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        if (focusedItemKey != null || (isSingleItem && singleItemFocusEnabled))
+                                            "Quitter le plein écran"
+                                        else
+                                            "Plein écran"
+                                    )
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = if (focusedItemKey != null || (isSingleItem && singleItemFocusEnabled))
+                                            Icons.Default.FullscreenExit
+                                        else
+                                            Icons.Default.Fullscreen,
+                                        contentDescription = null
+                                    )
+                                },
+                                onClick = {
+                                    when {
+                                        focusedItemKey != null -> {
                                             focusedItemKey = null
                                             focusedTimeIndex = 0
-                                        } else {
+                                        }
+
+                                        isSingleItem && singleItemFocusEnabled -> {
+                                            singleItemFocusEnabled = false
+                                        }
+
+                                        isSingleItem -> {
+                                            singleItemFocusEnabled = true
+                                        }
+
+                                        else -> {
                                             focusedItemKey =
                                                 (uiState as? StopDetailsUiState.Success)
                                                     ?.groupedArrivals?.keys?.firstOrNull()
                                             focusedTimeIndex = 0
                                         }
-                                        showMenu = false
                                     }
-                                )
-                            }
+                                    showMenu = false
+                                }
+                            )
                             // ── Annonces sonores ───────────────────────────
                             HorizontalDivider()
                             Box(
@@ -757,7 +783,7 @@ fun StopDetailsScreen(
             }
 
             val showFocusMode =
-                state is StopDetailsUiState.Success && (state.groupedArrivals.size == 1 || focusedItemKey != null)
+                state is StopDetailsUiState.Success && ((state.groupedArrivals.size == 1 && singleItemFocusEnabled) || focusedItemKey != null)
 
             LaunchedEffect(showFocusMode, scrollBehavior) {
                 if (showFocusMode) {
