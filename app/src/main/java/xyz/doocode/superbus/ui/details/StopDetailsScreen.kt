@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.RecordVoiceOver
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.VoiceOverOff
+import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -100,6 +101,17 @@ fun StopDetailsScreen(
     val currentlySpeakingKey by viewModel.ttsManager.currentlySpeakingKey.collectAsState()
     val velociteStation by viewModel.velociteStation.collectAsState()
     val title = stopName ?: "Station inconnue"
+
+    val tabs = remember(velociteStation) {
+        StopDetailsTab.buildTabs(velociteStation != null)
+    }
+    var selectedTabIndex by remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(tabs.size) {
+        if (selectedTabIndex >= tabs.size) {
+            selectedTabIndex = 0
+        }
+    }
 
     val isSingleItem = (uiState as? StopDetailsUiState.Success)?.groupedArrivals?.size == 1
 
@@ -363,8 +375,8 @@ fun StopDetailsScreen(
                                 )
                             }
                         }
-                    } else {
-                        // Fullscreen FAB — list mode
+                    } else if (tabs.getOrElse(selectedTabIndex) { StopDetailsTab.SCHEDULES } == StopDetailsTab.SCHEDULES) {
+                        // Fullscreen FAB — list mode (Only for Schedules)
                         FloatingActionButton(
                             onClick = {
                                 focusedItemKey = successState.groupedArrivals.keys.firstOrNull()
@@ -398,219 +410,169 @@ fun StopDetailsScreen(
             }
         },
         topBar = {
-            LargeTopAppBar(
-                title = {
-                    if (title.contains(" - ")) {
-                        val parts = title.split(" - ", limit = 2)
-                        Column {
-                            Text(
-                                text = parts[0],
-                                style = MaterialTheme.typography.titleSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                            Text(
-                                text = parts[1],
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-                    } else {
-                        Text(
-                            text = title,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                },
-                navigationIcon = {
-                    IconButton(onClick = {
-                        if (focusedItemKey != null) {
-                            focusedItemKey = null
-                        } else if (viewModel.hasTtsSubscriptions()) {
-                            showExitConfirmation = true
+            Column {
+                LargeTopAppBar(
+                    title = {
+                        if (title.contains(" - ")) {
+                            val parts = title.split(" - ", limit = 2)
+                            Column {
+                                Text(
+                                    text = parts[0],
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Text(
+                                    text = parts[1],
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
                         } else {
-                            onBackClick()
+                            Text(
+                                text = title,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
                         }
-                    }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Retour"
-                        )
-                    }
-                },
-                actions = {
-                    if (keepScreenOn) {
-                        IconButton(onClick = { toggleScreenOn() }) {
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = {
+                            if (focusedItemKey != null) {
+                                focusedItemKey = null
+                            } else if (viewModel.hasTtsSubscriptions()) {
+                                showExitConfirmation = true
+                            } else {
+                                onBackClick()
+                            }
+                        }) {
                             Icon(
-                                imageVector = Icons.Default.Lightbulb,
-                                contentDescription = "Désactiver l'écran toujours allumé",
-                                tint = MaterialTheme.colorScheme.primary
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Retour"
                             )
                         }
-                    }
-                    IconButton(onClick = {
-                        if (isFavorite) showUnfavoriteConfirmation = true
-                        else viewModel.toggleFavorite()
-                    }) {
-                        Icon(
-                            imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                            contentDescription = if (isFavorite) "Retirer des favoris" else "Ajouter aux favoris",
-                            tint = if (isFavorite) MaterialTheme.colorScheme.primary else LocalContentColor.current
-                        )
-                    }
-                    Box {
-                        IconButton(onClick = { showMenu = true }) {
-                            Icon(Icons.Default.MoreVert, "Plus d'options")
+                    },
+                    actions = {
+                        if (keepScreenOn) {
+                            IconButton(onClick = { toggleScreenOn() }) {
+                                Icon(
+                                    imageVector = Icons.Default.Lightbulb,
+                                    contentDescription = "Désactiver l'écran toujours allumé",
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            }
                         }
-                        DropdownMenu(
-                            expanded = showMenu,
-                            onDismissRequest = { showMenu = false }
-                        ) {
-                            // ── Écran ──────────────────────────────────────
-                            Box(
-                                modifier = Modifier.padding(
-                                    start = 16.dp,
-                                    top = 10.dp,
-                                    bottom = 2.dp
-                                )
-                            ) {
-                                Text(
-                                    text = "Écran",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
+                        IconButton(onClick = {
+                            if (isFavorite) showUnfavoriteConfirmation = true
+                            else viewModel.toggleFavorite()
+                        }) {
+                            Icon(
+                                imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                contentDescription = if (isFavorite) "Retirer des favoris" else "Ajouter aux favoris",
+                                tint = if (isFavorite) MaterialTheme.colorScheme.primary else LocalContentColor.current
+                            )
+                        }
+                        Box {
+                            IconButton(onClick = { showMenu = true }) {
+                                Icon(Icons.Default.MoreVert, "Plus d'options")
                             }
-                            DropdownMenuItem(
-                                text = {
-                                    Text(
-                                        text = "Garder l'écran allumé",
-                                        modifier = Modifier.weight(1f)
+                            DropdownMenu(
+                                expanded = showMenu,
+                                onDismissRequest = { showMenu = false }
+                            ) {
+                                // ── Écran ──────────────────────────────────────
+                                Box(
+                                    modifier = Modifier.padding(
+                                        start = 16.dp,
+                                        top = 10.dp,
+                                        bottom = 2.dp
                                     )
-                                },
-                                leadingIcon = {
-                                    if (keepScreenOn) {
+                                ) {
+                                    Text(
+                                        text = "Écran",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            text = "Garder l'écran allumé",
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                    },
+                                    leadingIcon = {
+                                        if (keepScreenOn) {
+                                            Icon(
+                                                imageVector = Icons.Default.Lightbulb,
+                                                contentDescription = null
+                                            )
+                                        } else {
+                                            Icon(
+                                                imageVector = Icons.Outlined.Lightbulb,
+                                                contentDescription = null
+                                            )
+                                        }
+                                    },
+                                    trailingIcon = {
+                                        if (keepScreenOn) {
+                                            Icon(
+                                                imageVector = Icons.Filled.CheckCircle,
+                                                contentDescription = "Activé",
+                                                tint = MaterialTheme.colorScheme.primary
+                                            )
+                                        }
+                                    },
+                                    onClick = {
+                                        toggleScreenOn()
+                                        showMenu = false
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            if (focusedItemKey != null || (isSingleItem && singleItemFocusEnabled))
+                                                "Quitter le plein écran"
+                                            else
+                                                "Plein écran"
+                                        )
+                                    },
+                                    leadingIcon = {
                                         Icon(
-                                            imageVector = Icons.Default.Lightbulb,
+                                            imageVector = if (focusedItemKey != null || (isSingleItem && singleItemFocusEnabled))
+                                                Icons.Default.FullscreenExit
+                                            else
+                                                Icons.Default.Fullscreen,
                                             contentDescription = null
                                         )
-                                    } else {
-                                        Icon(
-                                            imageVector = Icons.Outlined.Lightbulb,
-                                            contentDescription = null
-                                        )
-                                    }
-                                },
-                                trailingIcon = {
-                                    if (keepScreenOn) {
-                                        Icon(
-                                            imageVector = Icons.Filled.CheckCircle,
-                                            contentDescription = "Activé",
-                                            tint = MaterialTheme.colorScheme.primary
-                                        )
-                                    }
-                                },
-                                onClick = {
-                                    toggleScreenOn()
-                                    showMenu = false
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = {
-                                    Text(
-                                        if (focusedItemKey != null || (isSingleItem && singleItemFocusEnabled))
-                                            "Quitter le plein écran"
-                                        else
-                                            "Plein écran"
-                                    )
-                                },
-                                leadingIcon = {
-                                    Icon(
-                                        imageVector = if (focusedItemKey != null || (isSingleItem && singleItemFocusEnabled))
-                                            Icons.Default.FullscreenExit
-                                        else
-                                            Icons.Default.Fullscreen,
-                                        contentDescription = null
-                                    )
-                                },
-                                onClick = {
-                                    when {
-                                        focusedItemKey != null -> {
-                                            focusedItemKey = null
-                                            focusedTimeIndex = 0
-                                        }
+                                    },
+                                    onClick = {
+                                        when {
+                                            focusedItemKey != null -> {
+                                                focusedItemKey = null
+                                                focusedTimeIndex = 0
+                                            }
 
-                                        isSingleItem && singleItemFocusEnabled -> {
-                                            singleItemFocusEnabled = false
-                                        }
+                                            isSingleItem && singleItemFocusEnabled -> {
+                                                singleItemFocusEnabled = false
+                                            }
 
-                                        isSingleItem -> {
-                                            singleItemFocusEnabled = true
-                                        }
+                                            isSingleItem -> {
+                                                singleItemFocusEnabled = true
+                                            }
 
-                                        else -> {
-                                            focusedItemKey =
-                                                (uiState as? StopDetailsUiState.Success)
-                                                    ?.groupedArrivals?.keys?.firstOrNull()
-                                            focusedTimeIndex = 0
+                                            else -> {
+                                                focusedItemKey =
+                                                    (uiState as? StopDetailsUiState.Success)
+                                                        ?.groupedArrivals?.keys?.firstOrNull()
+                                                focusedTimeIndex = 0
+                                            }
                                         }
+                                        showMenu = false
                                     }
-                                    showMenu = false
-                                }
-                            )
-                            // ── Annonces sonores ───────────────────────────
-                            HorizontalDivider()
-                            Box(
-                                modifier = Modifier.padding(
-                                    start = 16.dp,
-                                    top = 10.dp,
-                                    bottom = 2.dp
                                 )
-                            ) {
-                                Text(
-                                    text = "Annonces sonores",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                            DropdownMenuItem(
-                                text = { Text("Gérer les annonces") },
-                                leadingIcon = {
-                                    Icon(
-                                        imageVector = Icons.Default.RecordVoiceOver,
-                                        contentDescription = null
-                                    )
-                                },
-                                trailingIcon = {
-                                    if (ttsSubscriptions.isNotEmpty()) {
-                                        Icon(
-                                            imageVector = Icons.Filled.CheckCircle,
-                                            contentDescription = "Actif",
-                                            tint = MaterialTheme.colorScheme.primary
-                                        )
-                                    }
-                                },
-                                onClick = {
-                                    showLineSelectionDialog = true
-                                    showMenu = false
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("Réglages des annonces") },
-                                leadingIcon = {
-                                    Icon(
-                                        imageVector = Icons.Default.Settings,
-                                        contentDescription = null
-                                    )
-                                },
-                                onClick = {
-                                    showTtsSettings = true
-                                    showMenu = false
-                                }
-                            )
-                            // ── Affichage (mode liste uniquement) ──────────
-                            if (!showFocusMode) {
+                                // ── Annonces sonores ───────────────────────────
                                 HorizontalDivider()
                                 Box(
                                     modifier = Modifier.padding(
@@ -620,142 +582,209 @@ fun StopDetailsScreen(
                                     )
                                 ) {
                                     Text(
-                                        text = "Affichage",
+                                        text = "Annonces sonores",
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.primary
                                     )
                                 }
                                 DropdownMenuItem(
-                                    text = { Text(if (forcedExpandState != false) "Réduire les cartes" else "Agrandir les cartes") },
+                                    text = { Text("Gérer les annonces") },
                                     leadingIcon = {
                                         Icon(
-                                            imageVector = if (forcedExpandState != false) Icons.Default.ArrowUpward else Icons.Default.ArrowDownward,
+                                            imageVector = Icons.Default.RecordVoiceOver,
                                             contentDescription = null
                                         )
                                     },
+                                    trailingIcon = {
+                                        if (ttsSubscriptions.isNotEmpty()) {
+                                            Icon(
+                                                imageVector = Icons.Filled.CheckCircle,
+                                                contentDescription = "Actif",
+                                                tint = MaterialTheme.colorScheme.primary
+                                            )
+                                        }
+                                    },
                                     onClick = {
-                                        forcedExpandState = forcedExpandState == false
+                                        showLineSelectionDialog = true
                                         showMenu = false
                                     }
                                 )
                                 DropdownMenuItem(
-                                    text = { Text(if (forcedSectionsExpandState != false) "Réduire les sections" else "Agrandir les sections") },
+                                    text = { Text("Réglages des annonces") },
                                     leadingIcon = {
                                         Icon(
-                                            imageVector = if (forcedSectionsExpandState != false) Icons.Default.ArrowUpward else Icons.Default.ArrowDownward,
+                                            imageVector = Icons.Default.Settings,
                                             contentDescription = null
                                         )
                                     },
                                     onClick = {
-                                        forcedSectionsExpandState =
-                                            forcedSectionsExpandState == false
+                                        showTtsSettings = true
                                         showMenu = false
                                     }
                                 )
-                                HorizontalDivider()
-                                Box(
-                                    modifier = Modifier.padding(
-                                        start = 16.dp,
-                                        top = 10.dp,
-                                        bottom = 2.dp
+                                // ── Affichage (mode liste uniquement) ──────────
+                                if (!showFocusMode) {
+                                    HorizontalDivider()
+                                    Box(
+                                        modifier = Modifier.padding(
+                                            start = 16.dp,
+                                            top = 10.dp,
+                                            bottom = 2.dp
+                                        )
+                                    ) {
+                                        Text(
+                                            text = "Affichage",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                    DropdownMenuItem(
+                                        text = { Text(if (forcedExpandState != false) "Réduire les cartes" else "Agrandir les cartes") },
+                                        leadingIcon = {
+                                            Icon(
+                                                imageVector = if (forcedExpandState != false) Icons.Default.ArrowUpward else Icons.Default.ArrowDownward,
+                                                contentDescription = null
+                                            )
+                                        },
+                                        onClick = {
+                                            forcedExpandState = forcedExpandState == false
+                                            showMenu = false
+                                        }
                                     )
-                                ) {
-                                    Text(
-                                        text = "Groupes",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.primary
+                                    DropdownMenuItem(
+                                        text = { Text(if (forcedSectionsExpandState != false) "Réduire les sections" else "Agrandir les sections") },
+                                        leadingIcon = {
+                                            Icon(
+                                                imageVector = if (forcedSectionsExpandState != false) Icons.Default.ArrowUpward else Icons.Default.ArrowDownward,
+                                                contentDescription = null
+                                            )
+                                        },
+                                        onClick = {
+                                            forcedSectionsExpandState =
+                                                forcedSectionsExpandState == false
+                                            showMenu = false
+                                        }
+                                    )
+                                    HorizontalDivider()
+                                    Box(
+                                        modifier = Modifier.padding(
+                                            start = 16.dp,
+                                            top = 10.dp,
+                                            bottom = 2.dp
+                                        )
+                                    ) {
+                                        Text(
+                                            text = "Groupes",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                    DropdownMenuItem(
+                                        text = { Text("Ne pas grouper") },
+                                        leadingIcon = {
+                                            Icon(
+                                                imageVector = Icons.Default.Block,
+                                                contentDescription = null
+                                            )
+                                        },
+                                        trailingIcon = {
+                                            if (groupingMode == GroupingMode.NONE) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Check,
+                                                    contentDescription = "Sélectionné",
+                                                    tint = MaterialTheme.colorScheme.primary
+                                                )
+                                            }
+                                        },
+                                        onClick = {
+                                            groupingMode = GroupingMode.NONE
+                                            prefs.edit {
+                                                putString(
+                                                    "arrival_grouping_mode",
+                                                    GroupingMode.NONE.name
+                                                )
+                                            }
+                                            showMenu = false
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text("Grouper par sens de la ligne") },
+                                        leadingIcon = {
+                                            Icon(
+                                                imageVector = Icons.Default.CompareArrows,
+                                                contentDescription = null
+                                            )
+                                        },
+                                        trailingIcon = {
+                                            if (groupingMode == GroupingMode.BY_DIRECTION) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Check,
+                                                    contentDescription = "Sélectionné",
+                                                    tint = MaterialTheme.colorScheme.primary
+                                                )
+                                            }
+                                        },
+                                        onClick = {
+                                            groupingMode = GroupingMode.BY_DIRECTION
+                                            prefs.edit {
+                                                putString(
+                                                    "arrival_grouping_mode",
+                                                    GroupingMode.BY_DIRECTION.name
+                                                )
+                                            }
+                                            showMenu = false
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text("Grouper par type de transport") },
+                                        leadingIcon = {
+                                            Icon(
+                                                imageVector = Icons.Default.DirectionsBus,
+                                                contentDescription = null
+                                            )
+                                        },
+                                        trailingIcon = {
+                                            if (groupingMode == GroupingMode.BY_TRANSPORT) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Check,
+                                                    contentDescription = "Sélectionné",
+                                                    tint = MaterialTheme.colorScheme.primary
+                                                )
+                                            }
+                                        },
+                                        onClick = {
+                                            groupingMode = GroupingMode.BY_TRANSPORT
+                                            prefs.edit {
+                                                putString(
+                                                    "arrival_grouping_mode",
+                                                    GroupingMode.BY_TRANSPORT.name
+                                                )
+                                            }
+                                            showMenu = false
+                                        }
                                     )
                                 }
-                                DropdownMenuItem(
-                                    text = { Text("Ne pas grouper") },
-                                    leadingIcon = {
-                                        Icon(
-                                            imageVector = Icons.Default.Block,
-                                            contentDescription = null
-                                        )
-                                    },
-                                    trailingIcon = {
-                                        if (groupingMode == GroupingMode.NONE) {
-                                            Icon(
-                                                imageVector = Icons.Default.Check,
-                                                contentDescription = "Sélectionné",
-                                                tint = MaterialTheme.colorScheme.primary
-                                            )
-                                        }
-                                    },
-                                    onClick = {
-                                        groupingMode = GroupingMode.NONE
-                                        prefs.edit {
-                                            putString(
-                                                "arrival_grouping_mode",
-                                                GroupingMode.NONE.name
-                                            )
-                                        }
-                                        showMenu = false
-                                    }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("Grouper par sens de la ligne") },
-                                    leadingIcon = {
-                                        Icon(
-                                            imageVector = Icons.Default.CompareArrows,
-                                            contentDescription = null
-                                        )
-                                    },
-                                    trailingIcon = {
-                                        if (groupingMode == GroupingMode.BY_DIRECTION) {
-                                            Icon(
-                                                imageVector = Icons.Default.Check,
-                                                contentDescription = "Sélectionné",
-                                                tint = MaterialTheme.colorScheme.primary
-                                            )
-                                        }
-                                    },
-                                    onClick = {
-                                        groupingMode = GroupingMode.BY_DIRECTION
-                                        prefs.edit {
-                                            putString(
-                                                "arrival_grouping_mode",
-                                                GroupingMode.BY_DIRECTION.name
-                                            )
-                                        }
-                                        showMenu = false
-                                    }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("Grouper par type de transport") },
-                                    leadingIcon = {
-                                        Icon(
-                                            imageVector = Icons.Default.DirectionsBus,
-                                            contentDescription = null
-                                        )
-                                    },
-                                    trailingIcon = {
-                                        if (groupingMode == GroupingMode.BY_TRANSPORT) {
-                                            Icon(
-                                                imageVector = Icons.Default.Check,
-                                                contentDescription = "Sélectionné",
-                                                tint = MaterialTheme.colorScheme.primary
-                                            )
-                                        }
-                                    },
-                                    onClick = {
-                                        groupingMode = GroupingMode.BY_TRANSPORT
-                                        prefs.edit {
-                                            putString(
-                                                "arrival_grouping_mode",
-                                                GroupingMode.BY_TRANSPORT.name
-                                            )
-                                        }
-                                        showMenu = false
-                                    }
-                                )
                             }
                         }
+                    },
+                    scrollBehavior = scrollBehavior
+                )
+                if (!showFocusMode) {
+                    PrimaryTabRow(
+                        selectedTabIndex = selectedTabIndex,
+                        divider = {}
+                    ) {
+                        tabs.forEachIndexed { index, tab ->
+                            Tab(
+                                selected = selectedTabIndex == index,
+                                onClick = { selectedTabIndex = index },
+                                text = { Text(tab.title) },
+                                icon = { Icon(tab.icon, contentDescription = null) }
+                            )
+                        }
                     }
-                },
-                scrollBehavior = scrollBehavior
-            )
+                }
+            }
         }
     ) { innerPadding ->
         PullToRefreshBox(
@@ -820,6 +849,7 @@ fun StopDetailsScreen(
             } else {
                 StopDetailsListContent(
                     state = state,
+                    selectedTab = tabs.getOrElse(selectedTabIndex) { StopDetailsTab.SCHEDULES },
                     forcedExpandState = forcedExpandState,
                     forcedSectionsExpandState = forcedSectionsExpandState,
                     groupingMode = groupingMode,

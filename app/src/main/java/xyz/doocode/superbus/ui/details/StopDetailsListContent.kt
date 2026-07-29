@@ -52,6 +52,7 @@ enum class GroupingMode {
 @Composable
 fun StopDetailsListContent(
     state: StopDetailsUiState,
+    selectedTab: StopDetailsTab = StopDetailsTab.SCHEDULES,
     forcedExpandState: Boolean?,
     forcedSectionsExpandState: Boolean? = null,
     groupingMode: GroupingMode = GroupingMode.BY_TRANSPORT,
@@ -135,10 +136,223 @@ fun StopDetailsListContent(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.fillMaxSize()
             ) {
-                when (state) {
-                    is StopDetailsUiState.Empty -> {
-                        item { EmptyUpcomingPassagesView() }
-                        if (isLoadingNearbyStops) {
+                when (selectedTab) {
+                    StopDetailsTab.SCHEDULES -> {
+                        when (state) {
+                            is StopDetailsUiState.Empty -> {
+                                item { EmptyUpcomingPassagesView() }
+                            }
+
+                            is StopDetailsUiState.Success -> {
+                                val list = state.groupedArrivals.toList()
+
+                                when (groupingMode) {
+                                    GroupingMode.BY_TRANSPORT -> {
+                                        val lianeRegex = Regex("^L\\d+$")
+                                        val scolaireRegex = Regex("^D([1-9]\\d{0,2})$")
+
+                                        val tramEntries =
+                                            list.filter { (_, arrivals) -> arrivals.first().modeTransport == 1 }
+                                        val busEntries =
+                                            list.filter { (_, arrivals) -> arrivals.first().modeTransport == 0 }
+
+                                        val sections = listOf(
+                                            Triple(1, tramEntries, "tram"),
+                                            Triple(
+                                                2,
+                                                busEntries.filter { (_, arrivals) ->
+                                                    arrivals.first().numLignePublic.matches(
+                                                        lianeRegex
+                                                    )
+                                                },
+                                                "lianes"
+                                            ),
+                                            Triple(
+                                                0,
+                                                busEntries.filter { (_, arrivals) ->
+                                                    val first = arrivals.first()
+                                                    !first.numLignePublic.matches(lianeRegex) &&
+                                                            !first.numLignePublic.matches(
+                                                                scolaireRegex
+                                                            ) &&
+                                                            !((first.idLigne.toIntOrNull()
+                                                                ?: 0) in 50..99)
+                                                },
+                                                "bus"
+                                            ),
+                                            Triple(
+                                                4,
+                                                busEntries.filter { (_, arrivals) ->
+                                                    val first = arrivals.first()
+                                                    !first.numLignePublic.matches(lianeRegex) &&
+                                                            !first.numLignePublic.matches(
+                                                                scolaireRegex
+                                                            ) &&
+                                                            ((first.idLigne.toIntOrNull()
+                                                                ?: 0) in 50..99)
+                                                },
+                                                "periurbain"
+                                            ),
+                                            Triple(
+                                                5,
+                                                busEntries.filter { (_, arrivals) ->
+                                                    arrivals.first().numLignePublic.matches(
+                                                        scolaireRegex
+                                                    )
+                                                },
+                                                "scolaire"
+                                            )
+                                        ).filter { (_, entries, _) -> entries.isNotEmpty() }
+
+                                        val hasMixedSections = sections.size > 1
+
+                                        sections.forEach { (sectionKey, sectionEntries, _) ->
+                                            val isExpanded = expandedSections[sectionKey] != false
+                                            if (hasMixedSections) {
+                                                item(key = "header_$sectionKey") {
+                                                    TransportSectionHeader(
+                                                        mode = sectionKey,
+                                                        isExpanded = isExpanded,
+                                                        onToggle = {
+                                                            expandedSections[sectionKey] =
+                                                                !isExpanded
+                                                        }
+                                                    )
+                                                }
+                                            }
+                                            item(key = "section_$sectionKey") {
+                                                AnimatedVisibility(
+                                                    visible = !hasMixedSections || isExpanded,
+                                                    enter = expandVertically(),
+                                                    exit = shrinkVertically()
+                                                ) {
+                                                    Column(
+                                                        verticalArrangement = Arrangement.spacedBy(
+                                                            12.dp
+                                                        )
+                                                    ) {
+                                                        sectionEntries.forEach { (key, arrivals) ->
+                                                            val parts = key.split("|")
+                                                            ArrivalCard(
+                                                                numLigne = parts.getOrNull(0)
+                                                                    ?: "?",
+                                                                destination = parts.getOrNull(1)
+                                                                    ?: "?",
+                                                                couleurFond = arrivals.first().couleurFond,
+                                                                couleurTexte = arrivals.first().couleurTexte,
+                                                                ligneId = arrivals.first().idLigne,
+                                                                times = arrivals,
+                                                                initialExpoMode = list.size < 4,
+                                                                forcedExpandState = forcedExpandState,
+                                                                onLongClick = { onItemLongClick(key) },
+                                                                onTimeClick = { timeIndex ->
+                                                                    onArrivalTimeClick(
+                                                                        key,
+                                                                        timeIndex
+                                                                    )
+                                                                }
+                                                            )
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    GroupingMode.BY_DIRECTION -> {
+                                        val directionSections = listOf(
+                                            Pair(
+                                                10,
+                                                list.filter { (_, arrivals) -> arrivals.first().sensAller }),
+                                            Pair(
+                                                11,
+                                                list.filter { (_, arrivals) -> !arrivals.first().sensAller })
+                                        ).filter { (_, entries) -> entries.isNotEmpty() }
+
+                                        val hasMixedDirections = directionSections.size > 1
+                                        directionSections.forEach { (sectionKey, sectionEntries) ->
+                                            val isExpanded = expandedSections[sectionKey] != false
+                                            if (hasMixedDirections) {
+                                                item(key = "dir_header_$sectionKey") {
+                                                    DirectionSectionHeader(
+                                                        sensAller = sectionKey == 10,
+                                                        isExpanded = isExpanded,
+                                                        onToggle = {
+                                                            expandedSections[sectionKey] =
+                                                                !isExpanded
+                                                        }
+                                                    )
+                                                }
+                                            }
+                                            item(key = "dir_section_$sectionKey") {
+                                                AnimatedVisibility(
+                                                    visible = !hasMixedDirections || isExpanded,
+                                                    enter = expandVertically(),
+                                                    exit = shrinkVertically()
+                                                ) {
+                                                    Column(
+                                                        verticalArrangement = Arrangement.spacedBy(
+                                                            12.dp
+                                                        )
+                                                    ) {
+                                                        sectionEntries.forEach { (key, arrivals) ->
+                                                            val parts = key.split("|")
+                                                            ArrivalCard(
+                                                                numLigne = parts.getOrNull(0)
+                                                                    ?: "?",
+                                                                destination = parts.getOrNull(1)
+                                                                    ?: "?",
+                                                                couleurFond = arrivals.first().couleurFond,
+                                                                couleurTexte = arrivals.first().couleurTexte,
+                                                                ligneId = arrivals.first().idLigne,
+                                                                times = arrivals,
+                                                                initialExpoMode = list.size < 4,
+                                                                forcedExpandState = forcedExpandState,
+                                                                onLongClick = { onItemLongClick(key) },
+                                                                onTimeClick = { timeIndex ->
+                                                                    onArrivalTimeClick(
+                                                                        key,
+                                                                        timeIndex
+                                                                    )
+                                                                }
+                                                            )
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    GroupingMode.NONE -> {
+                                        list.forEach { (key, arrivals) ->
+                                            item(key = "card_$key") {
+                                                val parts = key.split("|")
+                                                ArrivalCard(
+                                                    numLigne = parts.getOrNull(0) ?: "?",
+                                                    destination = parts.getOrNull(1) ?: "?",
+                                                    couleurFond = arrivals.first().couleurFond,
+                                                    couleurTexte = arrivals.first().couleurTexte,
+                                                    ligneId = arrivals.first().idLigne,
+                                                    times = arrivals,
+                                                    initialExpoMode = list.size < 4,
+                                                    forcedExpandState = forcedExpandState,
+                                                    onLongClick = { onItemLongClick(key) },
+                                                    onTimeClick = { timeIndex ->
+                                                        onArrivalTimeClick(key, timeIndex)
+                                                    }
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            else -> {}
+                        }
+                    }
+
+                    StopDetailsTab.NEARBY -> {
+                        if (isLoadingNearbyStops && nearbyStops.isEmpty()) {
                             item {
                                 Box(
                                     modifier = Modifier
@@ -149,325 +363,21 @@ fun StopDetailsListContent(
                                     CircularProgressIndicator(modifier = Modifier.size(28.dp))
                                 }
                             }
-                        }
-                        if (nearbyStops.isNotEmpty()) {
+                        } else if (nearbyStops.isEmpty()) {
                             item {
-                                Column(
-                                    modifier = Modifier.layout { measurable, constraints ->
-                                        val offsetPx = 0.dp.roundToPx()
-                                        val placeable = measurable.measure(
-                                            constraints.copy(maxWidth = constraints.maxWidth + 2 * offsetPx)
-                                        )
-                                        layout(placeable.width, placeable.height) {
-                                            placeable.place(-offsetPx, 0)
-                                        }
-                                    }
-                                ) {
-                                    Text(
-                                        text = "Stations de bus/tram à proximité",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        modifier = Modifier.padding(
-                                            start = 16.dp,
-                                            end = 16.dp,
-                                            top = 8.dp,
-                                            bottom = 8.dp
-                                        )
-                                    )
-                                    HorizontalDivider()
-                                    nearbyStops.forEach { stop ->
-                                        val hasVariants = stop.duplicates.size > 1
-                                        BusStopItem(
-                                            stop = stop,
-                                            isFavorite = isNearbyStopFavorite(stop),
-                                            groupDuplicates = hasVariants,
-                                            onFillQuery = onFillQuery,
-                                            onToggleFavorite = {
-                                                onToggleNearbyFavorite(stop, !hasVariants)
-                                            },
-                                            onClick = {
-                                                if (hasVariants) onNearbyStopClick(stop, false)
-                                                else onNearbyStopClick(stop, true)
-                                            },
-                                            onVariantsClick = { selectedStop = stop }
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    is StopDetailsUiState.Success -> {
-                        val list = state.groupedArrivals.toList()
-
-                        when (groupingMode) {
-                            GroupingMode.BY_TRANSPORT -> {
-                                val lianeRegex = Regex("^L\\d+$")
-                                val scolaireRegex = Regex("^D([1-9]\\d{0,2})$")
-
-                                val tramEntries =
-                                    list.filter { (_, arrivals) -> arrivals.first().modeTransport == 1 }
-                                val busEntries =
-                                    list.filter { (_, arrivals) -> arrivals.first().modeTransport == 0 }
-
-                                fun isPeriurbain(idLigne: String): Boolean {
-                                    val id = idLigne.toIntOrNull() ?: return false
-                                    return id in 50..99
-                                }
-
-                                val lianeEntries =
-                                    busEntries.filter { (_, arrivals) ->
-                                        arrivals.first().numLignePublic.matches(lianeRegex)
-                                    }
-                                val scolaireEntries =
-                                    busEntries.filter { (_, arrivals) ->
-                                        arrivals.first().numLignePublic.matches(scolaireRegex)
-                                    }
-                                val periurbainEntries =
-                                    busEntries.filter { (_, arrivals) ->
-                                        val firstArrival = arrivals.first()
-                                        !firstArrival.numLignePublic.matches(lianeRegex) &&
-                                                !firstArrival.numLignePublic.matches(scolaireRegex) &&
-                                                isPeriurbain(firstArrival.idLigne)
-                                    }
-                                val regularBusEntries =
-                                    busEntries.filter { (_, arrivals) ->
-                                        val firstArrival = arrivals.first()
-                                        !firstArrival.numLignePublic.matches(lianeRegex) &&
-                                                !firstArrival.numLignePublic.matches(scolaireRegex) &&
-                                                !isPeriurbain(firstArrival.idLigne)
-                                    }
-
-                                // Ordre : Tram (1) → Lianes (2) → Bus (0) → Périurbain (4) → Scolaire (5)
-                                val sections = listOf(
-                                    Triple(1, tramEntries, "tram"),
-                                    Triple(2, lianeEntries, "lianes"),
-                                    Triple(0, regularBusEntries, "bus"),
-                                    Triple(4, periurbainEntries, "periurbain"),
-                                    Triple(5, scolaireEntries, "scolaire")
-                                ).filter { (_, entries, _) -> entries.isNotEmpty() }
-
-                                val totalSectionCount =
-                                    sections.size + if (velociteStation != null) 1 else 0
-                                val hasMixedSections = totalSectionCount > 1
-
-                                sections.forEach { (sectionKey, sectionEntries, _) ->
-                                    val isExpanded = expandedSections[sectionKey] != false
-
-                                    if (hasMixedSections) {
-                                        item(key = "header_$sectionKey") {
-                                            TransportSectionHeader(
-                                                mode = sectionKey,
-                                                isExpanded = isExpanded,
-                                                onToggle = {
-                                                    expandedSections[sectionKey] = !isExpanded
-                                                }
-                                            )
-                                        }
-                                    }
-
-                                    item(key = "section_$sectionKey") {
-                                        AnimatedVisibility(
-                                            visible = !hasMixedSections || isExpanded,
-                                            enter = expandVertically(
-                                                animationSpec = tween(
-                                                    durationMillis = 300,
-                                                    easing = FastOutSlowInEasing
-                                                )
-                                            ),
-                                            exit = shrinkVertically(
-                                                animationSpec = tween(
-                                                    durationMillis = 300,
-                                                    easing = FastOutSlowInEasing
-                                                )
-                                            )
-                                        ) {
-                                            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                                                sectionEntries.forEach { (key, arrivals) ->
-                                                    val parts = key.split("|")
-                                                    ArrivalCard(
-                                                        numLigne = parts.getOrNull(0) ?: "?",
-                                                        destination = parts.getOrNull(1) ?: "?",
-                                                        couleurFond = arrivals.first().couleurFond,
-                                                        couleurTexte = arrivals.first().couleurTexte,
-                                                        ligneId = arrivals.first().idLigne,
-                                                        times = arrivals,
-                                                        initialExpoMode = list.size < 4,
-                                                        forcedExpandState = forcedExpandState,
-                                                        onLongClick = { onItemLongClick(key) },
-                                                        onTimeClick = { timeIndex ->
-                                                            onArrivalTimeClick(key, timeIndex)
-                                                        }
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                            GroupingMode.BY_DIRECTION -> {
-                                val allesEntries =
-                                    list.filter { (_, arrivals) -> arrivals.first().sensAller }
-                                val retourEntries =
-                                    list.filter { (_, arrivals) -> !arrivals.first().sensAller }
-
-                                val directionSections = listOf(
-                                    Pair(10, allesEntries),
-                                    Pair(11, retourEntries)
-                                ).filter { (_, entries) -> entries.isNotEmpty() }
-
-                                val hasMixedDirections = directionSections.size > 1
-
-                                directionSections.forEach { (sectionKey, sectionEntries) ->
-                                    val sensAller = sectionKey == 10
-                                    val isExpanded = expandedSections[sectionKey] != false
-
-                                    if (hasMixedDirections) {
-                                        item(key = "dir_header_$sectionKey") {
-                                            DirectionSectionHeader(
-                                                sensAller = sensAller,
-                                                isExpanded = isExpanded,
-                                                onToggle = {
-                                                    expandedSections[sectionKey] = !isExpanded
-                                                }
-                                            )
-                                        }
-                                    }
-
-                                    item(key = "dir_section_$sectionKey") {
-                                        AnimatedVisibility(
-                                            visible = !hasMixedDirections || isExpanded,
-                                            enter = expandVertically(
-                                                animationSpec = tween(
-                                                    durationMillis = 300,
-                                                    easing = FastOutSlowInEasing
-                                                )
-                                            ),
-                                            exit = shrinkVertically(
-                                                animationSpec = tween(
-                                                    durationMillis = 300,
-                                                    easing = FastOutSlowInEasing
-                                                )
-                                            )
-                                        ) {
-                                            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                                                sectionEntries.forEach { (key, arrivals) ->
-                                                    val parts = key.split("|")
-                                                    ArrivalCard(
-                                                        numLigne = parts.getOrNull(0) ?: "?",
-                                                        destination = parts.getOrNull(1) ?: "?",
-                                                        couleurFond = arrivals.first().couleurFond,
-                                                        couleurTexte = arrivals.first().couleurTexte,
-                                                        ligneId = arrivals.first().idLigne,
-                                                        times = arrivals,
-                                                        initialExpoMode = list.size < 4,
-                                                        forcedExpandState = forcedExpandState,
-                                                        onLongClick = { onItemLongClick(key) },
-                                                        onTimeClick = { timeIndex ->
-                                                            onArrivalTimeClick(key, timeIndex)
-                                                        }
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                            GroupingMode.NONE -> {
-                                list.forEach { (key, arrivals) ->
-                                    item(key = "card_$key") {
-                                        val parts = key.split("|")
-                                        ArrivalCard(
-                                            numLigne = parts.getOrNull(0) ?: "?",
-                                            destination = parts.getOrNull(1) ?: "?",
-                                            couleurFond = arrivals.first().couleurFond,
-                                            couleurTexte = arrivals.first().couleurTexte,
-                                            ligneId = arrivals.first().idLigne,
-                                            times = arrivals,
-                                            initialExpoMode = list.size < 4,
-                                            forcedExpandState = forcedExpandState,
-                                            onLongClick = { onItemLongClick(key) },
-                                            onTimeClick = { timeIndex ->
-                                                onArrivalTimeClick(key, timeIndex)
-                                            }
-                                        )
-                                    }
-                                }
-                            }
-                        }
-
-                        // Section Vélocité
-                        if (velociteStation != null) {
-                            val isVelociteExpanded = expandedSections[3] != false
-                            item(key = "velocite_header") {
-                                TransportSectionHeader(
-                                    mode = 3,
-                                    subtitle = "${velociteStation.totalStands.capacity} bornes",
-                                    isExpanded = isVelociteExpanded,
-                                    onToggle = { expandedSections[3] = !isVelociteExpanded }
+                                Text(
+                                    "Aucune station à proximité trouvée",
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    textAlign = TextAlign.Center,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
-                            item(key = "velocite_content") {
-                                AnimatedVisibility(
-                                    visible = isVelociteExpanded,
-                                    enter = expandVertically(),
-                                    exit = shrinkVertically()
-                                ) {
-                                    Column(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .then(if (onVelociteClick != null) Modifier.clickable { onVelociteClick() } else Modifier),
-                                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                                    ) {
-                                        VelociteRecap(
-                                            station = velociteStation,
-                                            contentPadding = 0.dp
-                                        )
-                                        /*VelociteCapacityGrid(
-                                            station = velociteStation,
-                                            modifier = Modifier.fillMaxWidth()
-                                        )*/
-                                    }
-                                }
-                            }
-                        }
-
-                        // Section stations à proximité
-                        if (isLoadingNearbyStops || nearbyStops.isNotEmpty()) {
-                            item(key = "nearby_section") {
-                                Column(
-                                    modifier = Modifier.layout { measurable, constraints ->
-                                        val offsetPx = 0.dp.roundToPx()
-                                        val placeable = measurable.measure(
-                                            constraints.copy(maxWidth = constraints.maxWidth + 2 * offsetPx)
-                                        )
-                                        layout(placeable.width, placeable.height) {
-                                            placeable.place(-offsetPx, 0)
-                                        }
-                                    }
-                                ) {
-                                    Text(
-                                        text = "Bus/tram à proximité",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        modifier = Modifier.padding(
-                                            start = 16.dp,
-                                            end = 16.dp,
-                                            top = 8.dp,
-                                            bottom = 8.dp
-                                        )
-                                    )
-                                    HorizontalDivider()
-                                    if (isLoadingNearbyStops && nearbyStops.isEmpty()) {
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(16.dp),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            CircularProgressIndicator(modifier = Modifier.size(28.dp))
-                                        }
-                                    }
+                        } else {
+                            item {
+                                Column {
                                     nearbyStops.forEach { stop ->
                                         val hasVariants = stop.duplicates.size > 1
                                         BusStopItem(
@@ -490,7 +400,29 @@ fun StopDetailsListContent(
                         }
                     }
 
-                    else -> {}
+                    StopDetailsTab.VELOCITE -> {
+                        if (velociteStation != null) {
+                            item(key = "velocite_content") {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .then(
+                                            if (onVelociteClick != null) Modifier.clickable { onVelociteClick() } else Modifier
+                                        ),
+                                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    VelociteRecap(
+                                        station = velociteStation,
+                                        contentPadding = 0.dp
+                                    )
+                                    VelociteCapacityGrid(
+                                        station = velociteStation,
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
