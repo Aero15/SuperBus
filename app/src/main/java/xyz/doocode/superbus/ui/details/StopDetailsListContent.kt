@@ -432,6 +432,62 @@ fun StopDetailsListContent(
                                 }
                             }
                         }
+
+                        // Section stations à proximité
+                        if (isLoadingNearbyStops || nearbyStops.isNotEmpty()) {
+                            item(key = "nearby_section") {
+                                Column(
+                                    modifier = Modifier.layout { measurable, constraints ->
+                                        val offsetPx = 0.dp.roundToPx()
+                                        val placeable = measurable.measure(
+                                            constraints.copy(maxWidth = constraints.maxWidth + 2 * offsetPx)
+                                        )
+                                        layout(placeable.width, placeable.height) {
+                                            placeable.place(-offsetPx, 0)
+                                        }
+                                    }
+                                ) {
+                                    Text(
+                                        text = "Bus/tram à proximité",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        modifier = Modifier.padding(
+                                            start = 16.dp,
+                                            end = 16.dp,
+                                            top = 8.dp,
+                                            bottom = 8.dp
+                                        )
+                                    )
+                                    HorizontalDivider()
+                                    if (isLoadingNearbyStops && nearbyStops.isEmpty()) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(16.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            CircularProgressIndicator(modifier = Modifier.size(28.dp))
+                                        }
+                                    }
+                                    nearbyStops.forEach { stop ->
+                                        val hasVariants = stop.duplicates.size > 1
+                                        BusStopItem(
+                                            stop = stop,
+                                            isFavorite = isNearbyStopFavorite(stop),
+                                            groupDuplicates = hasVariants,
+                                            onFillQuery = onFillQuery,
+                                            onToggleFavorite = {
+                                                onToggleNearbyFavorite(stop, !hasVariants)
+                                            },
+                                            onClick = {
+                                                if (hasVariants) onNearbyStopClick(stop, false)
+                                                else onNearbyStopClick(stop, true)
+                                            },
+                                            onVariantsClick = { selectedStop = stop }
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     }
 
                     else -> {}

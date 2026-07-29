@@ -173,14 +173,13 @@ class StopDetailsViewModel(application: Application) : AndroidViewModel(applicat
                     response?.let { res ->
                         val arrivals = res.objects.listeTemps
 
+                        if (!nearbyStopsLoaded && currentStopId != null) {
+                            loadNearbyStops()
+                        }
+
                         if (arrivals.isEmpty()) {
                             _uiState.value = StopDetailsUiState.Empty
-                            if (!nearbyStopsLoaded && currentStopId != null) {
-                                loadNearbyStops()
-                            }
                         } else {
-                            nearbyStopsLoaded = false
-                            _nearbyStops.value = emptyList()
                             val grouped = arrivals
                                 .groupBy { "${it.numLignePublic}|${it.destination}" }
                                 .mapValues { (_, list) ->
@@ -250,7 +249,6 @@ class StopDetailsViewModel(application: Application) : AndroidViewModel(applicat
 
                 // Group by name exactly like SearchViewModel does
                 val grouped = rawNearby
-                    .filter { it.id != stopId }
                     .onEach { if (it.duplicates == null) it.duplicates = emptyList() }
                     .groupBy { it.nom }
                     .map { (_, stops) ->
@@ -261,7 +259,8 @@ class StopDetailsViewModel(application: Application) : AndroidViewModel(applicat
                             }
                         )
                     }
-                //.sortedBy { it.nom }
+                    // TODO: Option pour trier par [nom, proximité]
+                    // TODO: Afficher un badge (position actuelle) sur la station actuelle
 
                 _nearbyStops.value = grouped
                 nearbyStopsLoaded = true
