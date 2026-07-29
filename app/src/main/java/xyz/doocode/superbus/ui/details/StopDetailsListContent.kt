@@ -129,9 +129,9 @@ fun StopDetailsListContent(
             LazyVerticalGrid(
                 columns = GridCells.Fixed(1),
                 contentPadding = PaddingValues(
-                    start = 16.dp,
+                    start = if (selectedTab == StopDetailsTab.NEARBY) 0.dp else 16.dp,
                     top = 16.dp,
-                    end = 16.dp,
+                    end = if (selectedTab == StopDetailsTab.NEARBY) 0.dp else 16.dp,
                     bottom = contentPaddingBottom + if (selectedTab == StopDetailsTab.SCHEDULES) 96.dp else 16.dp
                 ),
                 verticalArrangement = Arrangement.spacedBy(12.dp),

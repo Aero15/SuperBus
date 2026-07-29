@@ -101,9 +101,12 @@ fun SearchBar(
         trailingIcon = {
             IconButton(
                 onClick = {
-                    onQueryChange("")
-                    onFilterSelected(SearchFilterOption.NONE)
-                    focusManager.clearFocus()
+                    if (query.isNotEmpty()) {
+                        onQueryChange("")
+                    } else if (selectedFilter != SearchFilterOption.NONE) {
+                        onFilterSelected(SearchFilterOption.NONE)
+                        focusManager.clearFocus()
+                    }
                 },
                 enabled = canClear
             ) {
