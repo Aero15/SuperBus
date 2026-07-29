@@ -18,7 +18,8 @@ data class TtsSettings(
     val volume: Float = 1.0f,
     val announceSecondArrival: Boolean = true,
     val announceSecondArrivalOnlyUnder10Min: Boolean = false,
-    val askBeforeExit: Boolean = true
+    val askBeforeExit: Boolean = true,
+    val removeSubOnZero: Boolean = true
 )
 
 data class CountdownSubscription(
@@ -88,6 +89,7 @@ class TtsCountdownManager(context: Context) {
                 false
             ),
             askBeforeExit = prefs.getBoolean("ask_before_exit", true),
+            removeSubOnZero = prefs.getBoolean("remove_sub_on_zero", true),
         )
     }
 
@@ -105,6 +107,7 @@ class TtsCountdownManager(context: Context) {
                 newSettings.announceSecondArrivalOnlyUnder10Min
             )
             .putBoolean("ask_before_exit", newSettings.askBeforeExit)
+            .putBoolean("remove_sub_on_zero", newSettings.removeSubOnZero)
             .apply()
         applySettings()
     }
@@ -192,8 +195,8 @@ class TtsCountdownManager(context: Context) {
 
             announcements.add(key to text)
 
-            // Remove subscription when countdown reaches 0
-            if (minutes <= 0) {
+            // Remove subscription when countdown reaches 0 (if setting is enabled)
+            if (settings.removeSubOnZero && minutes <= 0) {
                 keysToRemove.add(key)
             }
         }

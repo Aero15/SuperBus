@@ -26,6 +26,7 @@ fun TtsSettingsDialog(
     var announceSecondArrival by remember { mutableStateOf(currentSettings.announceSecondArrival) }
     var announceSecondArrivalOnlyUnder10Min by remember { mutableStateOf(currentSettings.announceSecondArrivalOnlyUnder10Min) }
     var askBeforeExit by remember { mutableStateOf(currentSettings.askBeforeExit) }
+    var removeSubOnZero by remember { mutableStateOf(currentSettings.removeSubOnZero) }
 
     val languages = remember {
         listOf(
@@ -180,6 +181,24 @@ fun TtsSettingsDialog(
                     )
                 }
 
+                // Remove subscription on zero
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { removeSubOnZero = !removeSubOnZero },
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Checkbox(
+                        checked = removeSubOnZero,
+                        onCheckedChange = null
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Arrêter l'annonce lorsque le décompte atteint 0 min",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+
                 // Test button
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -194,7 +213,8 @@ fun TtsSettingsDialog(
                                 volume,
                                 announceSecondArrival,
                                 announceSecondArrivalOnlyUnder10Min,
-                                askBeforeExit
+                                askBeforeExit,
+                                removeSubOnZero
                             )
                         )
                     }) {
@@ -214,6 +234,7 @@ fun TtsSettingsDialog(
                         announceSecondArrival = true
                         announceSecondArrivalOnlyUnder10Min = false
                         askBeforeExit = true
+                        removeSubOnZero = true
                         selectedLocale = Locale.FRANCE
                     }) {
                         Text("Réinitialiser")
@@ -231,7 +252,8 @@ fun TtsSettingsDialog(
                         volume,
                         announceSecondArrival,
                         announceSecondArrivalOnlyUnder10Min,
-                        askBeforeExit
+                        askBeforeExit,
+                        removeSubOnZero
                     )
                 )
                 onDismiss()
