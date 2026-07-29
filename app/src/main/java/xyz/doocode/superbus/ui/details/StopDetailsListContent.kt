@@ -38,7 +38,7 @@ import xyz.doocode.superbus.ui.components.ErrorView
 import xyz.doocode.superbus.ui.components.StopVariantsBottomSheet
 import xyz.doocode.superbus.ui.details.components.ArrivalCard
 import xyz.doocode.superbus.core.dto.jcdecaux.Station
-import xyz.doocode.superbus.ui.details.velocite.components.VelociteCapacityGrid
+import xyz.doocode.superbus.ui.details.velocite.components.VelociteDetailsContent
 import xyz.doocode.superbus.ui.details.velocite.components.VelociteRecap
 import xyz.doocode.superbus.ui.search.components.BusStopItem
 
@@ -403,23 +403,12 @@ fun StopDetailsListContent(
                     StopDetailsTab.VELOCITE -> {
                         if (velociteStation != null) {
                             item(key = "velocite_content") {
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .then(
-                                            if (onVelociteClick != null) Modifier.clickable { onVelociteClick() } else Modifier
-                                        ),
-                                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                                ) {
-                                    VelociteRecap(
-                                        station = velociteStation,
-                                        contentPadding = 0.dp
-                                    )
-                                    VelociteCapacityGrid(
-                                        station = velociteStation,
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
-                                }
+                                VelociteDetailsContent(
+                                    station = velociteStation,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalPadding = 0.dp,
+                                    onClick = onVelociteClick
+                                )
                             }
                         }
                     }

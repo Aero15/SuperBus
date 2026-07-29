@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import xyz.doocode.superbus.core.dto.jcdecaux.Station
@@ -26,7 +27,7 @@ import xyz.doocode.superbus.ui.theme.MechanicalBikeColor
 import xyz.doocode.superbus.ui.theme.UnavailableStandsColor
 
 @Composable
-fun VelociteCapacityChartCard(station: Station) {
+fun VelociteCapacityChartCard(station: Station, horizontalPadding: Dp = 16.dp) {
     val availableStands = station.totalStands.availabilities.stands
     val mechBikes = station.totalStands.availabilities.mechanicalBikes
     val elecBikes = station.totalStands.availabilities.electricalBikes
@@ -34,7 +35,7 @@ fun VelociteCapacityChartCard(station: Station) {
     val unavailableStands = maxOf(0, capacity - (mechBikes + elecBikes + availableStands))
 
     Column/*(modifier = Modifier.padding(top = 16.dp, bottom = 16.dp))*/ {
-        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+        Column(modifier = Modifier.padding(horizontal = horizontalPadding)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -53,7 +54,7 @@ fun VelociteCapacityChartCard(station: Station) {
 
             Row(
                 modifier = Modifier
-                    .padding(horizontal = 16.dp)
+                    .padding(horizontal = horizontalPadding)
                     .padding(top = 8.dp, bottom = 16.dp)
                     .fillMaxWidth(),
                 horizontalArrangement = Arrangement.Start,
@@ -111,14 +112,14 @@ fun VelociteCapacityChartCard(station: Station) {
 
             VelociteCapacityGrid(
                 station = station,
-                modifier = Modifier.padding(horizontal = 16.dp)
+                modifier = Modifier.padding(horizontal = horizontalPadding)
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
             // Legend
             Column(
-                modifier = Modifier.padding(horizontal = 16.dp),
+                modifier = Modifier.padding(horizontal = horizontalPadding),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 LegendItem(
@@ -144,7 +145,7 @@ fun VelociteCapacityChartCard(station: Station) {
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
+                        .padding(horizontal = horizontalPadding)
                         .padding(top = 12.dp),
                     shape = RoundedCornerShape(12.dp),
                     color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.65f)
@@ -191,7 +192,7 @@ fun VelociteCapacityChartCard(station: Station) {
             Text(
                 text = "Capacité inconnue.",
                 style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(horizontal = 16.dp)
+                modifier = Modifier.padding(horizontal = horizontalPadding)
             )
         }
     }

@@ -45,11 +45,8 @@ import xyz.doocode.superbus.ui.components.ErrorView
 import xyz.doocode.superbus.ui.components.StopVariantsBottomSheet
 import xyz.doocode.superbus.ui.details.StopDetailsActivity
 import xyz.doocode.superbus.ui.details.StopDetailsLoadingView
-import xyz.doocode.superbus.ui.details.velocite.components.VelociteAddressCard
-import xyz.doocode.superbus.ui.details.velocite.components.VelociteCapacityChartCard
+import xyz.doocode.superbus.ui.details.velocite.components.VelociteDetailsContent
 import xyz.doocode.superbus.ui.details.velocite.components.VelociteNearbyStops
-import xyz.doocode.superbus.ui.details.velocite.components.VelociteRecap
-import xyz.doocode.superbus.ui.details.velocite.components.VelociteStatusCard
 import xyz.doocode.superbus.ui.search.components.BusStopItem
 import androidx.core.content.edit
 import kotlinx.coroutines.launch
@@ -300,10 +297,9 @@ fun VelociteDetailsScreen(
                             .padding(bottom = 16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        VelociteRecap(station = state.station, expanded = true)
-                        VelociteCapacityChartCard(station = state.station)
-                        VelociteStatusCard(station = state.station)
-                        VelociteAddressCard(station = state.station)
+                        VelociteDetailsContent(
+                            station = state.station
+                        )
 
                         VelociteNearbyStops(
                             nearbyStops = nearbyStops,

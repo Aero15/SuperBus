@@ -26,15 +26,16 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import xyz.doocode.superbus.core.dto.jcdecaux.Station
 
 @Composable
-fun VelociteStatusCard(station: Station) {
+fun VelociteStatusCard(station: Station, horizontalPadding: Dp = 16.dp) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp),
+            .padding(horizontal = horizontalPadding, vertical = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Surface(
