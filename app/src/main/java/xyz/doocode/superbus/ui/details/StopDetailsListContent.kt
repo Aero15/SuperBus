@@ -150,7 +150,7 @@ fun StopDetailsListContent(
 
                                 when (groupingMode) {
                                     GroupingMode.BY_TRANSPORT -> {
-                                        val lianeRegex = Regex("^L\\d+$")
+                                        val lianeRegex = Regex("^[LB]\\d+$")
                                         val scolaireRegex = Regex("^D([1-9]\\d{0,2})$")
 
                                         val tramEntries =
