@@ -12,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import xyz.doocode.superbus.core.dto.ginko.Temps
 import xyz.doocode.superbus.ui.details.components.FocusArrivalCard
@@ -25,6 +26,7 @@ fun StopDetailsFocusContent(
     onFocusedTimeIndexChanged: (Int) -> Unit = {},
     activeSubscriptionKeys: Set<String> = emptySet(),
     currentlySpeakingKey: String? = null,
+    contentPaddingBottom: Dp = 0.dp,
     onToggleTts: (key: String, numLigne: String, destination: String) -> Unit = { _, _, _ -> }
 ) {
     val initialPage = remember(focusedItemKey, arrivalsList) {
@@ -84,6 +86,7 @@ fun StopDetailsFocusContent(
                         ligneId = arrivals.first().idLigne,
                         times = arrivals,
                         startIndex = if (focusedItemKey == key) focusedTimeIndex else 0,
+                        bottomPadding = contentPaddingBottom,
                         onStartIndexChanged = { newIndex ->
                             if (focusedItemKey == key) {
                                 onFocusedTimeIndexChanged(newIndex)

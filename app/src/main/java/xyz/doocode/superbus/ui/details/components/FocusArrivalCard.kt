@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import xyz.doocode.superbus.core.data.ReferenceDataRepository
 import xyz.doocode.superbus.core.dto.ginko.Temps
@@ -37,6 +38,7 @@ fun FocusArrivalCard(
     times: List<Temps>,
     ligneId: String = "",
     startIndex: Int = 0,
+    bottomPadding: Dp = 0.dp,
     onStartIndexChanged: (Int) -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -190,7 +192,7 @@ fun FocusArrivalCard(
                     twoColumn = true
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(96.dp + bottomPadding))
             }
         } else {
             Column(
@@ -268,7 +270,7 @@ fun FocusArrivalCard(
                     fullBleed = true
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(96.dp + bottomPadding))
             }
         }
     }

@@ -30,6 +30,7 @@ import androidx.compose.ui.layout.layout
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import xyz.doocode.superbus.core.dto.ginko.Arret
 import xyz.doocode.superbus.core.dto.ginko.FavoriteStation
@@ -61,6 +62,7 @@ fun StopDetailsListContent(
     nearbyStops: List<Arret> = emptyList(),
     favorites: List<FavoriteStation> = emptyList(),
     isLoadingNearbyStops: Boolean = false,
+    contentPaddingBottom: Dp = 16.dp,
     onRetry: () -> Unit,
     onItemLongClick: (String) -> Unit,
     onArrivalTimeClick: (key: String, timeIndex: Int) -> Unit = { _, _ -> },
@@ -130,7 +132,7 @@ fun StopDetailsListContent(
                     start = 16.dp,
                     top = 16.dp,
                     end = 16.dp,
-                    bottom = 96.dp
+                    bottom = contentPaddingBottom + if (selectedTab == StopDetailsTab.SCHEDULES) 96.dp else 16.dp
                 ),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
