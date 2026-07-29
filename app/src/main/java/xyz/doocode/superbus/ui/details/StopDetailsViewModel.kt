@@ -259,8 +259,8 @@ class StopDetailsViewModel(application: Application) : AndroidViewModel(applicat
                             }
                         )
                     }
-                    // TODO: Option pour trier par [nom, proximité]
-                    // TODO: Afficher un badge (position actuelle) sur la station actuelle
+                // TODO: Option pour trier par [nom, proximité]
+                // TODO: Afficher un badge (position actuelle) sur la station actuelle
 
                 _nearbyStops.value = grouped
                 nearbyStopsLoaded = true
@@ -284,7 +284,13 @@ class StopDetailsViewModel(application: Application) : AndroidViewModel(applicat
 
     fun announceTtsPause() = ttsManager.announcePause()
 
-    fun saveTtsSettings(settings: TtsSettings) = ttsManager.saveSettings(settings)
+    private val _ttsSettings = MutableStateFlow(ttsManager.getSettings())
+    val ttsSettingsState: StateFlow<TtsSettings> = _ttsSettings.asStateFlow()
+
+    fun saveTtsSettings(settings: TtsSettings) {
+        ttsManager.saveSettings(settings)
+        _ttsSettings.value = settings
+    }
 
     fun getTtsSettings(): TtsSettings = ttsManager.getSettings()
 

@@ -8,6 +8,14 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import android.os.PowerManager
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Intent
+import androidx.core.app.NotificationCompat
+import xyz.doocode.superbus.MainActivity
+import xyz.doocode.superbus.R
 import xyz.doocode.superbus.core.dto.ginko.Temps
 import java.util.Locale
 
@@ -19,7 +27,8 @@ data class TtsSettings(
     val announceSecondArrival: Boolean = true,
     val announceSecondArrivalOnlyUnder10Min: Boolean = false,
     val askBeforeExit: Boolean = true,
-    val removeSubOnZero: Boolean = true
+    val removeSubOnZero: Boolean = true,
+    val allowBackground: Boolean = false
 )
 
 data class CountdownSubscription(
@@ -35,6 +44,13 @@ class TtsCountdownManager(context: Context) {
     private val appContext = context.applicationContext
     private var tts: TextToSpeech? = null
     private var ttsReady = false
+
+    private val notificationManager =
+        appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    private val powerManager = appContext.getSystemService(Context.POWER_SERVICE) as PowerManager
+    private var wakeLock: PowerManager.WakeLock? = null
+    private val CHANNEL_ID = "tts_countdown_channel"
+    private val NOTIFICATION_ID = 42
 
     private val _activeSubscriptions =
         MutableStateFlow<Map<String, CountdownSubscription>>(emptyMap())
@@ -53,6 +69,7 @@ class TtsCountdownManager(context: Context) {
     private var settings = loadSettings()
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private var announcementJob: Job? = null
+    private var notificationTickerJob: Job? = null
 
     private val prefs by lazy {
         appContext.getSharedPreferences("superbus_tts_settings", Context.MODE_PRIVATE)
@@ -60,6 +77,7 @@ class TtsCountdownManager(context: Context) {
 
     fun init() {
         if (tts != null) return
+        createNotificationChannel()
         tts = TextToSpeech(appContext) { status ->
             ttsReady = status == TextToSpeech.SUCCESS
             _isTtsReady.value = ttsReady
@@ -90,10 +108,12 @@ class TtsCountdownManager(context: Context) {
             ),
             askBeforeExit = prefs.getBoolean("ask_before_exit", true),
             removeSubOnZero = prefs.getBoolean("remove_sub_on_zero", true),
+            allowBackground = prefs.getBoolean("allow_background", false),
         )
     }
 
     fun saveSettings(newSettings: TtsSettings) {
+        val oldAllowBackground = settings.allowBackground
         settings = newSettings
         prefs.edit()
             .putFloat("speech_rate", newSettings.speechRate)
@@ -108,8 +128,15 @@ class TtsCountdownManager(context: Context) {
             )
             .putBoolean("ask_before_exit", newSettings.askBeforeExit)
             .putBoolean("remove_sub_on_zero", newSettings.removeSubOnZero)
+            .putBoolean("allow_background", newSettings.allowBackground)
             .apply()
         applySettings()
+
+        if (oldAllowBackground && !newSettings.allowBackground) {
+            notificationManager.cancel(NOTIFICATION_ID)
+        } else if (!oldAllowBackground && newSettings.allowBackground && lastGroupedArrivals.isNotEmpty()) {
+            updateNotification(lastGroupedArrivals)
+        }
     }
 
     fun getSettings(): TtsSettings = settings
@@ -135,6 +162,7 @@ class TtsCountdownManager(context: Context) {
         if (isAdded && lastGroupedArrivals.isNotEmpty()) {
             internalProcessArrivals(lastGroupedArrivals)
         }
+        updateNotification(lastGroupedArrivals)
     }
 
     fun isSubscribed(key: String): Boolean = _activeSubscriptions.value.containsKey(key)
@@ -144,6 +172,63 @@ class TtsCountdownManager(context: Context) {
     fun clearAllSubscriptions() {
         _activeSubscriptions.value = emptyMap()
         tts?.stop()
+        TtsForegroundService.stop(appContext)
+    }
+
+    private fun createNotificationChannel() {
+        val name = "Suivi des départs"
+        val descriptionText = "Affiche le compte à rebours de l'arrivée des bus en temps réel"
+        val importance = NotificationManager.IMPORTANCE_LOW
+        val channel = NotificationChannel(CHANNEL_ID, name, importance).apply {
+            description = descriptionText
+        }
+        notificationManager.createNotificationChannel(channel)
+    }
+
+    private fun startNotificationTicker() {
+        if (notificationTickerJob?.isActive == true) return
+        notificationTickerJob = scope.launch {
+            while (true) {
+                delay(15000) // Update every 15s if no data update happened
+                if (_activeSubscriptions.value.isNotEmpty() && lastGroupedArrivals.isNotEmpty()) {
+                    updateNotification(lastGroupedArrivals)
+                }
+            }
+        }
+    }
+
+    private fun stopNotificationTicker() {
+        notificationTickerJob?.cancel()
+        notificationTickerJob = null
+    }
+
+    private fun updateNotification(groupedArrivals: Map<String, List<Temps>>) {
+        val subs = _activeSubscriptions.value
+        if (subs.isEmpty() || !settings.allowBackground) {
+            stopNotificationTicker()
+            TtsForegroundService.stop(appContext)
+            return
+        }
+
+        startNotificationTicker()
+        val lines = mutableListOf<String>()
+        for ((key, sub) in subs) {
+            val arrivals = groupedArrivals[key] ?: continue
+            val firstArrival = arrivals.firstOrNull() ?: continue
+            val minutes = parseDurationMinutes(firstArrival.temps, firstArrival.tempsEnSeconde)
+            val timeText = if (minutes > 0) "$minutes minutes" else "départ imminent"
+            lines.add("Dans $timeText, [${sub.numLigne}] ${sub.destination}")
+        }
+
+        if (lines.isEmpty()) {
+            TtsForegroundService.stop(appContext)
+            return
+        }
+
+        val contentText = if (lines.size == 1) lines[0] else "${lines.size} lignes suivies"
+        val bigText = lines.joinToString("\n")
+
+        TtsForegroundService.start(appContext, "Suivi SuperBus", contentText, bigText)
     }
 
     /**
@@ -153,6 +238,7 @@ class TtsCountdownManager(context: Context) {
     fun onArrivalsUpdated(groupedArrivals: Map<String, List<Temps>>) {
         lastGroupedArrivals = groupedArrivals
         internalProcessArrivals(groupedArrivals)
+        updateNotification(groupedArrivals)
     }
 
     private fun internalProcessArrivals(groupedArrivals: Map<String, List<Temps>>) {
@@ -205,6 +291,7 @@ class TtsCountdownManager(context: Context) {
             val currentMap = _activeSubscriptions.value.toMutableMap()
             keysToRemove.forEach { currentMap.remove(it) }
             _activeSubscriptions.value = currentMap
+            updateNotification(groupedArrivals)
         }
 
         if (announcements.isNotEmpty()) {
@@ -293,6 +380,13 @@ class TtsCountdownManager(context: Context) {
         tts?.setSpeechRate(s.speechRate)
         tts?.setPitch(s.pitch)
 
+        if (settings.allowBackground && wakeLock == null) {
+            wakeLock = powerManager.newWakeLock(
+                PowerManager.PARTIAL_WAKE_LOCK,
+                "SuperBus:TtsWakeLock"
+            ).apply { acquire(10 * 60 * 1000L /*10 minutes max*/) }
+        }
+
         val params = Bundle().apply {
             putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, s.volume)
         }
@@ -312,6 +406,10 @@ class TtsCountdownManager(context: Context) {
                 override fun onStart(utteranceId: String?) {}
                 override fun onDone(utteranceId: String?) {
                     if (cont.isActive) cont.resume(Unit) {}
+                    if (wakeLock?.isHeld == true) {
+                        wakeLock?.release()
+                        wakeLock = null
+                    }
                 }
 
                 @Deprecated("Deprecated in Java")

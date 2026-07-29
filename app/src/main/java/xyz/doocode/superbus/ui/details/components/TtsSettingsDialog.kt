@@ -27,6 +27,7 @@ fun TtsSettingsDialog(
     var announceSecondArrivalOnlyUnder10Min by remember { mutableStateOf(currentSettings.announceSecondArrivalOnlyUnder10Min) }
     var askBeforeExit by remember { mutableStateOf(currentSettings.askBeforeExit) }
     var removeSubOnZero by remember { mutableStateOf(currentSettings.removeSubOnZero) }
+    var allowBackground by remember { mutableStateOf(currentSettings.allowBackground) }
 
     val languages = remember {
         listOf(
@@ -199,6 +200,24 @@ fun TtsSettingsDialog(
                     )
                 }
 
+                // Background announcements
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { allowBackground = !allowBackground },
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Checkbox(
+                        checked = allowBackground,
+                        onCheckedChange = null
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Autoriser les annonces en arrière-plan (écran éteint)",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+
                 // Test button
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -214,7 +233,8 @@ fun TtsSettingsDialog(
                                 announceSecondArrival,
                                 announceSecondArrivalOnlyUnder10Min,
                                 askBeforeExit,
-                                removeSubOnZero
+                                removeSubOnZero,
+                                allowBackground
                             )
                         )
                     }) {
@@ -235,6 +255,7 @@ fun TtsSettingsDialog(
                         announceSecondArrivalOnlyUnder10Min = false
                         askBeforeExit = true
                         removeSubOnZero = true
+                        allowBackground = false
                         selectedLocale = Locale.FRANCE
                     }) {
                         Text("Réinitialiser")
@@ -253,7 +274,8 @@ fun TtsSettingsDialog(
                         announceSecondArrival,
                         announceSecondArrivalOnlyUnder10Min,
                         askBeforeExit,
-                        removeSubOnZero
+                        removeSubOnZero,
+                        allowBackground
                     )
                 )
                 onDismiss()

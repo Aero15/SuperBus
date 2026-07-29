@@ -44,6 +44,12 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import android.os.Build
+import android.Manifest
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import android.content.pm.PackageManager
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -72,24 +78,10 @@ fun StopDetailsScreen(
         viewModel.init(stopName, stopId, detailsFromId)
     }
 
-    val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME || event == Lifecycle.Event.ON_START) {
-                viewModel.startAutoRefresh()
-            } else if (event == Lifecycle.Event.ON_PAUSE || event == Lifecycle.Event.ON_STOP) {
-                viewModel.stopAutoRefresh()
-                if (viewModel.hasTtsSubscriptions()) {
-                    viewModel.announceTtsPause()
-                }
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-            viewModel.stopAutoRefresh()
-        }
-    }
+    val ttsSubscriptions by viewModel.ttsManager.activeSubscriptions.collectAsState()
+    val currentlySpeakingKey by viewModel.ttsManager.currentlySpeakingKey.collectAsState()
+    val ttsSettings by viewModel.ttsSettingsState.collectAsState()
+    val velociteStation by viewModel.velociteStation.collectAsState()
 
     val uiState by viewModel.uiState.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
@@ -97,9 +89,42 @@ fun StopDetailsScreen(
     val favorites by viewModel.favorites.collectAsState()
     val nearbyStops by viewModel.nearbyStops.collectAsState()
     val isLoadingNearbyStops by viewModel.isLoadingNearbyStops.collectAsState()
-    val ttsSubscriptions by viewModel.ttsManager.activeSubscriptions.collectAsState()
-    val currentlySpeakingKey by viewModel.ttsManager.currentlySpeakingKey.collectAsState()
-    val velociteStation by viewModel.velociteStation.collectAsState()
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner, ttsSettings.allowBackground) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME || event == Lifecycle.Event.ON_START) {
+                viewModel.startAutoRefresh()
+            } else if (event == Lifecycle.Event.ON_PAUSE || event == Lifecycle.Event.ON_STOP) {
+                val backgroundAllowed =
+                    ttsSettings.allowBackground && viewModel.hasTtsSubscriptions()
+                if (!backgroundAllowed) {
+                    viewModel.stopAutoRefresh()
+                    if (viewModel.hasTtsSubscriptions()) {
+                        viewModel.announceTtsPause()
+                    }
+                }
+            }
+        }
+
+        // Ensuring refresh is active if background allowed, even if current state is stopped
+        val isStarted = lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)
+        val backgroundAllowed = ttsSettings.allowBackground && viewModel.hasTtsSubscriptions()
+        if (isStarted || backgroundAllowed) {
+            viewModel.startAutoRefresh()
+        }
+
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            // Stop ONLY if background not allowed or no subscriptions
+            val stillBackgroundAllowed =
+                viewModel.getTtsSettings().allowBackground && viewModel.hasTtsSubscriptions()
+            if (!stillBackgroundAllowed) {
+                viewModel.stopAutoRefresh()
+            }
+        }
+    }
     val title = stopName ?: "Station inconnue"
 
     val tabs = remember(velociteStation) {
@@ -121,6 +146,23 @@ fun StopDetailsScreen(
     // Keep Screen On Logic
     val context = LocalContext.current
     val activity = context as? Activity
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = {}
+    )
+
+    LaunchedEffect(ttsSettings.allowBackground) {
+        if (ttsSettings.allowBackground && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val hasPermission = ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+            if (!hasPermission) {
+                permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
 
     val openNearbyStop = { stop: Arret, fromId: Boolean ->
         val intent = Intent(context, StopDetailsActivity::class.java).apply {
@@ -193,7 +235,6 @@ fun StopDetailsScreen(
     }
 
     // Back handler: confirm exit when TTS subscriptions are active
-    val ttsSettings = viewModel.getTtsSettings()
     BackHandler(enabled = true) {
         if (focusedItemKey != null) {
             focusedItemKey = null
@@ -263,7 +304,7 @@ fun StopDetailsScreen(
     // TTS Settings dialog
     if (showTtsSettings) {
         TtsSettingsDialog(
-            currentSettings = viewModel.getTtsSettings(),
+            currentSettings = ttsSettings,
             onDismiss = { showTtsSettings = false },
             onSave = { viewModel.saveTtsSettings(it) },
             onTest = { testSettings -> viewModel.ttsManager.testTTS(testSettings) }
