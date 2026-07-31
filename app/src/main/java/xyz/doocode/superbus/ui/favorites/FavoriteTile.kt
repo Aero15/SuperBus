@@ -106,7 +106,10 @@ fun FavoriteTile(
                             .padding(9.dp)
                     )
                 } else {
-                    val validLines = station.lines
+                    // Prefer "major" lines (typologie <= 30) for display. If none, fall back to all lines.
+                    val allLines = station.lines
+                    val preferredLines = allLines.filter { it.typologie <= 30 }
+                    val validLines = preferredLines.ifEmpty { allLines }
                     val isTramDuo = validLines.size == 2 && validLines.all {
                         it.numLignePublic.matches(Regex("T\\d+"))
                     }

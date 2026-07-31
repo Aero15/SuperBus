@@ -51,14 +51,15 @@ class FavoritesRepository(context: Context) {
         lines: List<Ligne>
     ) {
         val currentList = _favorites.value.toMutableList()
-        val filteredLines = lines.filter { it.typologie <= 30 }
+        // Store the full set of lines for the favorite — apply display filtering in the UI.
+        val linesToSave = lines
         if (currentList.none { it.id == stopId && it.detailsFromId == detailsFromId }) {
             currentList.add(
                 FavoriteStation(
                     id = stopId,
                     detailsFromId = detailsFromId,
                     name = stopName,
-                    lines = filteredLines,
+                    lines = linesToSave,
                     createdAt = System.currentTimeMillis(),
                     updatedAt = System.currentTimeMillis()
                 )
@@ -131,11 +132,12 @@ class FavoritesRepository(context: Context) {
 
         if (index != -1) {
             val oldFav = favoriteList[index]
-            val filteredLines = lines.filter { it.typologie <= 30 && it.id !in listOf("110") }
+            // Keep all lines from the update; the UI will choose which to display.
+            val linesToSave = lines
 
-            if (oldFav.lines != filteredLines) {
+            if (oldFav.lines != linesToSave) {
                 val newFav = oldFav.copy(
-                    lines = filteredLines,
+                    lines = linesToSave,
                     updatedAt = System.currentTimeMillis()
                 )
                 favoriteList[index] = newFav
