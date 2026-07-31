@@ -8,11 +8,10 @@ import androidx.compose.ui.graphics.vector.ImageVector
 
 enum class MenuFeature(val label: String, val icon: ImageVector) {
     FAVORITES("Favoris", Icons.Default.Favorite),
-
-    //MAP("Carte", Icons.Default.Map),
+    MAP("Carte", Icons.Default.Map),
     VELOCITE("Vélocité", Icons.AutoMirrored.Filled.DirectionsBike),
     LINES("Lignes", Icons.Default.DirectionsBus),
-    CALENDAR("Calendrier", Icons.Default.DateRange),
+    //CALENDAR("Calendrier", Icons.Default.DateRange),
     TRAFFIC("Info Traffic", Icons.Default.Traffic)
 }
 

@@ -10,13 +10,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Map
 import androidx.compose.material.icons.outlined.Menu
-import androidx.compose.material.icons.outlined.Place
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import xyz.doocode.superbus.ui.home.*
+import xyz.doocode.superbus.ui.map.MapScreen
 import xyz.doocode.superbus.ui.menu.MenuScreen
 import xyz.doocode.superbus.ui.favorites.FavoritesScreen
 import xyz.doocode.superbus.ui.details.StopDetailsActivity
@@ -124,7 +125,7 @@ fun SuperBusApp(launchRequest: LaunchRequest = LaunchRequest()) {
                 .padding(innerPadding)
                 .fillMaxSize()
             when (currentDestination) {
-                //AppDestinations.MAP -> MapScreen(modifier)
+                AppDestinations.MAP -> MapScreen(modifier)
                 AppDestinations.FAVORITES -> {
                     val context = androidx.compose.ui.platform.LocalContext.current
                     FavoritesScreen(
@@ -193,7 +194,7 @@ enum class AppDestinations(
     val selectedIcon: ImageVector,
     val unselectedIcon: ImageVector,
 ) {
-    //MAP("Carte", Icons.Default.Place, Icons.Outlined.Place),
+    MAP("Carte", Icons.Default.Map, Icons.Outlined.Map),
     FAVORITES("Favoris", Icons.Default.Favorite, Icons.Outlined.FavoriteBorder),
     SEARCH("Chercher", Icons.Default.Search, Icons.Outlined.Search),
     TRAFFIC("Infos", Icons.Default.Info, Icons.Outlined.Info),

@@ -68,6 +68,8 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.material3.adaptive.navigation.suite)
     implementation(libs.androidx.material.icons.extended)
+    // Map rendering
+    implementation("org.osmdroid:osmdroid-android:6.1.11")
 
     // Networking
     implementation(libs.retrofit)
