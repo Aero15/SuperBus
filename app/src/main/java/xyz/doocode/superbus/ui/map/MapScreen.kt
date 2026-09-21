@@ -1,6 +1,7 @@
 package xyz.doocode.superbus.ui.map
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -25,6 +26,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,15 +56,47 @@ fun MapScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val coroutineScope = rememberCoroutineScope()
+    val prefs =
+        remember { context.getSharedPreferences("superbus_app_settings", Context.MODE_PRIVATE) }
+    val mapLayerPrefKey = "map_selected_layer"
+    val mapVelociteModePrefKey = "map_selected_velocite_mode"
 
     var arrets by remember { mutableStateOf<List<Arret>>(emptyList()) }
     var velos by remember { mutableStateOf<List<Station>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
 
-    var selectedLayer by remember { mutableStateOf(MapLayer.STANDARD) }
-    var selectedVelociteMode by remember { mutableStateOf(VelociteMapDisplayMode.BASIC) }
-    var showLayerSheet by remember { mutableStateOf(false) }
-    var showVelociteSheet by remember { mutableStateOf(false) }
+    var selectedLayer by rememberSaveable {
+        mutableStateOf(
+            runCatching {
+                MapLayer.valueOf(
+                    prefs.getString(mapLayerPrefKey, MapLayer.STANDARD.name)
+                        ?: MapLayer.STANDARD.name
+                )
+            }.getOrDefault(MapLayer.STANDARD)
+        )
+    }
+    var selectedVelociteMode by rememberSaveable {
+        mutableStateOf(
+            runCatching {
+                VelociteMapDisplayMode.valueOf(
+                    prefs.getString(mapVelociteModePrefKey, VelociteMapDisplayMode.BASIC.name)
+                        ?: VelociteMapDisplayMode.BASIC.name
+                )
+            }.getOrDefault(VelociteMapDisplayMode.BASIC)
+        )
+    }
+    var showLayerSheet by rememberSaveable { mutableStateOf(false) }
+    var showVelociteSheet by rememberSaveable { mutableStateOf(false) }
+
+    fun updateSelectedLayer(layer: MapLayer) {
+        selectedLayer = layer
+        prefs.edit().putString(mapLayerPrefKey, layer.name).apply()
+    }
+
+    fun updateSelectedVelociteMode(mode: VelociteMapDisplayMode) {
+        selectedVelociteMode = mode
+        prefs.edit().putString(mapVelociteModePrefKey, mode.name).apply()
+    }
 
     val showVelocite = selectedLayer == MapLayer.STANDARD || selectedLayer == MapLayer.VELOCITE
 
@@ -258,7 +292,7 @@ fun MapScreen(modifier: Modifier = Modifier) {
         if (showLayerSheet) {
             MapLayersBottomSheet(
                 selectedLayer = selectedLayer,
-                onLayerSelected = { selectedLayer = it },
+                onLayerSelected = { updateSelectedLayer(it) },
                 onDismissRequest = { showLayerSheet = false }
             )
         }
@@ -266,7 +300,7 @@ fun MapScreen(modifier: Modifier = Modifier) {
         if (showVelociteSheet) {
             VelociteOptionsBottomSheet(
                 selectedMode = selectedVelociteMode,
-                onModeSelected = { selectedVelociteMode = it },
+                onModeSelected = { updateSelectedVelociteMode(it) },
                 onDismissRequest = { showVelociteSheet = false }
             )
         }
