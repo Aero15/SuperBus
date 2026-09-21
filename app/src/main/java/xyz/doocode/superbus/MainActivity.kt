@@ -85,7 +85,7 @@ data class LaunchRequest(
 @PreviewScreenSizes
 @Composable
 fun SuperBusApp(launchRequest: LaunchRequest = LaunchRequest()) {
-    var currentDestination by rememberSaveable { mutableStateOf(AppDestinations.FAVORITES) }
+    var currentDestination by rememberSaveable { mutableStateOf(AppDestinations.MAP) }
     var autoFocusSearch by rememberSaveable { mutableStateOf(false) }
     var autoVelociteFilter by rememberSaveable { mutableStateOf(false) }
     var pendingSearchQuery by rememberSaveable { mutableStateOf<String?>(null) }
