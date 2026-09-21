@@ -10,9 +10,13 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import org.osmdroid.config.Configuration
+import org.osmdroid.events.MapListener
+import org.osmdroid.events.ScrollEvent
+import org.osmdroid.events.ZoomEvent
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.FolderOverlay
 import org.osmdroid.views.overlay.Marker
 import xyz.doocode.superbus.core.dto.ginko.Arret
 import xyz.doocode.superbus.core.dto.jcdecaux.Station
@@ -30,6 +34,8 @@ fun MapViewContainer(
     val context = LocalContext.current
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
 
+    val markersOverlay = remember { FolderOverlay() }
+
     val mapView = remember {
         Configuration.getInstance()
             .load(context, context.getSharedPreferences("osmdroid", Context.MODE_PRIVATE))
@@ -38,6 +44,20 @@ fun MapViewContainer(
             setMultiTouchControls(true)
             controller.setZoom(MapConstants.DEFAULT_ZOOM)
             controller.setCenter(GeoPoint(MapConstants.BESANCON_LAT, MapConstants.BESANCON_LON))
+
+            // Create an overlay to display/hide markers based on zoom level
+            overlays.add(markersOverlay)
+            addMapListener(object : MapListener {
+                override fun onScroll(event: ScrollEvent?): Boolean = false
+                override fun onZoom(event: ZoomEvent?): Boolean {
+                    val isVisible = zoomLevelDouble >= MapConstants.MIN_ZOOM_MARKERS
+                    if (markersOverlay.isEnabled != isVisible) {
+                        markersOverlay.isEnabled = isVisible
+                        postInvalidate()
+                    }
+                    return true
+                }
+            })
         }
     }
 
@@ -55,11 +75,10 @@ fun MapViewContainer(
     }
 
     AndroidView(factory = { mapView }, modifier = modifier) { mv ->
-        // remove existing markers
-        val toRemove = mv.overlays.filterIsInstance<Marker>().toList()
-        toRemove.forEach { mv.overlays.remove(it) }
+        // Clear existing markers from the folder overlay to avoid duplicates
+        markersOverlay.items.clear()
 
-        // add Ginko stops
+        // add bus/tram stops
         arrets.forEach { a ->
             val marker = Marker(mv).apply {
                 position = GeoPoint(a.latitude, a.longitude)
@@ -75,7 +94,7 @@ fun MapViewContainer(
                 onArretClick(a)
                 true
             }
-            mv.overlays.add(marker)
+            markersOverlay.add(marker)
         }
 
         // add Vélocité stations
@@ -94,9 +113,10 @@ fun MapViewContainer(
                 onVelociteClick(s)
                 true
             }
-            mv.overlays.add(marker)
+            markersOverlay.add(marker)
         }
 
+        markersOverlay.isEnabled = mv.zoomLevelDouble >= MapConstants.MIN_ZOOM_MARKERS
         mv.invalidate()
     }
 }
