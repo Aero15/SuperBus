@@ -36,6 +36,7 @@ fun MapViewContainer(
     modifier: Modifier = Modifier,
     arrets: List<Arret>,
     veloStations: List<Station>,
+    selectedLayer: MapLayer = MapLayer.STANDARD,
     trackUserLocation: Boolean = false,
     centerUserLocationTrigger: Int = 0,
     onArretClick: (Arret) -> Unit,
@@ -119,42 +120,46 @@ fun MapViewContainer(
         // Clear existing markers from the folder overlay to avoid duplicates
         markersOverlay.items.clear()
 
-        // add bus/tram stops
-        arrets.forEach { a ->
-            val marker = Marker(mv).apply {
-                position = GeoPoint(a.latitude, a.longitude)
-                title = a.nom
-                subDescription = "ARRET|${a.id}"
-                icon = createMarkerBitmap(
-                    mv.context,
-                    "#00abc4".toColorInt()
-                ).toDrawable(mv.context.resources)
-                setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+        // Add bus/tram stops according to selected layer
+        if (selectedLayer == MapLayer.STANDARD || selectedLayer == MapLayer.BUS_TRAM) {
+            arrets.forEach { a ->
+                val marker = Marker(mv).apply {
+                    position = GeoPoint(a.latitude, a.longitude)
+                    title = a.nom
+                    subDescription = "ARRET|${a.id}"
+                    icon = createMarkerBitmap(
+                        mv.context,
+                        "#00abc4".toColorInt()
+                    ).toDrawable(mv.context.resources)
+                    setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                }
+                marker.setOnMarkerClickListener { _, _ ->
+                    onArretClick(a)
+                    true
+                }
+                markersOverlay.add(marker)
             }
-            marker.setOnMarkerClickListener { _, _ ->
-                onArretClick(a)
-                true
-            }
-            markersOverlay.add(marker)
         }
 
-        // add Vélocité stations
-        veloStations.forEach { s ->
-            val marker = Marker(mv).apply {
-                position = GeoPoint(s.position.latitude, s.position.longitude)
-                title = s.name
-                subDescription = "VELO|${s.number}"
-                icon = createMarkerBitmap(
-                    mv.context,
-                    "#b7007a".toColorInt()
-                ).toDrawable(mv.context.resources)
-                setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+        // Add Vélocité stations according to selected layer
+        if (selectedLayer == MapLayer.STANDARD || selectedLayer == MapLayer.VELOCITE) {
+            veloStations.forEach { s ->
+                val marker = Marker(mv).apply {
+                    position = GeoPoint(s.position.latitude, s.position.longitude)
+                    title = s.name
+                    subDescription = "VELO|${s.number}"
+                    icon = createMarkerBitmap(
+                        mv.context,
+                        "#b7007a".toColorInt()
+                    ).toDrawable(mv.context.resources)
+                    setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                }
+                marker.setOnMarkerClickListener { _, _ ->
+                    onVelociteClick(s)
+                    true
+                }
+                markersOverlay.add(marker)
             }
-            marker.setOnMarkerClickListener { _, _ ->
-                onVelociteClick(s)
-                true
-            }
-            markersOverlay.add(marker)
         }
 
         markersOverlay.isEnabled = mv.zoomLevelDouble >= MapConstants.MIN_ZOOM_MARKERS

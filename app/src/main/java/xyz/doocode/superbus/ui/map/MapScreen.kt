@@ -5,9 +5,13 @@ import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
@@ -40,6 +44,9 @@ fun MapScreen(modifier: Modifier = Modifier) {
     var arrets by remember { mutableStateOf<List<Arret>>(emptyList()) }
     var velos by remember { mutableStateOf<List<Station>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
+
+    var selectedLayer by remember { mutableStateOf(MapLayer.STANDARD) }
+    var showLayerSheet by remember { mutableStateOf(false) }
 
     var isTrackingLocation by remember { mutableStateOf(false) }
     var centerTrigger by remember { mutableIntStateOf(0) }
@@ -90,6 +97,7 @@ fun MapScreen(modifier: Modifier = Modifier) {
             modifier = Modifier.fillMaxSize(),
             arrets = arrets,
             veloStations = velos,
+            selectedLayer = selectedLayer,
             trackUserLocation = isTrackingLocation || permissionGranted,
             centerUserLocationTrigger = centerTrigger,
             onArretClick = { arret ->
@@ -111,27 +119,50 @@ fun MapScreen(modifier: Modifier = Modifier) {
             }
         )
 
-        FloatingActionButton(
-            onClick = {
-                if (permissionGranted) {
-                    isTrackingLocation = true
-                    centerTrigger++
-                } else {
-                    locationPermissionLauncher.launch(
-                        arrayOf(
-                            Manifest.permission.ACCESS_FINE_LOCATION,
-                            Manifest.permission.ACCESS_COARSE_LOCATION
-                        )
-                    )
-                }
-            },
+        Column(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(16.dp)
+                .padding(16.dp),
+            horizontalAlignment = Alignment.End
         ) {
-            Icon(
-                imageVector = Icons.Filled.MyLocation,
-                contentDescription = "Ma position"
+            FloatingActionButton(
+                onClick = { showLayerSheet = true }
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Layers,
+                    contentDescription = "Changer de calque"
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            FloatingActionButton(
+                onClick = {
+                    if (permissionGranted) {
+                        isTrackingLocation = true
+                        centerTrigger++
+                    } else {
+                        locationPermissionLauncher.launch(
+                            arrayOf(
+                                Manifest.permission.ACCESS_FINE_LOCATION,
+                                Manifest.permission.ACCESS_COARSE_LOCATION
+                            )
+                        )
+                    }
+                }
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.MyLocation,
+                    contentDescription = "Ma position"
+                )
+            }
+        }
+
+        if (showLayerSheet) {
+            MapLayersBottomSheet(
+                selectedLayer = selectedLayer,
+                onLayerSelected = { selectedLayer = it },
+                onDismissRequest = { showLayerSheet = false }
             )
         }
 
