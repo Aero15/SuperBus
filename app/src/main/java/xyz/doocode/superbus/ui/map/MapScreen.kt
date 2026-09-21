@@ -18,11 +18,13 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,8 +32,16 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import xyz.doocode.superbus.core.api.ApiClient
 import xyz.doocode.superbus.core.data.ReferenceDataRepository
 import xyz.doocode.superbus.core.dto.ginko.Arret
 import xyz.doocode.superbus.core.dto.jcdecaux.Station
@@ -42,6 +52,9 @@ import xyz.doocode.superbus.ui.details.velocite.VelociteDetailsActivity
 @Composable
 fun MapScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val coroutineScope = rememberCoroutineScope()
+
     var arrets by remember { mutableStateOf<List<Arret>>(emptyList()) }
     var velos by remember { mutableStateOf<List<Station>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
@@ -50,6 +63,8 @@ fun MapScreen(modifier: Modifier = Modifier) {
     var selectedVelociteMode by remember { mutableStateOf(VelociteMapDisplayMode.BASIC) }
     var showLayerSheet by remember { mutableStateOf(false) }
     var showVelociteSheet by remember { mutableStateOf(false) }
+
+    val showVelocite = selectedLayer == MapLayer.STANDARD || selectedLayer == MapLayer.VELOCITE
 
     var isTrackingLocation by remember { mutableStateOf(false) }
     var centerTrigger by remember { mutableIntStateOf(0) }
@@ -92,6 +107,73 @@ fun MapScreen(modifier: Modifier = Modifier) {
             }
         } catch (t: Throwable) {
             loading = false
+        }
+    }
+
+    DisposableEffect(lifecycleOwner, showVelocite) {
+        var autoRefreshJob: Job? = null
+        var immediateRefreshJob: Job? = null
+
+        suspend fun refreshLiveVelociteStations() {
+            try {
+                val freshStations = withContext(Dispatchers.IO) {
+                    ApiClient.jcDecauxService.getStations()
+                }
+                velos = freshStations
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+
+        fun startAutoRefresh() {
+            if (autoRefreshJob?.isActive == true) return
+
+            immediateRefreshJob?.cancel()
+            immediateRefreshJob = coroutineScope.launch {
+                refreshLiveVelociteStations()
+            }
+
+            autoRefreshJob = coroutineScope.launch {
+                while (isActive) {
+                    delay(10_000)
+                    refreshLiveVelociteStations()
+                }
+            }
+        }
+
+        fun stopAutoRefresh() {
+            autoRefreshJob?.cancel()
+            autoRefreshJob = null
+            immediateRefreshJob?.cancel()
+            immediateRefreshJob = null
+        }
+
+        if (showVelocite && lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) {
+            startAutoRefresh()
+        } else {
+            stopAutoRefresh()
+        }
+
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_START -> {
+                    if (showVelocite) {
+                        startAutoRefresh()
+                    }
+                }
+
+                Lifecycle.Event.ON_STOP -> {
+                    stopAutoRefresh()
+                }
+
+                else -> Unit
+            }
+        }
+
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            stopAutoRefresh()
         }
     }
 
