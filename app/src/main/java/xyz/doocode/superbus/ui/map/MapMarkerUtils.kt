@@ -86,32 +86,60 @@ fun createTextMarkerBitmap(
     return bitmap
 }
 
-fun createUserLocationMarkerBitmap(context: Context, sizeDp: Float = 32f): Bitmap {
+fun createUserLocationMarkerBitmap(
+    context: Context,
+    progress: Float = 0f,
+    sizeDp: Float = 44f
+): Bitmap {
     val density = context.resources.displayMetrics.density
-    val size = (sizeDp * density).toInt().coerceAtLeast(32)
+    val size = (sizeDp * density).toInt().coerceAtLeast(36)
     val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
 
+    val center = size / 2f
+    val clampedProgress = progress.coerceIn(0f, 1f)
+
+    // Halo animation: scale between 0.65 and 1.0 of max radius, alpha between 0.15 and 0.45
+    val maxHaloRadius = size * 0.46f
+    val haloRadius = maxHaloRadius * (0.65f + 0.35f * clampedProgress)
+    val haloAlpha = (25 + (85 * clampedProgress)).toInt().coerceIn(0, 255)
+
+    // Color transition from vibrant blue (#2979FF) to dark slate/black (#1A1A1A)
+    val blueR = 0x29
+    val blueG = 0x79
+    val blueB = 0xFF
+
+    val darkR = 0x12
+    val darkG = 0x12
+    val darkB = 0x12
+
+    val coreR = (blueR + (darkR - blueR) * clampedProgress).toInt().coerceIn(0, 255)
+    val coreG = (blueG + (darkG - blueG) * clampedProgress).toInt().coerceIn(0, 255)
+    val coreB = (blueB + (darkB - blueB) * clampedProgress).toInt().coerceIn(0, 255)
+
+    val haloColor = Color.argb(haloAlpha, coreR, coreG, coreB)
+    val coreColor = Color.rgb(coreR, coreG, coreB)
+
     // Outer accuracy halo
     val haloPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#4D2979FF")
+        color = haloColor
     }
-    canvas.drawCircle(size / 2f, size / 2f, size / 2f, haloPaint)
+    canvas.drawCircle(center, center, haloRadius, haloPaint)
 
-    // Blue core
+    // Core circle
     val corePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.parseColor("#2979FF")
+        color = coreColor
     }
-    val coreRadius = size * 0.35f
-    canvas.drawCircle(size / 2f, size / 2f, coreRadius, corePaint)
+    val coreRadius = size * 0.22f
+    canvas.drawCircle(center, center, coreRadius, corePaint)
 
-    // White border around blue core
+    // White border around core
     val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
         color = Color.WHITE
         strokeWidth = density * 2f
     }
-    canvas.drawCircle(size / 2f, size / 2f, coreRadius, borderPaint)
+    canvas.drawCircle(center, center, coreRadius, borderPaint)
 
     return bitmap
 }

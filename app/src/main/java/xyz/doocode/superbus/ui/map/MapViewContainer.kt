@@ -189,6 +189,37 @@ private class UserLocationHelper(
     private var lastLocation: Location? = null
     private var pendingCenterAnimation = false
 
+    private val handler = android.os.Handler(android.os.Looper.getMainLooper())
+    private var animationStartTime = 0L
+    private val animationDuration = 2400L // 2.4s for full breath cycle in-and-out
+
+    private val animationRunnable = object : Runnable {
+        override fun run() {
+            if (!isListening || userMarker == null) return
+            val elapsed = (System.currentTimeMillis() - animationStartTime) % animationDuration
+            val fraction = elapsed.toFloat() / animationDuration // 0..1
+            // Smooth sine breathing: 0 -> 1 -> 0
+            val progress =
+                ((kotlin.math.sin(fraction * 2.0 * Math.PI - Math.PI / 2.0) + 1.0) / 2.0).toFloat()
+
+            userMarker?.icon =
+                createUserLocationMarkerBitmap(context, progress).toDrawable(context.resources)
+            mapView.postInvalidate()
+
+            handler.postDelayed(this, 33L) // ~30 fps smooth animation
+        }
+    }
+
+    private fun startMarkerAnimation() {
+        handler.removeCallbacks(animationRunnable)
+        animationStartTime = System.currentTimeMillis()
+        handler.post(animationRunnable)
+    }
+
+    private fun stopMarkerAnimation() {
+        handler.removeCallbacks(animationRunnable)
+    }
+
     fun startListening() {
         if (isListening || locationManager == null) return
         val fineGranted = ContextCompat.checkSelfPermission(
@@ -205,7 +236,7 @@ private class UserLocationHelper(
             userMarker = Marker(mapView).apply {
                 title = "Ma position"
                 subDescription = "USER_LOCATION"
-                icon = createUserLocationMarkerBitmap(context).toDrawable(context.resources)
+                icon = createUserLocationMarkerBitmap(context, 0f).toDrawable(context.resources)
                 setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
             }
             mapView.overlays.add(userMarker)
@@ -249,12 +280,14 @@ private class UserLocationHelper(
                 )
             }
             isListening = true
+            startMarkerAnimation()
         } catch (_: SecurityException) {
         }
     }
 
     fun stopListening() {
         if (!isListening) return
+        stopMarkerAnimation()
         try {
             locationManager?.removeUpdates(this)
         } catch (_: Throwable) {
