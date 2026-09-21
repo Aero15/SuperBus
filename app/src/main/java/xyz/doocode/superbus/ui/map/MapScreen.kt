@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.DirectionsBike
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.CircularProgressIndicator
@@ -46,7 +47,9 @@ fun MapScreen(modifier: Modifier = Modifier) {
     var loading by remember { mutableStateOf(true) }
 
     var selectedLayer by remember { mutableStateOf(MapLayer.STANDARD) }
+    var selectedVelociteMode by remember { mutableStateOf(VelociteMapDisplayMode.BASIC) }
     var showLayerSheet by remember { mutableStateOf(false) }
+    var showVelociteSheet by remember { mutableStateOf(false) }
 
     var isTrackingLocation by remember { mutableStateOf(false) }
     var centerTrigger by remember { mutableIntStateOf(0) }
@@ -98,6 +101,7 @@ fun MapScreen(modifier: Modifier = Modifier) {
             arrets = arrets,
             veloStations = velos,
             selectedLayer = selectedLayer,
+            velociteDisplayMode = selectedVelociteMode,
             trackUserLocation = isTrackingLocation || permissionGranted,
             centerUserLocationTrigger = centerTrigger,
             onArretClick = { arret ->
@@ -125,6 +129,17 @@ fun MapScreen(modifier: Modifier = Modifier) {
                 .padding(16.dp),
             horizontalAlignment = Alignment.End
         ) {
+            FloatingActionButton(
+                onClick = { showVelociteSheet = true }
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.DirectionsBike,
+                    contentDescription = "Options Vélocité"
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
             FloatingActionButton(
                 onClick = { showLayerSheet = true }
             ) {
@@ -163,6 +178,14 @@ fun MapScreen(modifier: Modifier = Modifier) {
                 selectedLayer = selectedLayer,
                 onLayerSelected = { selectedLayer = it },
                 onDismissRequest = { showLayerSheet = false }
+            )
+        }
+
+        if (showVelociteSheet) {
+            VelociteOptionsBottomSheet(
+                selectedMode = selectedVelociteMode,
+                onModeSelected = { selectedVelociteMode = it },
+                onDismissRequest = { showVelociteSheet = false }
             )
         }
 

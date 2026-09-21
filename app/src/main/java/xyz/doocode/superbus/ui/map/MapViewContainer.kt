@@ -37,6 +37,7 @@ fun MapViewContainer(
     arrets: List<Arret>,
     veloStations: List<Station>,
     selectedLayer: MapLayer = MapLayer.STANDARD,
+    velociteDisplayMode: VelociteMapDisplayMode = VelociteMapDisplayMode.BASIC,
     trackUserLocation: Boolean = false,
     centerUserLocationTrigger: Int = 0,
     onArretClick: (Arret) -> Unit,
@@ -144,14 +145,24 @@ fun MapViewContainer(
         // Add Vélocité stations according to selected layer
         if (selectedLayer == MapLayer.STANDARD || selectedLayer == MapLayer.VELOCITE) {
             veloStations.forEach { s ->
+                val markerData = getVelociteMarkerData(s, velociteDisplayMode)
                 val marker = Marker(mv).apply {
                     position = GeoPoint(s.position.latitude, s.position.longitude)
-                    title = s.name
+                    title =
+                        if (markerData.infoText.isNotEmpty()) "${s.name} (${markerData.infoText})" else s.name
                     subDescription = "VELO|${s.number}"
-                    icon = createMarkerBitmap(
-                        mv.context,
-                        "#b7007a".toColorInt()
-                    ).toDrawable(mv.context.resources)
+                    icon = if (markerData.text != null) {
+                        createTextMarkerBitmap(
+                            mv.context,
+                            markerData.text,
+                            markerData.color
+                        ).toDrawable(mv.context.resources)
+                    } else {
+                        createMarkerBitmap(
+                            mv.context,
+                            markerData.color
+                        ).toDrawable(mv.context.resources)
+                    }
                     setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
                 }
                 marker.setOnMarkerClickListener { _, _ ->
