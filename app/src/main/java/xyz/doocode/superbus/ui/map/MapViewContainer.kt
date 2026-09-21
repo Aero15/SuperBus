@@ -24,7 +24,6 @@ fun MapViewContainer(
     modifier: Modifier = Modifier,
     arrets: List<Arret>,
     veloStations: List<Station>,
-    showUserLocation: Boolean = false,
     onArretClick: (Arret) -> Unit,
     onVelociteClick: (Station) -> Unit
 ) {
@@ -56,9 +55,8 @@ fun MapViewContainer(
     }
 
     AndroidView(factory = { mapView }, modifier = modifier) { mv ->
-        // keep a possible user location marker and remove other markers
-        val existingUserMarker = mv.overlays.filterIsInstance<Marker>().firstOrNull { it.title == "My Location" }
-        val toRemove = mv.overlays.filterIsInstance<Marker>().filter { it.title != "My Location" }.toList()
+        // remove existing markers
+        val toRemove = mv.overlays.filterIsInstance<Marker>().toList()
         toRemove.forEach { mv.overlays.remove(it) }
 
         // add Ginko stops
@@ -69,7 +67,7 @@ fun MapViewContainer(
                 subDescription = "ARRET|${a.id}"
                 icon = createMarkerBitmap(
                     mv.context,
-                    "#1E88E5".toColorInt()
+                    "#00abc4".toColorInt()
                 ).toDrawable(mv.context.resources)
                 setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
             }
@@ -88,7 +86,7 @@ fun MapViewContainer(
                 subDescription = "VELO|${s.number}"
                 icon = createMarkerBitmap(
                     mv.context,
-                    "#43A047".toColorInt()
+                    "#b7007a".toColorInt()
                 ).toDrawable(mv.context.resources)
                 setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
             }
