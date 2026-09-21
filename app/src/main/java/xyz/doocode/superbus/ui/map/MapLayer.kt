@@ -6,6 +6,7 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.ElectricBike
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocalParking
 import androidx.compose.material.icons.filled.PedalBike
 import androidx.compose.material.icons.filled.Storage
@@ -26,7 +27,7 @@ enum class VelociteMapDisplayMode(
     val description: String,
     val icon: ImageVector
 ) {
-    BASIC("Basique", "Affichage standard des stations", Icons.AutoMirrored.Filled.DirectionsBike),
+    BASIC("Simple", "Affichage standard des stations", Icons.Default.Info),
     AVAILABLE_BIKES(
         "Vélos disponibles",
         "Nombre de vélos disponibles",

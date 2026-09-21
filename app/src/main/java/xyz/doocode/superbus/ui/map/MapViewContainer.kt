@@ -235,7 +235,6 @@ private class UserLocationHelper(
         if (userMarker == null) {
             userMarker = Marker(mapView).apply {
                 title = "Ma position"
-                subDescription = "USER_LOCATION"
                 icon = createUserLocationMarkerBitmap(context, 0f).toDrawable(context.resources)
                 setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
             }
