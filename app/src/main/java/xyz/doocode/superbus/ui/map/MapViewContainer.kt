@@ -10,7 +10,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import org.osmdroid.config.Configuration
-import org.osmdroid.tileprovider.tilesource.XYTileSource
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
@@ -24,7 +24,7 @@ fun MapViewContainer(
     modifier: Modifier = Modifier,
     arrets: List<Arret>,
     veloStations: List<Station>,
-    mapStyle: MapStyle = MapStyle.Streets,
+    showUserLocation: Boolean = false,
     onArretClick: (Arret) -> Unit,
     onVelociteClick: (Station) -> Unit
 ) {
@@ -35,6 +35,7 @@ fun MapViewContainer(
         Configuration.getInstance()
             .load(context, context.getSharedPreferences("osmdroid", Context.MODE_PRIVATE))
         MapView(context).apply {
+            setTileSource(TileSourceFactory.MAPNIK)
             setMultiTouchControls(true)
             controller.setZoom(MapConstants.DEFAULT_ZOOM)
             controller.setCenter(GeoPoint(MapConstants.BESANCON_LAT, MapConstants.BESANCON_LON))
@@ -55,11 +56,9 @@ fun MapViewContainer(
     }
 
     AndroidView(factory = { mapView }, modifier = modifier) { mv ->
-        val tileSource = XYTileSource(mapStyle.id, 0, 19, 256, mapStyle.fileExt, mapStyle.baseUrls)
-        mv.setTileSource(tileSource)
-
-        // remove previous markers
-        val toRemove = mv.overlays.filterIsInstance<Marker>().toList()
+        // keep a possible user location marker and remove other markers
+        val existingUserMarker = mv.overlays.filterIsInstance<Marker>().firstOrNull { it.title == "My Location" }
+        val toRemove = mv.overlays.filterIsInstance<Marker>().filter { it.title != "My Location" }.toList()
         toRemove.forEach { mv.overlays.remove(it) }
 
         // add Ginko stops

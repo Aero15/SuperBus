@@ -2,6 +2,8 @@ package xyz.doocode.superbus.ui.map
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -19,8 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Place
+import androidx.core.content.ContextCompat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import xyz.doocode.superbus.core.data.ReferenceDataRepository
@@ -56,17 +57,25 @@ fun MapScreen(modifier: Modifier = Modifier) {
     }
 
     Scaffold(
-        modifier = modifier.fillMaxSize()/*,
+        modifier = modifier.fillMaxSize(),
         floatingActionButton = {
-            MapStyleFab(currentStyle = currentStyle, onSelect = { currentStyle = it })
-        }*/
+            FloatingActionButton(onClick = {
+                if (permissionGranted) {
+                    showMyLocation = !showMyLocation
+                } else {
+                    locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                }
+            }) {
+                Icon(Icons.Filled.MyLocation, contentDescription = "Ma position")
+            }
+        }
     ) { innerPadding ->
         Box(modifier = Modifier.fillMaxSize()) {
             MapViewContainer(
                 modifier = Modifier.fillMaxSize(),
                 arrets = arrets,
                 veloStations = velos,
-                mapStyle = currentStyle,
+                showUserLocation = showMyLocation,
                 onArretClick = { arret ->
                     val intent =
                         android.content.Intent(context, StopDetailsActivity::class.java).apply {
@@ -89,27 +98,6 @@ fun MapScreen(modifier: Modifier = Modifier) {
             if (loading) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             }
-        }
-    }
-}
-
-@Composable
-private fun MapStyleFab(currentStyle: MapStyle, onSelect: (MapStyle) -> Unit) {
-    var expanded by remember { mutableStateOf(false) }
-    Box {
-        FloatingActionButton(onClick = { expanded = true }) {
-            Icon(Icons.Filled.Place, contentDescription = "Style")
-        }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            DropdownMenuItem(
-                text = { Text("Streets") },
-                onClick = { onSelect(MapStyle.Streets); expanded = false })
-            DropdownMenuItem(
-                text = { Text("Dark (Toner)") },
-                onClick = { onSelect(MapStyle.Toner); expanded = false })
-            DropdownMenuItem(
-                text = { Text("Satellite (requires key)") },
-                onClick = { onSelect(MapStyle.Satellite); expanded = false })
         }
     }
 }
