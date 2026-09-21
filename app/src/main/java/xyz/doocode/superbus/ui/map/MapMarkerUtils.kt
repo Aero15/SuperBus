@@ -23,3 +23,33 @@ fun createMarkerBitmap(context: Context, color: Int, sizeDp: Float = 28f): Bitma
     canvas.drawCircle(size / 2f, size / 2f, radius - border.strokeWidth / 2f, border)
     return bitmap
 }
+
+fun createUserLocationMarkerBitmap(context: Context, sizeDp: Float = 32f): Bitmap {
+    val density = context.resources.displayMetrics.density
+    val size = (sizeDp * density).toInt().coerceAtLeast(32)
+    val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+
+    // Outer accuracy halo
+    val haloPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#4D2979FF")
+    }
+    canvas.drawCircle(size / 2f, size / 2f, size / 2f, haloPaint)
+
+    // Blue core
+    val corePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.parseColor("#2979FF")
+    }
+    val coreRadius = size * 0.35f
+    canvas.drawCircle(size / 2f, size / 2f, coreRadius, corePaint)
+
+    // White border around blue core
+    val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        color = Color.WHITE
+        strokeWidth = density * 2f
+    }
+    canvas.drawCircle(size / 2f, size / 2f, coreRadius, borderPaint)
+
+    return bitmap
+}

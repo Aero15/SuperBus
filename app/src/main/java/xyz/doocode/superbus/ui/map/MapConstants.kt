@@ -5,4 +5,6 @@ object MapConstants {
     const val BESANCON_LON = 6.024053
     const val DEFAULT_ZOOM = 16.0
     const val MIN_ZOOM_MARKERS = 15.0 // Minimum zoom level at which markers are visible
+    const val USER_LOCATION_ZOOM = 18.0 // Zoom level when centering on user location
+    const val ANIMATION_DURATION_MS = 500L // Duration of map animations in milliseconds
 }
