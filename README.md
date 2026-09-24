@@ -7,20 +7,23 @@ SuperBus (temporary name) is a mobile app designed to be a better alternative to
 **[WARNING] This project is still under development and many bugs remain unresolved. As this is a proof-of-concept project, the final result may be entirely different.**
 
 ## Features
+
 - ⏲️ **Display waiting times**:
-    - 🔍 with larger font size (easily readable)
-    - ↕️ full-screen view (swipe cards)
-    - 🖼️ landscape and tablet support
-    - 💡 option to keep the screen on
-    - 🌙 dark mode support
+  - 🔍 with larger font size (easily readable)
+  - ↕️ full-screen view (swipe cards)
+  - 🖼️ landscape and tablet support
+  - 💡 option to keep the screen on
+  - 🌙 dark mode support
 - 📣 **Text-to-speech countdown**: announcement of waiting times (inspired by the [PANAM/SIEL screens of the Paris metro](https://youtu.be/M3j0xNkYBy0?si=6MJ926puqFzxaYgx&t=5))
-    - 1️⃣ for a single transit line
-    - *️⃣ or for several lines simultaneously (with auto-swiping cards in full-screen mode)
-    - 💤 countdown disabled in background
+  - 1️⃣ for a single transit line
+  - \*️⃣ or for several lines simultaneously (with auto-swiping cards in full-screen mode)
+  - 💤 countdown disabled in background
 - ❤️ **Favorites with preview**: favorites page with an overview of bus/tram lines
-    - 🛠️ editable grid: wobbly tiles like iOS
-    - ✏️ rename favorite items
-- 🚲 **Ginko Vélocité included**
+  - 🛠️ editable grid: wobbly tiles like iOS
+  - ✏️ rename favorite items
+- 🚲 **Ginko Vélocité support**: view bike/stand availability in real-time
+- 🗺️ **Map view** with nearby station detection
+  - 🚲 display of nearby Vélocité stations data (count bike/stands/etc.) in real-time
 
 [![Sketches and concepts for SuperBus](./wiki/sketches.png)](./wiki/sketches.png)
 
@@ -38,7 +41,7 @@ Here is a list of features I would like to add:
 - 🔊 Background text-to-speech countdown
 - 💾 Favorites backup: import/export data
 - 🚲 Extended support: Mobigo, SNCF, Citiz
-- 🗺️ Map view with nearby station detection
+- 🗺️ Map view with bus/tram routes
 
 [![Drawing the tram of Ginko Besançon with Inkscape](./wiki/making-tramway-tile.gif)](./wiki/inkscape.png)
 
@@ -58,6 +61,7 @@ This project need an API key to interact with Ginko API and JCDecaux API.
 2. **Ginko Vélocité (JCDecaux)**: Go to [JCDecaux Developer](https://developer.jcdecaux.com/), then create an account to get your API key.
 
 Then, edit `local.properties` to add these lines :
+
 ```ini
 apikey.ginko_mobilites=PUT_YOUR_GINKO_API_KEY_RIGHT_THERE
 apikey.ginko_velocite=PUT_YOUR_VELOCITE_API_KEY_RIGHT_THERE
