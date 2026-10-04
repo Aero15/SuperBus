@@ -47,6 +47,28 @@ fun MapViewContainer(
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
 
     val markersOverlay = remember { FolderOverlay() }
+    val markerIconsMap =
+        remember { mutableMapOf<Marker, Pair<android.graphics.drawable.Drawable, android.graphics.drawable.Drawable>>() }
+
+    fun updateMarkerIcons(isDetailed: Boolean) {
+        markersOverlay.items.forEach { overlay ->
+            if (overlay is Marker) {
+                val pair = markerIconsMap[overlay]
+                if (pair != null) {
+                    val (detailedIcon, miniIcon) = pair
+                    val newIcon = if (isDetailed) detailedIcon else miniIcon
+                    if (overlay.icon != newIcon) {
+                        overlay.icon = newIcon
+                        if (isDetailed) {
+                            overlay.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                        } else {
+                            overlay.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     val mapView = remember {
         Configuration.getInstance()
@@ -58,16 +80,13 @@ fun MapViewContainer(
             controller.setZoom(MapConstants.DEFAULT_ZOOM)
             controller.setCenter(GeoPoint(MapConstants.BESANCON_LAT, MapConstants.BESANCON_LON))
 
-            // Create an overlay to display/hide markers based on zoom level
             overlays.add(markersOverlay)
             addMapListener(object : MapListener {
                 override fun onScroll(event: ScrollEvent?): Boolean = false
                 override fun onZoom(event: ZoomEvent?): Boolean {
-                    val isVisible = zoomLevelDouble >= MapConstants.MIN_ZOOM_MARKERS
-                    if (markersOverlay.isEnabled != isVisible) {
-                        markersOverlay.isEnabled = isVisible
-                        postInvalidate()
-                    }
+                    val isDetailed = zoomLevelDouble >= MapConstants.MIN_ZOOM_MARKERS
+                    updateMarkerIcons(isDetailed)
+                    postInvalidate()
                     return true
                 }
             })
@@ -118,26 +137,37 @@ fun MapViewContainer(
     }
 
     AndroidView(factory = { mapView }, modifier = modifier) { mv ->
-        // Clear existing markers from the folder overlay to avoid duplicates
+        // Clear existing markers from the folder overlay and cache to avoid duplicates
         markersOverlay.items.clear()
+        markerIconsMap.clear()
+
+        val isDetailed = mv.zoomLevelDouble >= MapConstants.MIN_ZOOM_MARKERS
 
         // Add bus/tram stops according to selected layer
         if (selectedLayer == MapLayer.STANDARD || selectedLayer == MapLayer.BUS_TRAM) {
+            val stopColor = "#00abc4".toColorInt()
+            val detailedIcon =
+                createMarkerBitmap(mv.context, stopColor).toDrawable(mv.context.resources)
+            val miniIcon =
+                createMiniMarkerBitmap(mv.context, stopColor).toDrawable(mv.context.resources)
+
             arrets.forEach { a ->
                 val marker = Marker(mv).apply {
                     position = GeoPoint(a.latitude, a.longitude)
                     title = a.nom
                     subDescription = "ARRET|${a.id}"
-                    icon = createMarkerBitmap(
-                        mv.context,
-                        "#00abc4".toColorInt()
-                    ).toDrawable(mv.context.resources)
-                    setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                    icon = if (isDetailed) detailedIcon else miniIcon
+                    if (isDetailed) {
+                        setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                    } else {
+                        setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
+                    }
                 }
                 marker.setOnMarkerClickListener { _, _ ->
                     onArretClick(a)
                     true
                 }
+                markerIconsMap[marker] = detailedIcon to miniIcon
                 markersOverlay.add(marker)
             }
         }
@@ -146,34 +176,45 @@ fun MapViewContainer(
         if (selectedLayer == MapLayer.STANDARD || selectedLayer == MapLayer.VELOCITE) {
             veloStations.forEach { s ->
                 val markerData = getVelociteMarkerData(s, velociteDisplayMode)
+                val detailedIcon = if (markerData.text != null) {
+                    createTextMarkerBitmap(
+                        mv.context,
+                        markerData.text,
+                        markerData.color
+                    ).toDrawable(mv.context.resources)
+                } else {
+                    createMarkerBitmap(
+                        mv.context,
+                        markerData.color
+                    ).toDrawable(mv.context.resources)
+                }
+                val miniIcon = createMiniMarkerBitmap(
+                    mv.context,
+                    markerData.color
+                ).toDrawable(mv.context.resources)
+
                 val marker = Marker(mv).apply {
                     position = GeoPoint(s.position.latitude, s.position.longitude)
                     title =
                         if (markerData.infoText.isNotEmpty()) "${s.name} (${markerData.infoText})" else s.name
                     subDescription = "VELO|${s.number}"
-                    icon = if (markerData.text != null) {
-                        createTextMarkerBitmap(
-                            mv.context,
-                            markerData.text,
-                            markerData.color
-                        ).toDrawable(mv.context.resources)
+                    icon = if (isDetailed) detailedIcon else miniIcon
+                    if (isDetailed) {
+                        setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
                     } else {
-                        createMarkerBitmap(
-                            mv.context,
-                            markerData.color
-                        ).toDrawable(mv.context.resources)
+                        setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
                     }
-                    setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
                 }
                 marker.setOnMarkerClickListener { _, _ ->
                     onVelociteClick(s)
                     true
                 }
+                markerIconsMap[marker] = detailedIcon to miniIcon
                 markersOverlay.add(marker)
             }
         }
 
-        markersOverlay.isEnabled = mv.zoomLevelDouble >= MapConstants.MIN_ZOOM_MARKERS
+        markersOverlay.isEnabled = true
         mv.invalidate()
     }
 }

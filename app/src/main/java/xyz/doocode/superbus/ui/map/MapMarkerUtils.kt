@@ -26,6 +26,24 @@ fun createMarkerBitmap(context: Context, color: Int, sizeDp: Float = 28f): Bitma
     return bitmap
 }
 
+fun createMiniMarkerBitmap(context: Context, color: Int, sizeDp: Float = 20f): Bitmap {
+    val density = context.resources.displayMetrics.density
+    val size = (sizeDp * density).toInt().coerceAtLeast(8)
+    val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { this.color = color }
+    val radius = size * 0.45f
+    canvas.drawCircle(size / 2f, size / 2f, radius, paint)
+
+    val border = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        this.color = Color.WHITE
+        strokeWidth = density * 2f
+    }
+    canvas.drawCircle(size / 2f, size / 2f, radius - border.strokeWidth / 2f, border)
+    return bitmap
+}
+
 fun createTextMarkerBitmap(
     context: Context,
     text: String,
